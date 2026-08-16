@@ -1,0 +1,196 @@
+/* ==========================================================================
+   Glozin Theme Design System & Tokens for Laravel React (Inertia TSX)
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Instrument Sans';
+  src: url('/fonts/InstrumentSans-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  src: url('/fonts/InstrumentSans-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  src: url('/fonts/InstrumentSans-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  src: url('/fonts/InstrumentSans-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --gz-body-font: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --gz-color-dark: #111111;
+
+  --gz-color-primary: #d0473e;
+  --gz-color-primary-hover: #b83a32;
+  --gz-color-accent: #e56a54;
+  --gz-color-base: #444444;
+  --gz-color-grey: #888888;
+  --gz-color-light-grey: #f8f9fa;
+  --gz-border-color: #ebebeb;
+  --gz-bg-light: #fbfbfb;
+  --gz-badge-sale-bg: #d0473e;
+  --gz-badge-new-bg: #111111;
+  --gz-badge-hot-bg: #ff9800;
+  --gz-radius-sm: 4px;
+  --gz-radius-md: 8px;
+  --gz-radius-lg: 12px;
+  --gz-radius-pill: 9999px;
+  --gz-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --gz-shadow-drawer: -4px 0 25px rgba(0, 0, 0, 0.15);
+  --gz-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+body {
+  font-family: var(--gz-body-font);
+  color: var(--gz-color-base);
+  background-color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Glozin Badge Utilities */
+.gz-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: var(--gz-radius-pill);
+  line-height: 1.4;
+}
+
+.gz-badge-sale {
+  background-color: var(--gz-badge-sale-bg);
+  color: #ffffff;
+}
+
+.gz-badge-new {
+  background-color: var(--gz-badge-new-bg);
+  color: #ffffff;
+}
+
+.gz-badge-hot {
+  background-color: var(--gz-badge-hot-bg);
+  color: #ffffff;
+}
+
+/* Product Card Animations & Overlays */
+.gz-product-card {
+  position: relative;
+  transition: var(--gz-transition);
+  border-radius: var(--gz-radius-md);
+  overflow: hidden;
+}
+
+.gz-product-card .gz-card-actions {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.25s ease;
+}
+
+.gz-product-card:hover .gz-card-actions {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.gz-product-card .gz-secondary-img {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.gz-product-card:hover .gz-secondary-img {
+  opacity: 1;
+}
+
+/* Swatches */
+.gz-swatch-color {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.gz-swatch-color:hover,
+.gz-swatch-color.active {
+  transform: scale(1.25);
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 3px var(--gz-color-dark);
+}
+
+/* Slide-over Drawer Animations */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+/* Free Shipping Progress Bar */
+.gz-shipping-progress {
+  height: 6px;
+  border-radius: 3px;
+  background-color: #e9ecef;
+  overflow: hidden;
+}
+
+.gz-shipping-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #d0473e 0%, #ff6b6b 100%);
+  transition: width 0.4s ease;
+}
