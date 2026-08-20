@@ -50,9 +50,10 @@ export const PromoDualBanners: React.FC<PromoDualBannersProps> = ({ cards = defa
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
           {cards.map((card) => {
-            const isDarkText = card.textColor === 'dark' || !card.textColor;
+            const hasImage = Boolean(card.image && card.image.trim().length > 0);
+            const isDarkText = !hasImage || card.textColor === 'dark' || !card.textColor;
             const alignClass =
-              card.align === 'center'
+              card.align === 'center' || !hasImage
                 ? 'items-center text-center justify-center'
                 : card.align === 'right'
                 ? 'items-end text-right justify-end'
@@ -61,12 +62,12 @@ export const PromoDualBanners: React.FC<PromoDualBannersProps> = ({ cards = defa
             return (
               <div
                 key={card.id}
-                className={`relative rounded-3xl overflow-hidden transition-all duration-500 min-h-[380px] sm:min-h-[440px] lg:min-h-[480px] flex flex-col p-8 sm:p-12 lg:p-14 group ${
-                  card.bgClass || 'bg-gray-100'
+                className={`relative rounded-3xl sm:rounded-4xl overflow-hidden transition-all duration-500 min-h-[360px] sm:min-h-[420px] lg:min-h-[440px] flex flex-col p-8 sm:p-12 lg:p-14 group ${
+                  hasImage ? (card.bgClass || 'bg-gray-900') : 'bg-[#f4f4f4]'
                 } ${alignClass}`}
               >
                 {/* Background Image (If Provided) */}
-                {card.image && (
+                {hasImage && (
                   <>
                     <img
                       src={card.image}
@@ -83,16 +84,16 @@ export const PromoDualBanners: React.FC<PromoDualBannersProps> = ({ cards = defa
                 {/* Content Overlay */}
                 <div
                   className={`relative z-10 space-y-3.5 max-w-md ${
-                    card.align === 'center' ? 'mx-auto' : ''
+                    card.align === 'center' || !hasImage ? 'mx-auto' : ''
                   }`}
                 >
                   {/* Subtitle */}
                   {card.subtitle && (
                     <span
-                      className={`text-xs font-extrabold uppercase tracking-widest block ${
-                        isDarkText && !card.image
+                      className={`text-[11px] sm:text-xs font-bold uppercase tracking-widest block ${
+                        !hasImage || isDarkText
                           ? 'text-gray-900'
-                          : 'text-[#d0473e]'
+                          : 'text-amber-300'
                       }`}
                     >
                       {card.subtitle}
@@ -103,7 +104,7 @@ export const PromoDualBanners: React.FC<PromoDualBannersProps> = ({ cards = defa
                   {card.title && (
                     <h3
                       className={`text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.1] ${
-                        isDarkText && !card.image
+                        !hasImage || isDarkText
                           ? 'text-gray-900'
                           : 'text-white'
                       }`}
@@ -115,9 +116,9 @@ export const PromoDualBanners: React.FC<PromoDualBannersProps> = ({ cards = defa
                   {/* Description */}
                   {card.description && (
                     <p
-                      className={`text-xs sm:text-sm leading-relaxed ${
-                        isDarkText && !card.image
-                          ? 'text-gray-500'
+                      className={`text-xs sm:text-[13.5px] leading-relaxed font-normal ${
+                        !hasImage || isDarkText
+                          ? 'text-gray-600'
                           : 'text-gray-200'
                       }`}
                     >
@@ -125,19 +126,19 @@ export const PromoDualBanners: React.FC<PromoDualBannersProps> = ({ cards = defa
                     </p>
                   )}
 
-                  {/* Optional Action Button */}
+                  {/* Action Button */}
                   {card.buttonText && (
-                    <div className="pt-3">
+                    <div className="pt-2">
                       <Link
                         href={card.buttonLink || '/shop'}
-                        className={`inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-xs sm:text-sm font-bold tracking-normal transition-all shadow-md active:scale-95 ${
-                          isDarkText && !card.image
-                            ? 'bg-[#111111] hover:bg-[#d0473e] text-white'
-                            : 'bg-white hover:bg-[#d0473e] text-gray-900 hover:text-white'
+                        className={`inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-sm active:scale-95 cursor-pointer ${
+                          !hasImage || isDarkText
+                            ? 'bg-[#111111] hover:bg-black text-white'
+                            : 'bg-white hover:bg-gray-100 text-gray-900'
                         }`}
                       >
                         <span>{card.buttonText}</span>
-                        {card.image && <ArrowRight className="w-3.5 h-3.5" />}
+                        {hasImage && <ArrowRight className="w-3.5 h-3.5" />}
                       </Link>
                     </div>
                   )}
