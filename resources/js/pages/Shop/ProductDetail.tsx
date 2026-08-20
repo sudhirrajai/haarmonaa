@@ -311,22 +311,24 @@ export default function ProductDetail({
           {/* RIGHT COLUMN: GLOZIN STICKY PURCHASING SIDEBAR (5 COLS) */}
           <div className="lg:col-span-5 lg:sticky lg:top-24 space-y-6">
             <div className="space-y-2">
-              <span className="text-xs font-extrabold uppercase tracking-widest text-gray-400 block">
-                Glozin Fine Jewelry
+              <span className="text-[11px] font-bold uppercase tracking-widest text-[#d0473e] block">
+                {product.category || 'Haarmonaa Fine Jewelry'}
               </span>
               <h1 className="text-2xl sm:text-3xl font-serif text-gray-900 tracking-tight leading-tight">
                 {product.name}
               </h1>
 
-              {/* Badges & Stock Status Line */}
-              <div className="flex flex-wrap items-center gap-3 pt-1">
-                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md">
+              {/* Refined Luxury Stock & Availability Indicator */}
+              <div className="flex items-center gap-2.5 pt-1 text-xs">
+                <span className="inline-flex items-center gap-1.5 font-medium text-emerald-800 bg-emerald-50/80 px-2.5 py-1 rounded-[10px] border border-emerald-200/60">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
                   In Stock
                 </span>
-                <span className="inline-flex items-center gap-1 text-[11.5px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-md">
-                  <Flame className="w-3.5 h-3.5 text-rose-600 fill-rose-600" />
-                  <span>Only {currentStock} items left!</span>
-                </span>
+                {currentStock > 0 && currentStock <= 5 && (
+                  <span className="text-xs text-amber-700 font-medium bg-amber-50/80 px-2.5 py-1 rounded-[10px] border border-amber-200/60">
+                    Low stock — Only {currentStock} left
+                  </span>
+                )}
               </div>
             </div>
 
