@@ -86,9 +86,15 @@ export default function ProductDetail({
     setOpenAccordions((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // Frequently Bought Together checkbox selections
-  const upsellItem = relatedProducts[0] || null;
-  const upsellItem2 = relatedProducts[1] || null;
+  // Frequently Bought Together checkbox selections (Only if Admin explicitly selected upsell products)
+  const explicitUpsellProducts =
+    product.upsellIds && product.upsellIds.length > 0
+      ? relatedProducts.filter((p) => product.upsellIds?.includes(p.id))
+      : [];
+  const upsellItem = explicitUpsellProducts[0] || null;
+  const upsellItem2 = explicitUpsellProducts[1] || null;
+  const hasUpsells = explicitUpsellProducts.length > 0;
+
   const [selectedBundleItems, setSelectedBundleItems] = useState<{ [key: string]: boolean }>({
     main: true,
     upsell1: true,
@@ -378,8 +384,8 @@ export default function ProductDetail({
               </div>
             </div>
 
-            {/* FREQUENTLY BOUGHT TOGETHER SIDEBAR CARD */}
-            {upsellItem && (
+            {/* FREQUENTLY BOUGHT TOGETHER SIDEBAR CARD (Only if Admin explicitly selected upsell items) */}
+            {hasUpsells && upsellItem && (
               <div className="p-5 bg-white rounded-2xl border border-gray-200 shadow-2xs space-y-4">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900 border-b border-gray-100 pb-2.5">
                   Frequently Bought Together

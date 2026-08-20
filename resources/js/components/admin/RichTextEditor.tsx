@@ -35,10 +35,12 @@ export function RichTextEditor({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // Initialize content once or when reset
+  // Initialize content once or when externally loaded
   useEffect(() => {
-    if (editorRef.current && editorRef.current.innerHTML !== value) {
-      editorRef.current.innerHTML = value || '';
+    if (editorRef.current && editorRef.current.innerHTML !== (value || '')) {
+      if (document.activeElement !== editorRef.current) {
+        editorRef.current.innerHTML = value || '';
+      }
     }
   }, [value]);
 
@@ -46,6 +48,30 @@ export function RichTextEditor({
     if (editorRef.current) {
       onChange(editorRef.current.innerHTML);
     }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const clipboard = e.clipboardData;
+    const htmlData = clipboard.getData('text/html');
+    const textData = clipboard.getData('text/plain');
+
+    if (htmlData && htmlData.trim().length > 0) {
+      // Insert rich HTML from source website
+      document.execCommand('insertHTML', false, htmlData);
+    } else if (textData) {
+      // Convert plain text lines/paragraphs into clean HTML blocks
+      const lines = textData.split(/\r\n|\r|\n/);
+      const formattedHtml = lines
+        .map((line) => {
+          const trimmed = line.trim();
+          if (!trimmed) return '<p><br></p>';
+          return `<p>${trimmed}</p>`;
+        })
+        .join('');
+      document.execCommand('insertHTML', false, formattedHtml);
+    }
+    handleInput();
   };
 
   const format = (command: string, value: string | undefined = undefined) => {
@@ -207,7 +233,7 @@ export function RichTextEditor({
           onInput={handleInput}
           onBlur={handleInput}
           onKeyUp={handleInput}
-          onPaste={handleInput}
+          onPaste={handlePaste}
           placeholder={placeholder}
           className="min-h-[220px] max-h-[450px] overflow-y-auto p-4 bg-white text-xs sm:text-sm text-gray-900 leading-relaxed focus:outline-hidden font-normal prose prose-sm max-w-none [&_img]:rounded-2xl [&_img]:my-3 [&_img]:border [&_img]:border-gray-200 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-semibold"
         />
