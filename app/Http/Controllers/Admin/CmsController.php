@@ -124,14 +124,14 @@ class CmsController extends Controller
             'slides' => 'required|array|min:1',
             'slides.*.id' => 'required',
             'slides.*.subtitle' => 'nullable|string|max:255',
-            'slides.*.title' => 'required|string|max:255',
+            'slides.*.title' => 'nullable|string|max:255',
             'slides.*.buttonText' => 'nullable|string|max:100',
             'slides.*.buttonLink' => 'nullable|string|max:500',
             'slides.*.showButton' => 'nullable|boolean',
             'slides.*.enabled' => 'nullable|boolean',
             'slides.*.badge' => 'nullable|string|max:100',
-            'slides.*.leftImage' => 'required|string|max:1000',
-            'slides.*.rightImage' => 'required|string|max:1000',
+            'slides.*.leftImage' => 'nullable|string|max:1000',
+            'slides.*.rightImage' => 'nullable|string|max:1000',
         ]);
 
         Setting::set('homepage_slides', json_encode($validated['slides']));
@@ -143,7 +143,7 @@ class CmsController extends Controller
     {
         $validated = $request->validate([
             'enabled' => 'required|boolean',
-            'title' => 'required|string|max:255',
+            'title' => 'nullable|string|max:255',
             'subtitle' => 'nullable|string|max:255',
             'badge' => 'nullable|string|max:100',
             'description' => 'nullable|string|max:1000',
@@ -165,7 +165,7 @@ class CmsController extends Controller
             'banners' => 'required|array|min:1',
             'banners.*.id' => 'required',
             'banners.*.subtitle' => 'nullable|string|max:255',
-            'banners.*.title' => 'required|string|max:255',
+            'banners.*.title' => 'nullable|string|max:255',
             'banners.*.description' => 'nullable|string|max:1000',
             'banners.*.buttonText' => 'nullable|string|max:100',
             'banners.*.buttonLink' => 'nullable|string|max:500',

@@ -351,8 +351,7 @@ export default function CmsIndex({
                     <label className="block text-xs font-bold text-gray-700 mb-1">Main Heading / Title</label>
                     <input
                       type="text"
-                      required
-                      value={slide.title}
+                      value={slide.title || ''}
                       onChange={(e) => handleUpdateSlide(idx, 'title', e.target.value)}
                       placeholder="Sculpted By Light"
                       className="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
@@ -462,12 +461,11 @@ export default function CmsIndex({
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Collection Title (e.g. Summer Solstice / Winter Lookbook) <span className="text-[#d0473e]">*</span>
+                  Collection Title (e.g. Summer Solstice / Winter Lookbook)
                 </label>
                 <input
                   type="text"
-                  required
-                  value={seasonal.title}
+                  value={seasonal.title || ''}
                   onChange={(e) => setSeasonal({ ...seasonal, title: e.target.value })}
                   placeholder="Summer Solstice Edition"
                   className="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
@@ -640,8 +638,7 @@ export default function CmsIndex({
                   <label className="block text-xs font-bold text-gray-700 mb-1">Title</label>
                   <input
                     type="text"
-                    required
-                    value={card.title}
+                    value={card.title || ''}
                     onChange={(e) => {
                       const updated = [...banners];
                       updated[idx].title = e.target.value;
