@@ -25,7 +25,7 @@ export const GlozinLayout: React.FC<GlozinLayoutProps> = ({ children, allProduct
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white font-sans text-gray-800 antialiased selection:bg-[#d0473e] selection:text-white">
+    <div className="min-h-screen flex flex-col bg-white font-sans text-gray-800 antialiased overflow-x-hidden selection:bg-[#d0473e] selection:text-white">
       {/* Header with live dynamic counts directly from single global CartContext */}
       <Header
         cartCount={cartCount}
@@ -35,7 +35,7 @@ export const GlozinLayout: React.FC<GlozinLayoutProps> = ({ children, allProduct
       />
 
       {/* Main Page Slot */}
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 w-full max-w-full overflow-x-hidden">{children}</main>
 
       {/* Footer */}
       <Footer />

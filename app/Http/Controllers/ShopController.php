@@ -193,19 +193,27 @@ class ShopController extends Controller
 
     public function productDetail(string $slug): Response
     {
-        $products = $this->getProducts();
-        $product = collect($products)->firstWhere('slug', $slug)
-            ?? collect($products)->firstWhere('id', (int) $slug)
-            ?? ($products[0] ?? null);
+        $dbProduct = Product::with(['category', 'categories', 'variants'])
+            ->where('slug', $slug)
+            ->orWhere('id', is_numeric($slug) ? (int) $slug : 0)
+            ->orWhere('slug', 'like', $slug.'%')
+            ->first();
+
+        if (! $dbProduct) {
+            $dbProduct = Product::with(['category', 'categories', 'variants'])->first();
+        }
+
+        $product = $dbProduct ? $this->formatProduct($dbProduct) : null;
+        $allProducts = $this->getProducts();
 
         $relatedProducts = [];
         if ($product && ! empty($product['upsellIds'])) {
-            $explicitUpsells = collect($products)->whereIn('id', $product['upsellIds'])->values()->all();
+            $explicitUpsells = collect($allProducts)->whereIn('id', $product['upsellIds'])->values()->all();
             $relatedProducts = array_merge($relatedProducts, $explicitUpsells);
         }
 
         // Fill remaining up to 4 items from other products
-        $remaining = array_values(array_filter($products, fn ($p) => $product && $p['id'] !== $product['id'] && ! in_array($p['id'], array_column($relatedProducts, 'id'))));
+        $remaining = array_values(array_filter($allProducts, fn ($p) => $product && $p['id'] !== $product['id'] && ! in_array($p['id'], array_column($relatedProducts, 'id'))));
         $relatedProducts = array_merge($relatedProducts, $remaining);
 
         return Inertia::render('Shop/ProductDetail', [

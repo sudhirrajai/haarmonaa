@@ -249,8 +249,8 @@ export default function ProductDetail({
       </div>
 
       {/* GLOZIN JEWELRY 2-COLUMN MAIN LAYOUT (Left Gallery + Right Sticky Sidebar) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 overflow-x-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start w-full">
           {/* LEFT COLUMN: GLOZIN VERTICAL STACKED GALLERY (7 COLS) */}
           <div className="lg:col-span-7 space-y-4">
             {/* On Desktop: Glozin Signature Vertical Image Grid Stack */}

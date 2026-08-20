@@ -205,6 +205,9 @@ export function RichTextEditor({
           ref={editorRef}
           contentEditable
           onInput={handleInput}
+          onBlur={handleInput}
+          onKeyUp={handleInput}
+          onPaste={handleInput}
           placeholder={placeholder}
           className="min-h-[220px] max-h-[450px] overflow-y-auto p-4 bg-white text-xs sm:text-sm text-gray-900 leading-relaxed focus:outline-hidden font-normal prose prose-sm max-w-none [&_img]:rounded-2xl [&_img]:my-3 [&_img]:border [&_img]:border-gray-200 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-semibold"
         />
