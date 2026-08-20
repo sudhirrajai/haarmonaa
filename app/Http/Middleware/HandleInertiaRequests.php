@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -40,6 +41,16 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $request->user(),
+            ],
+            'settings' => [
+                'store_name' => Setting::get('store_name', 'Haarmonaa Fine Jewelry'),
+                'store_logo' => Setting::get('store_logo'),
+                'store_logo_dark' => Setting::get('store_logo_dark'),
+                'store_favicon' => Setting::get('store_favicon'),
+                'store_email' => Setting::get('store_email', 'support@haarmonaa.in'),
+                'store_phone' => Setting::get('store_phone', '+1 (973) 435-3638'),
+                'currency_symbol' => Setting::get('currency_symbol', '₹'),
+                'free_shipping_min_order' => (float) Setting::get('free_shipping_min_order', 999),
             ],
         ];
     }

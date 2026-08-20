@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Category, Product } from '@/types/shop';
+import { SingleImageUploader } from '@/components/admin/SingleImageUploader';
 import {
   Sparkles,
   Sliders,
@@ -314,57 +315,23 @@ export default function CmsIndex({
                   </div>
                 </div>
 
-                {/* Left & Right Images Row with Live Previews */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left & Right Images Row with Live Previews & System File Uploaders */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50/70 border border-gray-200/70 rounded-2xl">
                   {/* Left Image */}
-                  <div className="space-y-2">
-                    <label className="block text-xs font-bold text-gray-700">
-                      Left Split Image URL <span className="text-[#d0473e]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={slide.leftImage}
-                      onChange={(e) => handleUpdateSlide(idx, 'leftImage', e.target.value)}
-                      placeholder="https://images.unsplash.com/..."
-                      className="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-3 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black"
-                    />
-                    <div className="aspect-16/10 rounded-2xl overflow-hidden bg-gray-100 border border-gray-200 max-h-36">
-                      <img
-                        src={slide.leftImage}
-                        alt="Left Preview"
-                        className="w-full h-full object-cover"
-                        onError={(e: any) => {
-                          e.target.src = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800';
-                        }}
-                      />
-                    </div>
-                  </div>
+                  <SingleImageUploader
+                    label="Left Split Image (Lifestyle / Model)"
+                    hint="Recommended: 1200×1400 px (Portrait/Square)"
+                    value={slide.leftImage}
+                    onChange={(url) => handleUpdateSlide(idx, 'leftImage', url)}
+                  />
 
                   {/* Right Image */}
-                  <div className="space-y-2">
-                    <label className="block text-xs font-bold text-gray-700">
-                      Right Split Image URL <span className="text-[#d0473e]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={slide.rightImage}
-                      onChange={(e) => handleUpdateSlide(idx, 'rightImage', e.target.value)}
-                      placeholder="https://images.unsplash.com/..."
-                      className="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-3 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black"
-                    />
-                    <div className="aspect-16/10 rounded-2xl overflow-hidden bg-gray-100 border border-gray-200 max-h-36">
-                      <img
-                        src={slide.rightImage}
-                        alt="Right Preview"
-                        className="w-full h-full object-cover"
-                        onError={(e: any) => {
-                          e.target.src = 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=800';
-                        }}
-                      />
-                    </div>
-                  </div>
+                  <SingleImageUploader
+                    label="Right Split Image (Product Focus)"
+                    hint="Recommended: 1200×1400 px (Portrait/Square)"
+                    value={slide.rightImage}
+                    onChange={(url) => handleUpdateSlide(idx, 'rightImage', url)}
+                  />
                 </div>
 
                 {/* Text Content Inputs */}
@@ -543,22 +510,13 @@ export default function CmsIndex({
 
             {/* Banner Image & Category Target */}
             <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Collection Banner Image URL
-                </label>
-                <input
-                  type="text"
+              <div className="p-4 bg-gray-50/70 border border-gray-200/70 rounded-2xl">
+                <SingleImageUploader
+                  label="Collection Showcase Banner Image"
+                  hint="Recommended: 1200×800 px (Landscape 3:2)"
                   value={seasonal.banner_image}
-                  onChange={(e) => setSeasonal({ ...seasonal, banner_image: e.target.value })}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
+                  onChange={(url) => setSeasonal({ ...seasonal, banner_image: url })}
                 />
-                {seasonal.banner_image && (
-                  <div className="mt-2 aspect-16/9 rounded-2xl overflow-hidden bg-gray-100 border border-gray-200 max-h-36">
-                    <img src={seasonal.banner_image} alt="Banner Preview" className="w-full h-full object-cover" />
-                  </div>
-                )}
               </div>
 
               <div>
@@ -709,17 +667,15 @@ export default function CmsIndex({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Image URL (Optional)</label>
-                  <input
-                    type="text"
+                  <SingleImageUploader
+                    label="Banner Background Image (Optional)"
+                    hint="Recommended: 1200×800 px or 1920×800 px"
                     value={card.image || ''}
-                    onChange={(e) => {
+                    onChange={(url) => {
                       const updated = [...banners];
-                      updated[idx].image = e.target.value;
+                      updated[idx].image = url;
                       setBanners(updated);
                     }}
-                    placeholder="https://images.unsplash.com/..."
-                    className="w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
                   />
                 </div>
 

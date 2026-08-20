@@ -24,6 +24,9 @@ class SettingController extends Controller
     {
         $validated = $request->validate([
             'store_name' => 'required|string|max:255',
+            'store_logo' => 'nullable|string',
+            'store_logo_dark' => 'nullable|string',
+            'store_favicon' => 'nullable|string',
             'store_email' => 'required|email',
             'store_phone' => 'nullable|string',
             'currency_symbol' => 'required|string|max:10',
@@ -36,6 +39,6 @@ class SettingController extends Controller
             Setting::set($key, $val);
         }
 
-        return back()->with('success', 'Store settings updated successfully.');
+        return back()->with('success', 'Store settings and branding updated successfully.');
     }
 }

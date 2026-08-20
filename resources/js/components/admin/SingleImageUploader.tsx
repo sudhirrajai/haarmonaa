@@ -6,6 +6,7 @@ interface SingleImageUploaderProps {
   onChange: (url: string) => void;
   label?: string;
   placeholder?: string;
+  hint?: string;
   error?: string;
 }
 
@@ -14,6 +15,7 @@ export function SingleImageUploader({
   onChange,
   label = 'Image',
   placeholder = 'Upload image from system or paste URL...',
+  hint,
   error,
 }: SingleImageUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -69,7 +71,14 @@ export function SingleImageUploader({
 
   return (
     <div className="space-y-1.5">
-      {label && <label className="block text-xs font-bold text-gray-700">{label}</label>}
+      <div className="flex items-center justify-between gap-2">
+        {label && <label className="block text-xs font-bold text-gray-700">{label}</label>}
+        {hint && (
+          <span className="text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md">
+            {hint}
+          </span>
+        )}
+      </div>
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         {/* Thumbnail Preview Box */}

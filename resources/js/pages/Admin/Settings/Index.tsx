@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { Save, Store, Mail, Phone, IndianRupee, Truck, Percent, MapPin } from 'lucide-react';
+import { SingleImageUploader } from '@/components/admin/SingleImageUploader';
+import { Save, Store, Mail, Phone, IndianRupee, Truck, Percent, MapPin, Image as ImageIcon } from 'lucide-react';
 
 interface SettingsProps {
   settings: { [key: string]: string };
@@ -10,6 +11,9 @@ interface SettingsProps {
 export default function Index({ settings }: SettingsProps) {
   const [formData, setFormData] = useState({
     store_name: settings.store_name || 'Haarmonaa Fine Jewelry',
+    store_logo: settings.store_logo || '',
+    store_logo_dark: settings.store_logo_dark || '',
+    store_favicon: settings.store_favicon || '',
     store_email: settings.store_email || 'support@haarmonaa.in',
     store_phone: settings.store_phone || '+1 (973) 435-3638',
     currency_symbol: settings.currency_symbol || '₹',
@@ -38,12 +42,69 @@ export default function Index({ settings }: SettingsProps) {
           Store Configuration
         </h1>
         <p className="text-xs sm:text-[13px] text-gray-500 mt-1">
-          Customize currency symbols, tax rates, shipping thresholds, and store identity.
+          Customize brand logos, browser favicon, currency, tax rates, shipping rules, and contact info.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="max-w-4xl space-y-6">
-        {/* Card 1: Store Identity */}
+        {/* Card 1: Brand Logo & Favicon Assets */}
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200/80 shadow-2xs space-y-6">
+          <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+            <ImageIcon className="w-4 h-4 text-gray-700" />
+            <div>
+              <h2 className="text-sm font-bold text-gray-900">Brand Identity & Website Logos</h2>
+              <p className="text-[11px] text-gray-400">
+                Uploaded images will be immediately reflected in the store header, footer, and browser tabs.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Primary Logo (Header / Light background) */}
+            <div className="p-4 bg-gray-50/70 border border-gray-200/70 rounded-2xl space-y-2">
+              <SingleImageUploader
+                label="Primary Store Logo (Header)"
+                hint="Recommended: 320×80 px (PNG/SVG transparent)"
+                placeholder="Upload logo file or paste URL..."
+                value={formData.store_logo}
+                onChange={(url) => setFormData({ ...formData, store_logo: url })}
+              />
+              <p className="text-[11px] text-gray-500">
+                Displayed in the main top navigation bar on white/light backgrounds.
+              </p>
+            </div>
+
+            {/* Dark / Inverted Logo (Footer / Dark background) */}
+            <div className="p-4 bg-gray-50/70 border border-gray-200/70 rounded-2xl space-y-2">
+              <SingleImageUploader
+                label="Dark / Inverted Logo (Footer)"
+                hint="Recommended: 320×80 px (White/Gold on transparent)"
+                placeholder="Upload footer logo file or paste URL..."
+                value={formData.store_logo_dark}
+                onChange={(url) => setFormData({ ...formData, store_logo_dark: url })}
+              />
+              <p className="text-[11px] text-gray-500">
+                Displayed in the dark luxury footer section. If left blank, Primary Logo or white typography is used.
+              </p>
+            </div>
+          </div>
+
+          {/* Browser Favicon */}
+          <div className="p-4 bg-amber-50/40 border border-amber-200/60 rounded-2xl space-y-2">
+            <SingleImageUploader
+              label="Website Favicon"
+              hint="Recommended: 64×64 px or 32×32 px (Square PNG/ICO/SVG)"
+              placeholder="Upload favicon file or paste URL..."
+              value={formData.store_favicon}
+              onChange={(url) => setFormData({ ...formData, store_favicon: url })}
+            />
+            <p className="text-[11px] text-gray-600">
+              Shown in browser tabs, bookmarks, and mobile shortcut icons for your online store.
+            </p>
+          </div>
+        </div>
+
+        {/* Card 2: Store Identity */}
         <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200/80 shadow-2xs space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
             <Store className="w-4 h-4 text-gray-700" />
@@ -95,7 +156,7 @@ export default function Index({ settings }: SettingsProps) {
           </div>
         </div>
 
-        {/* Card 2: Currency & Taxes */}
+        {/* Card 3: Currency & Taxes */}
         <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200/80 shadow-2xs space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
             <IndianRupee className="w-4 h-4 text-gray-700" />
