@@ -50,26 +50,44 @@ export function RichTextEditor({
     }
   };
 
+  const insertPlainText = (text: string) => {
+    if (!text) return;
+    const lines = text.split(/\r\n|\r|\n/);
+    const formattedHtml = lines
+      .map((line) => {
+        const trimmed = line.trim();
+        if (!trimmed) return '<p><br></p>';
+        return `<p>${trimmed}</p>`;
+      })
+      .join('');
+    document.execCommand('insertHTML', false, formattedHtml);
+  };
+
   const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
     e.preventDefault();
     const clipboard = e.clipboardData;
     const htmlData = clipboard.getData('text/html');
     const textData = clipboard.getData('text/plain');
 
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+
     if (htmlData && htmlData.trim().length > 0) {
-      // Insert rich HTML from source website
-      document.execCommand('insertHTML', false, htmlData);
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlData, 'text/html');
+        const bodyContent = doc.body.innerHTML;
+        if (bodyContent && bodyContent.trim().length > 0) {
+          document.execCommand('insertHTML', false, bodyContent);
+        } else {
+          insertPlainText(textData);
+        }
+      } catch (err) {
+        insertPlainText(textData);
+      }
     } else if (textData) {
-      // Convert plain text lines/paragraphs into clean HTML blocks
-      const lines = textData.split(/\r\n|\r|\n/);
-      const formattedHtml = lines
-        .map((line) => {
-          const trimmed = line.trim();
-          if (!trimmed) return '<p><br></p>';
-          return `<p>${trimmed}</p>`;
-        })
-        .join('');
-      document.execCommand('insertHTML', false, formattedHtml);
+      insertPlainText(textData);
     }
     handleInput();
   };
