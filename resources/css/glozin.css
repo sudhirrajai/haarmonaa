@@ -49,9 +49,9 @@
   --gz-badge-sale-bg: #d0473e;
   --gz-badge-new-bg: #111111;
   --gz-badge-hot-bg: #ff9800;
-  --gz-radius-sm: 4px;
+  --gz-radius-sm: 6px;
   --gz-radius-md: 8px;
-  --gz-radius-lg: 12px;
+  --gz-radius-lg: 10px;
   --gz-radius-pill: 9999px;
   --gz-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
   --gz-shadow-drawer: -4px 0 25px rgba(0, 0, 0, 0.15);
