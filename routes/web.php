@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AttributeController as AdminAttributeController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\CmsController;
 use App\Http\Controllers\Admin\CollectionController;
+use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Shop\CheckoutController;
+use App\Http\Controllers\Shop\CouponController as ShopCouponController;
 use App\Http\Controllers\ShopController;
 use Illuminate\Support\Facades\Route;
 
@@ -25,6 +27,7 @@ Route::get('/privacy-policy', [ShopController::class, 'privacyPolicy'])->name('p
 Route::get('/product/{slug}', [ShopController::class, 'productDetail'])->name('shop.product');
 Route::get('/cart', [ShopController::class, 'cart'])->name('shop.cart');
 Route::get('/checkout', [CheckoutController::class, 'showCheckout'])->name('shop.checkout');
+Route::post('/checkout/apply-coupon', [ShopCouponController::class, 'apply'])->name('shop.coupon.apply');
 Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('shop.checkout.process');
 Route::post('/payment/razorpay/verify', [CheckoutController::class, 'verifyRazorpay'])->name('shop.razorpay.verify');
 Route::get('/order-success/{order_number}', [CheckoutController::class, 'orderSuccess'])->name('shop.orderSuccess');
@@ -45,7 +48,13 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
 
     // Products CRUD
+    Route::post('products/upload-media', [AdminProductController::class, 'uploadMedia'])->name('products.upload-media');
+    Route::patch('products/{product}/toggle-featured', [AdminProductController::class, 'toggleFeatured'])->name('products.toggle-featured');
     Route::resource('products', AdminProductController::class);
+
+    // Coupons CRUD
+    Route::patch('coupons/{coupon}/toggle-active', [AdminCouponController::class, 'toggleActive'])->name('coupons.toggle-active');
+    Route::resource('coupons', AdminCouponController::class);
 
     // Collections
     Route::resource('collections', CollectionController::class)->except(['create', 'edit', 'show']);

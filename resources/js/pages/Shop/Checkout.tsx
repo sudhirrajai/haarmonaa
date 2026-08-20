@@ -14,6 +14,8 @@ import {
   Truck,
   Sparkles,
   ShoppingBag,
+  Tag,
+  X,
 } from 'lucide-react';
 
 interface CheckoutProps {
@@ -44,6 +46,23 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
   const [processing, setProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Coupon state
+  const [couponInput, setCouponInput] = useState('');
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discount: number;
+    description?: string;
+  } | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
+
+  // Dynamic Discount & Total Calculations
+  const discountAmount = appliedCoupon ? appliedCoupon.discount : 0;
+  const taxableSubtotal = Math.max(0, subtotal - discountAmount);
+  const calculatedTax = Math.round(taxableSubtotal * 0.03 * 100) / 100;
+  const calculatedTotal = Math.round((taxableSubtotal + calculatedTax + shipping) * 100) / 100;
+
   // Load Razorpay Script
   useEffect(() => {
     const script = document.createElement('script');
@@ -54,6 +73,57 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
       document.body.removeChild(script);
     };
   }, []);
+
+  const handleApplyCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!couponInput.trim()) return;
+
+    setApplyingCoupon(true);
+    setCouponError(null);
+    setCouponSuccess(null);
+
+    try {
+      const response = await fetch('/checkout/apply-coupon', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+        },
+        body: JSON.stringify({
+          code: couponInput,
+          email: formData.email || null,
+          items: cart.map((item) => ({
+            product_id: item.product.id,
+            quantity: item.quantity,
+            unit_price: item.unitPrice,
+          })),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setCouponError(data.message || 'Invalid coupon code.');
+        setAppliedCoupon(null);
+      } else {
+        setAppliedCoupon(data.coupon);
+        setCouponSuccess(data.message || 'Coupon applied successfully!');
+        setCouponError(null);
+      }
+    } catch {
+      setCouponError('Network error validating coupon. Please try again.');
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput('');
+    setCouponError(null);
+    setCouponSuccess(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,6 +149,7 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
       city: formData.city,
       postal_code: formData.postalCode,
       payment_method: formData.paymentMethod,
+      coupon_code: appliedCoupon ? appliedCoupon.code : null,
       items: cart.map((item) => ({
         product_id: item.product.id,
         variant_id: item.variant?.id || null,
@@ -126,7 +197,7 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
 
         const options = {
           key: razorpayKey,
-          amount: Math.round(total * 100), // in paise
+          amount: Math.round(calculatedTotal * 100), // in paise
           currency: 'INR',
           name: 'Haarmonaa Luxury Jewelry',
           description: `Order #${orderNumber}`,
@@ -425,7 +496,7 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                 </div>
               </div>
 
-              {/* Right Column: Order Summary (5 Cols) */}
+              {/* Right Column: Order Summary & Coupon Promo (5 Cols) */}
               <div className="lg:col-span-5 space-y-6">
                 <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200/80 shadow-2xs space-y-6">
                   <div className="flex items-center justify-between pb-3 border-b border-gray-100">
@@ -469,6 +540,68 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                     ))}
                   </div>
 
+                  {/* PROMO COUPON CODE SECTION */}
+                  <div className="pt-4 border-t border-gray-100 space-y-3">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-gray-800">
+                      <Tag className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Have a Promo Code or Voucher?</span>
+                    </div>
+
+                    {!appliedCoupon ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={couponInput}
+                          onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                          placeholder="e.g. SUMMER20"
+                          className="flex-1 bg-gray-50 border border-gray-200 rounded-full py-2 px-3.5 text-xs font-mono font-bold uppercase text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleApplyCoupon}
+                          disabled={applyingCoupon || !couponInput.trim()}
+                          className="px-4 py-2 bg-[#111111] hover:bg-[#d0473e] text-white font-bold text-xs rounded-full transition-all disabled:opacity-50 cursor-pointer shrink-0"
+                        >
+                          {applyingCoupon ? 'Checking...' : 'Apply'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <div>
+                            <span className="text-xs font-extrabold text-emerald-900 font-mono">
+                              {appliedCoupon.code}
+                            </span>
+                            <span className="block text-[10.5px] text-emerald-700 font-semibold">
+                              Saved ₹{appliedCoupon.discount.toFixed(2)} on this order
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleRemoveCoupon}
+                          className="p-1 text-emerald-800 hover:text-rose-600 rounded-full hover:bg-emerald-100 transition-colors cursor-pointer"
+                          title="Remove Coupon"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+
+                    {couponError && (
+                      <div className="text-[11px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 p-2.5 rounded-xl">
+                        {couponError}
+                      </div>
+                    )}
+                    {couponSuccess && !appliedCoupon && (
+                      <div className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl">
+                        {couponSuccess}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Price Calculations */}
                   <div className="pt-4 border-t border-gray-100 space-y-2.5 text-xs">
                     <div className="flex justify-between text-gray-600">
@@ -476,9 +609,16 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                       <span className="font-bold text-gray-900">₹{subtotal.toFixed(2)}</span>
                     </div>
 
+                    {appliedCoupon && (
+                      <div className="flex justify-between text-emerald-700 font-bold">
+                        <span>Coupon Discount ({appliedCoupon.code})</span>
+                        <span>- ₹{discountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+
                     <div className="flex justify-between text-gray-600">
                       <span>GST (3% Jewelry Tax)</span>
-                      <span className="font-bold text-gray-900">₹{tax.toFixed(2)}</span>
+                      <span className="font-bold text-gray-900">₹{calculatedTax.toFixed(2)}</span>
                     </div>
 
                     <div className="flex justify-between text-gray-600">
@@ -491,7 +631,7 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                     <div className="pt-3 border-t border-gray-100 flex justify-between items-baseline">
                       <span className="text-sm font-extrabold text-gray-900 uppercase">Grand Total</span>
                       <span className="text-2xl font-extrabold text-gray-900 tracking-tight">
-                        ₹{total.toFixed(2)}
+                        ₹{calculatedTotal.toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -507,8 +647,8 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                       {processing
                         ? 'Processing Order...'
                         : formData.paymentMethod === 'cod'
-                        ? `Confirm COD Order (₹${total.toFixed(2)})`
-                        : `Pay Online (₹${total.toFixed(2)})`}
+                        ? `Confirm COD Order (₹${calculatedTotal.toFixed(2)})`
+                        : `Pay Online (₹${calculatedTotal.toFixed(2)})`}
                     </span>
                   </button>
 

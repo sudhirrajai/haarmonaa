@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
+use App\Models\Coupon;
+use App\Models\CouponUsage;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Services\CouponService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,6 +39,7 @@ class CheckoutController extends Controller
             'city' => 'required|string|max:100',
             'postal_code' => 'required|string|max:20',
             'payment_method' => 'required|string|in:razorpay,cod,card,upi',
+            'coupon_code' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.variant_id' => 'nullable|integer',
@@ -50,9 +54,29 @@ class CheckoutController extends Controller
             $subtotal += $item['unit_price'] * $item['quantity'];
         }
 
-        $tax = round($subtotal * 0.03, 2); // 3% GST on fine jewelry
+        // Coupon Processing
+        $appliedCouponCode = null;
+        $discountAmount = 0.00;
+        $couponId = null;
+
+        if (! empty($validated['coupon_code'])) {
+            $couponResult = CouponService::validateAndCalculate(
+                $validated['coupon_code'],
+                $validated['items'],
+                $validated['email']
+            );
+
+            if ($couponResult['valid']) {
+                $appliedCouponCode = $couponResult['coupon']['code'];
+                $discountAmount = (float) $couponResult['coupon']['discount'];
+                $couponId = $couponResult['coupon']['id'];
+            }
+        }
+
+        $taxableAmount = max(0, $subtotal - $discountAmount);
+        $tax = round($taxableAmount * 0.03, 2); // 3% GST on fine jewelry after discount
         $shipping = $subtotal >= 999 ? 0.00 : 49.00;
-        $totalAmount = round($subtotal + $tax + $shipping, 2);
+        $totalAmount = round($taxableAmount + $tax + $shipping, 2);
 
         $customerName = trim($validated['first_name'].' '.$validated['last_name']);
         $orderNumber = 'ORD-'.date('Y').'-'.strtoupper(Str::random(6));
@@ -66,6 +90,8 @@ class CheckoutController extends Controller
             'city' => $validated['city'],
             'postal_code' => $validated['postal_code'],
             'subtotal' => $subtotal,
+            'coupon_code' => $appliedCouponCode,
+            'discount_amount' => $discountAmount,
             'tax' => $tax,
             'shipping' => $shipping,
             'total_amount' => $totalAmount,
@@ -75,6 +101,21 @@ class CheckoutController extends Controller
             'payment_status' => $validated['payment_method'] === 'cod' ? 'pending' : 'pending',
             'notes' => 'Storefront online order',
         ]);
+
+        // Record Coupon Usage
+        if ($couponId) {
+            CouponUsage::create([
+                'coupon_id' => $couponId,
+                'order_id' => $order->id,
+                'customer_email' => strtolower(trim($validated['email'])),
+                'discount_amount' => $discountAmount,
+            ]);
+
+            $coupon = Coupon::find($couponId);
+            if ($coupon) {
+                $coupon->increment('usage_count');
+            }
+        }
 
         // Insert Order Items and decrement stock
         foreach ($validated['items'] as $item) {

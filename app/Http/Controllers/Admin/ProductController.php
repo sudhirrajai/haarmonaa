@@ -7,8 +7,10 @@ use App\Models\Attribute;
 use App\Models\Category;
 use App\Models\Collection;
 use App\Models\Product;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -51,6 +53,7 @@ class ProductController extends Controller
             'categories' => Category::all(),
             'collections' => Collection::all(['id', 'name']),
             'availableAttributes' => Attribute::with('values')->get(),
+            'allProducts' => Product::select('id', 'name', 'price', 'image')->get(),
         ]);
     }
 
@@ -62,11 +65,15 @@ class ProductController extends Controller
             'category_ids.*' => 'exists:categories,id',
             'collection_ids' => 'nullable|array',
             'collection_ids.*' => 'exists:collections,id',
+            'upsell_ids' => 'nullable|array',
+            'upsell_ids.*' => 'exists:products,id',
             'price' => 'required|numeric|min:0',
             'original_price' => 'nullable|numeric|min:0',
             'discount_percent' => 'nullable|integer|min:0|max:100',
-            'image' => 'required|string',
+            'image' => 'nullable|string',
             'secondary_image' => 'nullable|string',
+            'images' => 'nullable|array|max:10',
+            'images.*' => 'nullable|string',
             'description' => 'nullable|string',
             'stock_quantity' => 'required|integer|min:0',
             'in_stock' => 'boolean',
@@ -74,6 +81,22 @@ class ProductController extends Controller
             'is_best_seller' => 'boolean',
             'variants' => 'nullable|array',
         ]);
+
+        $imagesList = array_values(array_filter($request->input('images', [])));
+        if (empty($imagesList) && ! empty($validated['image'])) {
+            $imagesList[] = $validated['image'];
+            if (! empty($validated['secondary_image'])) {
+                $imagesList[] = $validated['secondary_image'];
+            }
+        }
+
+        if (! empty($imagesList)) {
+            $validated['images'] = $imagesList;
+            $validated['image'] = $imagesList[0];
+            $validated['secondary_image'] = $imagesList[1] ?? $imagesList[0];
+        } elseif (empty($validated['image'])) {
+            $validated['image'] = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop';
+        }
 
         $categoryIds = $validated['category_ids'];
         $collectionIds = $validated['collection_ids'] ?? [];
@@ -119,12 +142,17 @@ class ProductController extends Controller
             $productData['category_ids'] = [$product->category_id];
         }
         $productData['collection_ids'] = $product->collections->pluck('id')->all();
+        $productData['upsell_ids'] = $product->upsell_ids ?: [];
+        if (empty($productData['images'])) {
+            $productData['images'] = array_values(array_filter([$product->image, $product->secondary_image]));
+        }
 
         return Inertia::render('Admin/Products/Form', [
             'product' => $productData,
             'categories' => Category::all(),
             'collections' => Collection::all(['id', 'name']),
             'availableAttributes' => Attribute::with('values')->get(),
+            'allProducts' => Product::where('id', '!=', $product->id)->select('id', 'name', 'price', 'image')->get(),
         ]);
     }
 
@@ -136,11 +164,15 @@ class ProductController extends Controller
             'category_ids.*' => 'exists:categories,id',
             'collection_ids' => 'nullable|array',
             'collection_ids.*' => 'exists:collections,id',
+            'upsell_ids' => 'nullable|array',
+            'upsell_ids.*' => 'exists:products,id',
             'price' => 'required|numeric|min:0',
             'original_price' => 'nullable|numeric|min:0',
             'discount_percent' => 'nullable|integer|min:0|max:100',
-            'image' => 'required|string',
+            'image' => 'nullable|string',
             'secondary_image' => 'nullable|string',
+            'images' => 'nullable|array',
+            'images.*' => 'nullable|string',
             'description' => 'nullable|string',
             'stock_quantity' => 'required|integer|min:0',
             'in_stock' => 'boolean',
@@ -148,6 +180,22 @@ class ProductController extends Controller
             'is_best_seller' => 'boolean',
             'variants' => 'nullable|array',
         ]);
+
+        $imagesList = array_values(array_filter($request->input('images', [])));
+        if (empty($imagesList) && ! empty($validated['image'])) {
+            $imagesList[] = $validated['image'];
+            if (! empty($validated['secondary_image'])) {
+                $imagesList[] = $validated['secondary_image'];
+            }
+        }
+
+        if (! empty($imagesList)) {
+            $validated['images'] = $imagesList;
+            $validated['image'] = $imagesList[0];
+            $validated['secondary_image'] = $imagesList[1] ?? $imagesList[0];
+        } elseif (empty($validated['image'])) {
+            $validated['image'] = $product->image;
+        }
 
         $categoryIds = $validated['category_ids'];
         $collectionIds = $validated['collection_ids'] ?? [];
@@ -182,10 +230,42 @@ class ProductController extends Controller
         return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
     }
 
+    public function uploadMedia(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => 'required|image|mimes:jpeg,png,jpg,webp,gif,svg|max:10240',
+        ]);
+
+        $path = $request->file('file')->store('products', 'public');
+        $url = Storage::url($path);
+
+        return response()->json([
+            'success' => true,
+            'url' => $url,
+        ]);
+    }
+
     public function destroy(Product $product): RedirectResponse
     {
         $product->delete();
 
         return redirect()->route('admin.products.index')->with('success', 'Product deleted successfully.');
+    }
+
+    public function toggleFeatured(Product $product, Request $request)
+    {
+        $product->update([
+            'is_featured' => ! $product->is_featured,
+        ]);
+
+        if ($request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return response()->json([
+                'success' => true,
+                'is_featured' => (bool) $product->is_featured,
+                'message' => 'Product featured status updated successfully.',
+            ]);
+        }
+
+        return back()->with('success', 'Product featured status updated successfully.');
     }
 }

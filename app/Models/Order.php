@@ -19,6 +19,8 @@ class Order extends Model
         'city',
         'postal_code',
         'subtotal',
+        'coupon_code',
+        'discount_amount',
         'tax',
         'shipping',
         'total_amount',
@@ -31,6 +33,7 @@ class Order extends Model
 
     protected $casts = [
         'subtotal' => 'float',
+        'discount_amount' => 'float',
         'tax' => 'float',
         'shipping' => 'float',
         'total_amount' => 'float',

@@ -22,6 +22,8 @@ class Product extends Model
         'discount_percent',
         'image',
         'secondary_image',
+        'images',
+        'upsell_ids',
         'description',
         'rating',
         'review_count',
@@ -41,6 +43,8 @@ class Product extends Model
         'stock_quantity' => 'integer',
         'is_featured' => 'boolean',
         'is_best_seller' => 'boolean',
+        'images' => 'array',
+        'upsell_ids' => 'array',
     ];
 
     public function category(): BelongsTo

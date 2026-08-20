@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { SingleImageUploader } from '@/components/admin/SingleImageUploader';
 import { Product } from '@/types/shop';
 import {
   Layers,
@@ -447,18 +448,20 @@ export default function CollectionsIndex({
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Banner / Showcase Image URL
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.banner_image}
-                    onChange={(e) => setFormData({ ...formData, banner_image: e.target.value })}
-                    placeholder="https://images.unsplash.com/..."
-                    className="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                  />
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <SingleImageUploader
+                  label="Thumbnail Cover Image"
+                  value={formData.image}
+                  onChange={(url) => setFormData({ ...formData, image: url })}
+                  placeholder="Upload file from system or paste URL..."
+                />
+                <SingleImageUploader
+                  label="Banner / Showcase Image"
+                  value={formData.banner_image}
+                  onChange={(url) => setFormData({ ...formData, banner_image: url })}
+                  placeholder="Upload file from system or paste URL..."
+                />
+              </div>
               </div>
 
               <div>

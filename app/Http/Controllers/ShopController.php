@@ -12,40 +12,45 @@ use Inertia\Response;
 
 class ShopController extends Controller
 {
+    private function formatProduct(Product $p): array
+    {
+        return [
+            'id' => $p->id,
+            'name' => $p->name,
+            'slug' => $p->slug,
+            'price' => (float) $p->price,
+            'originalPrice' => $p->original_price ? (float) $p->original_price : null,
+            'rating' => (float) $p->rating,
+            'reviewCount' => (int) $p->review_count,
+            'image' => $p->image,
+            'secondaryImage' => $p->secondary_image,
+            'images' => $p->images ?: [],
+            'upsellIds' => $p->upsell_ids ?: [],
+            'isHot' => (bool) $p->is_featured,
+            'isNew' => (bool) $p->is_best_seller,
+            'discountPercent' => $p->discount_percent,
+            'category' => $p->category_name,
+            'categories' => $p->categories->pluck('name')->all(),
+            'description' => $p->description,
+            'inStock' => (bool) $p->in_stock,
+            'stockQuantity' => (int) $p->stock_quantity,
+            'variants' => $p->variants->map(fn ($v) => [
+                'id' => $v->id,
+                'name' => $v->name,
+                'sku' => $v->sku,
+                'price' => $v->price ? (float) $v->price : (float) $p->price,
+                'stockQuantity' => (int) $v->stock_quantity,
+                'image' => $v->image ?: $p->image,
+                'attributes' => $v->attributes,
+            ])->all(),
+        ];
+    }
+
     private function getProducts(): array
     {
         $products = Product::with(['category', 'categories', 'variants'])->get();
 
-        return $products->map(function ($p) {
-            return [
-                'id' => $p->id,
-                'name' => $p->name,
-                'slug' => $p->slug,
-                'price' => (float) $p->price,
-                'originalPrice' => $p->original_price ? (float) $p->original_price : null,
-                'rating' => (float) $p->rating,
-                'reviewCount' => (int) $p->review_count,
-                'image' => $p->image,
-                'secondaryImage' => $p->secondary_image,
-                'isHot' => (bool) $p->is_featured,
-                'isNew' => (bool) $p->is_best_seller,
-                'discountPercent' => $p->discount_percent,
-                'category' => $p->category_name,
-                'categories' => $p->categories->pluck('name')->all(),
-                'description' => $p->description,
-                'inStock' => (bool) $p->in_stock,
-                'stockQuantity' => (int) $p->stock_quantity,
-                'variants' => $p->variants->map(fn ($v) => [
-                    'id' => $v->id,
-                    'name' => $v->name,
-                    'sku' => $v->sku,
-                    'price' => $v->price ? (float) $v->price : (float) $p->price,
-                    'stockQuantity' => (int) $v->stock_quantity,
-                    'image' => $v->image ?: $p->image,
-                    'attributes' => $v->attributes,
-                ])->all(),
-            ];
-        })->toArray();
+        return $products->map(fn ($p) => $this->formatProduct($p))->toArray();
     }
 
     private function getCategories(): array
@@ -91,14 +96,13 @@ class ShopController extends Controller
     {
         $products = $this->getProducts();
 
-        // 1. Featured Collection for Slider (Only products marked as featured by admin)
+        // 1. Featured Collection for Slider (Only products marked as featured by admin, newest first)
         $featured = array_values(array_filter($products, fn ($p) => ! empty($p['isHot'])));
         if (empty($featured)) {
             $featured = array_slice($products, 0, 6);
         } else {
-            $featured = array_slice($featured, 0, 8);
+            $featured = array_reverse($featured);
         }
-
 
         // 2. Best Selling Products: Exactly 8 products (or random 8 if none sold yet)
         $bestSellers = array_values(array_filter($products, fn ($p) => ($p['rating'] ?? 0) >= 4.8 || ($p['reviewCount'] ?? 0) > 10));
@@ -122,23 +126,34 @@ class ShopController extends Controller
             'subtitle' => 'SUNLIT REFLECTIONS & WATERPROOF HEIRLOOMS',
             'badge' => 'SUMMER 2026 CAPSULE',
             'description' => 'A radiant curation of waterproof, anti-tarnish 18k solid gold vermeil designed to shine effortlessly through beach sun, ocean mist, and sunset soirees.',
-            'category_slug' => 'necklaces',
+            'category_slug' => 'summer-solstice-capsule',
             'banner_image' => 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=1200&auto=format&fit=crop',
             'button_text' => 'Explore Summer Edit',
-            'button_link' => '/shop?category=necklaces',
+            'button_link' => '/shop?category=summer-solstice-capsule',
         ];
 
         $rawBanners = Setting::get('homepage_promo_banners');
         $banners = $rawBanners ? json_decode($rawBanners, true) : null;
 
-        // Resolve Seasonal Products
-        $seasonalTarget = $seasonal['category_slug'] ?? 'all';
+        // Resolve Seasonal Products (Collection products or category products, newest first)
+        $seasonalTarget = $seasonal['category_slug'] ?? 'summer-solstice-capsule';
         $seasonalProducts = [];
         if (! empty($seasonal['enabled'])) {
-            // First check if matching a Collection
-            $matchedCollection = Collection::where('slug', $seasonalTarget)->with(['products.variants', 'products.categories'])->first();
+            // Search matching collection by slug or name
+            $matchedCollection = Collection::where('slug', $seasonalTarget)
+                ->orWhere('slug', 'summer-solstice-capsule')
+                ->orWhere('slug', 'like', '%'.$seasonalTarget.'%')
+                ->orWhere('name', 'like', '%'.$seasonalTarget.'%')
+                ->with(['products.category', 'products.categories', 'products.variants'])
+                ->first();
+
             if ($matchedCollection && $matchedCollection->products->count() > 0) {
-                $seasonalProducts = $this->transformProducts($matchedCollection->products);
+                // Map products and sort newest created first so newly added products appear upfront
+                $seasonalProducts = $matchedCollection->products
+                    ->sortByDesc('id')
+                    ->map(fn ($p) => $this->formatProduct($p))
+                    ->values()
+                    ->all();
             } elseif ($seasonalTarget !== 'all') {
                 $seasonalProducts = array_values(array_filter($products, function ($p) use ($seasonalTarget) {
                     return strtolower(str_replace([' ', '&'], ['-', ''], $p['category'])) === strtolower($seasonalTarget)
@@ -148,9 +163,7 @@ class ShopController extends Controller
             }
 
             if (empty($seasonalProducts)) {
-                $seasonalProducts = array_slice($products, 0, 4);
-            } else {
-                $seasonalProducts = array_slice($seasonalProducts, 0, 4);
+                $seasonalProducts = array_slice($products, 0, 6);
             }
         }
 
@@ -185,7 +198,15 @@ class ShopController extends Controller
             ?? collect($products)->firstWhere('id', (int) $slug)
             ?? ($products[0] ?? null);
 
-        $relatedProducts = array_values(array_filter($products, fn ($p) => $product && $p['id'] !== $product['id']));
+        $relatedProducts = [];
+        if ($product && ! empty($product['upsellIds'])) {
+            $explicitUpsells = collect($products)->whereIn('id', $product['upsellIds'])->values()->all();
+            $relatedProducts = array_merge($relatedProducts, $explicitUpsells);
+        }
+
+        // Fill remaining up to 4 items from other products
+        $remaining = array_values(array_filter($products, fn ($p) => $product && $p['id'] !== $product['id'] && ! in_array($p['id'], array_column($relatedProducts, 'id'))));
+        $relatedProducts = array_merge($relatedProducts, $remaining);
 
         return Inertia::render('Shop/ProductDetail', [
             'product' => $product,

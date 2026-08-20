@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { SingleImageUploader } from '@/components/admin/SingleImageUploader';
 import { Plus, Edit2, Trash2, FolderTree, X, Save } from 'lucide-react';
 
 interface CategoryItem {
@@ -163,16 +164,12 @@ export default function Index({ categories = [] }: CategoriesProps) {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">Cover Image URL</label>
-                <input
-                  type="text"
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  placeholder="https://..."
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
-                />
-              </div>
+              <SingleImageUploader
+                label="Category Cover Image"
+                value={formData.image}
+                onChange={(url) => setFormData({ ...formData, image: url })}
+                placeholder="Upload file from system or paste URL..."
+              />
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1.5">Description</label>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Plus, Edit2, Trash2, Sliders, X, Palette, Tag, Check, Sparkles } from 'lucide-react';
+import { SingleImageUploader } from '@/components/admin/SingleImageUploader';
 
 interface AttributeValueItem {
   id: number;
@@ -9,6 +10,7 @@ interface AttributeValueItem {
   name: string;
   value?: string;
   color_code?: string;
+  swatch_image?: string;
 }
 
 interface AttributeItem {
@@ -40,6 +42,7 @@ export default function Index({ attributes = [] }: AttributesProps) {
     name: '',
     value: '',
     color_code: '#D4AF37',
+    swatch_image: '',
   });
 
   const openCreateAttrModal = () => {
@@ -79,7 +82,7 @@ export default function Index({ attributes = [] }: AttributesProps) {
 
   const openAddValueModal = (attr: AttributeItem) => {
     setSelectedAttrForValue(attr);
-    setValueForm({ name: '', value: '', color_code: '#D4AF37' });
+    setValueForm({ name: '', value: '', color_code: '#D4AF37', swatch_image: '' });
     setValueModalOpen(true);
   };
 
@@ -347,22 +350,31 @@ export default function Index({ attributes = [] }: AttributesProps) {
               </div>
 
               {selectedAttrForValue.display_type === 'color_swatch' && (
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">Color Hex Code</label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={valueForm.color_code}
-                      onChange={(e) => setValueForm({ ...valueForm, color_code: e.target.value })}
-                      className="w-10 h-10 rounded-xl border border-gray-200 cursor-pointer p-1 bg-gray-50"
-                    />
-                    <input
-                      type="text"
-                      value={valueForm.color_code}
-                      onChange={(e) => setValueForm({ ...valueForm, color_code: e.target.value })}
-                      className="flex-1 bg-gray-50 border border-gray-200 rounded-xl py-2 px-3 text-xs text-gray-900 font-mono focus:outline-hidden focus:border-black"
-                    />
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1.5">Color Hex Code</label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={valueForm.color_code}
+                        onChange={(e) => setValueForm({ ...valueForm, color_code: e.target.value })}
+                        className="w-10 h-10 rounded-xl border border-gray-200 cursor-pointer p-1 bg-gray-50 shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={valueForm.color_code}
+                        onChange={(e) => setValueForm({ ...valueForm, color_code: e.target.value })}
+                        className="flex-1 bg-gray-50 border border-gray-200 rounded-xl py-2 px-3 text-xs text-gray-900 font-mono focus:outline-hidden focus:border-black"
+                      />
+                    </div>
                   </div>
+
+                  <SingleImageUploader
+                    label="Custom Swatch Pattern/Texture Image (Optional)"
+                    value={valueForm.swatch_image}
+                    onChange={(url) => setValueForm({ ...valueForm, swatch_image: url })}
+                    placeholder="Upload swatch texture image or paste URL..."
+                  />
                 </div>
               )}
 

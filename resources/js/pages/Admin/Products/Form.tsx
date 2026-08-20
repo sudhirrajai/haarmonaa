@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { MultiCategorySelect } from '@/components/admin/MultiCategorySelect';
+import { ProductMediaManager } from '@/components/admin/ProductMediaManager';
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import {
   ArrowLeft,
   Save,
@@ -15,6 +17,7 @@ import {
   Boxes,
   Layers,
   Image as ImageIcon,
+  Search,
 } from 'lucide-react';
 
 interface AttributeValueItem {
@@ -61,6 +64,7 @@ interface ProductItem {
   discount_percent?: number;
   image: string;
   secondary_image?: string;
+  images?: string[];
   description?: string;
   stock_quantity: number;
   in_stock: boolean;
@@ -79,6 +83,7 @@ interface FormProps {
   categories: CategoryItem[];
   collections?: CollectionOption[];
   availableAttributes: AttributeItem[];
+  allProducts?: Array<{ id: number; name: string; price: number; image?: string }>;
 }
 
 export default function Form({
@@ -86,6 +91,7 @@ export default function Form({
   categories = [],
   collections = [],
   availableAttributes = [],
+  allProducts = [],
 }: FormProps) {
   const isEditing = !!product?.id;
 
@@ -95,15 +101,21 @@ export default function Form({
     ? [product.category_id]
     : [categories[0]?.id ?? 1];
 
+  const initialImages = product?.images?.length
+    ? product.images
+    : [product?.image, product?.secondary_image].filter(Boolean) as string[];
+
   const [data, setData] = useState({
     name: product?.name || '',
     category_ids: defaultCatIds,
     collection_ids: product?.collection_ids || [],
+    upsell_ids: ((product as any)?.upsell_ids as number[]) || [],
     price: product?.price || '',
     original_price: product?.original_price || '',
     discount_percent: product?.discount_percent || 0,
-    image: product?.image || 'https://haarmonaa.vmcore.in/wp-content/uploads/2026/01/1.png',
-    secondary_image: product?.secondary_image || '',
+    image: product?.image || (initialImages[0] ?? 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop'),
+    secondary_image: product?.secondary_image || (initialImages[1] ?? ''),
+    images: initialImages.length > 0 ? initialImages : ['https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop'],
     description: product?.description || '',
     stock_quantity: product?.stock_quantity ?? 50,
     in_stock: product?.in_stock ?? true,
@@ -112,7 +124,7 @@ export default function Form({
     variants: product?.variants || [],
   });
 
-
+  const [upsellSearch, setUpsellSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'general' | 'attributes'>('general');
 
   // Selected Attributes Configuration for Matrix Generation
@@ -352,16 +364,12 @@ export default function Form({
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">Description</label>
-                  <textarea
-                    rows={4}
-                    value={data.description}
-                    onChange={(e) => setData({ ...data, description: e.target.value })}
-                    placeholder="Product description, materials used, karat purity..."
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
-                  />
-                </div>
+                <RichTextEditor
+                  label="Product Rich Description"
+                  value={data.description}
+                  onChange={(html) => setData({ ...data, description: html })}
+                  placeholder="Write detailed product description, highlights, care instructions..."
+                />
               </div>
 
               {/* Card 2: Pricing & Discount */}
@@ -420,42 +428,19 @@ export default function Form({
             {/* Right Column: Visuals & Flags (4 Cols) */}
             <div className="lg:col-span-4 space-y-6">
               {/* Card 3: Media Images */}
-              <div className="bg-white p-6 rounded-3xl border border-gray-200/80 shadow-2xs space-y-4">
-                <h2 className="text-sm font-bold text-gray-900">Product Media</h2>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                    Primary Image URL <span className="text-[#d0473e]">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={data.image}
-                    onChange={(e) => setData({ ...data, image: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
-                  />
-                </div>
-
-                {/* Image Preview */}
-                {data.image && (
-                  <div className="aspect-square rounded-2xl overflow-hidden bg-gray-100 border border-gray-200">
-                    <img src={data.image} alt="Preview" className="w-full h-full object-cover" />
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                    Secondary Hover Image URL
-                  </label>
-                  <input
-                    type="text"
-                    value={data.secondary_image}
-                    onChange={(e) => setData({ ...data, secondary_image: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
-                  />
-                </div>
+              <div className="bg-white p-6 rounded-3xl border border-gray-200/80 shadow-2xs">
+                <ProductMediaManager
+                  images={data.images}
+                  onChange={(updatedImages) => {
+                    setData((prev) => ({
+                      ...prev,
+                      images: updatedImages,
+                      image: updatedImages[0] || '',
+                      secondary_image: updatedImages[1] || updatedImages[0] || '',
+                    }));
+                  }}
+                  error={errors.image || errors.images}
+                />
               </div>
 
               {/* Card 4: Product Badges & Visibility */}
@@ -538,9 +523,94 @@ export default function Form({
                   </div>
                 </div>
               )}
+
+              {/* Card 6: Frequently Bought Together Upsells */}
+              {allProducts && allProducts.length > 0 && (
+                <div className="bg-white p-6 rounded-3xl border border-gray-200/80 shadow-2xs space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-sm font-bold text-gray-900">
+                        Frequently Bought Together (Recommended Upsells)
+                      </h2>
+                      <p className="text-[11px] text-gray-500">
+                        Select products to recommend as pairings on the storefront product page.
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 bg-black text-white rounded-full shrink-0">
+                      {data.upsell_ids.length} Selected
+                    </span>
+                  </div>
+
+                  {/* Quick Search Input */}
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={upsellSearch}
+                      onChange={(e) => setUpsellSearch(e.target.value)}
+                      placeholder="Quick search products to pair..."
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-8 py-2 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
+                    />
+                    {upsellSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setUpsellSearch('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black text-xs font-bold cursor-pointer"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Search / Selection Grid */}
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1 pt-1">
+                    {allProducts
+                      .filter((p) => p.name.toLowerCase().includes(upsellSearch.toLowerCase()))
+                      .map((pItem) => {
+                        const isSelected = data.upsell_ids.includes(pItem.id);
+                        return (
+                          <div
+                            key={pItem.id}
+                            onClick={() => {
+                              const next = isSelected
+                                ? data.upsell_ids.filter((id) => id !== pItem.id)
+                                : [...data.upsell_ids, pItem.id];
+                              setData({ ...data, upsell_ids: next });
+                            }}
+                            className={`flex items-center gap-3 p-3 rounded-2xl border transition-all cursor-pointer ${
+                              isSelected
+                                ? 'border-black bg-gray-50 ring-1 ring-black shadow-2xs'
+                                : 'border-gray-200 hover:border-gray-300 bg-white'
+                            }`}
+                          >
+                            <img
+                              src={pItem.image || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=400&auto=format&fit=crop'}
+                              alt={pItem.name}
+                              className="w-12 h-12 object-cover rounded-xl border border-gray-200 shrink-0"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <h4 className="text-xs font-bold text-gray-900 truncate">{pItem.name}</h4>
+                              <span className="text-xs font-extrabold text-gray-700">₹{Number(pItem.price).toFixed(2)}</span>
+                            </div>
+                            <div className={`w-5 h-5 rounded-full flex items-center justify-center border text-xs font-bold shrink-0 ${
+                              isSelected ? 'bg-black text-white border-black' : 'border-gray-300 text-transparent'
+                            }`}>
+                              ✓
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                    {allProducts.filter((p) => p.name.toLowerCase().includes(upsellSearch.toLowerCase())).length === 0 && (
+                      <div className="py-6 text-center text-xs text-gray-400">
+                        No products match "{upsellSearch}"
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-
         ) : (
           /* Tab 2: Attributes & Variations Matrix Builder */
           <div className="space-y-6">

@@ -19,6 +19,7 @@ import {
   LogOut,
   Sparkles,
   Layers,
+  Tag,
 } from 'lucide-react';
 
 
@@ -257,6 +258,24 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Das
                 <span>Customers</span>
               </div>
               {url.startsWith('/admin/customers') && <ChevronRight className="w-3.5 h-3.5 text-gray-400" />}
+            </Link>
+
+            {/* Coupons & Discounts Link */}
+            <Link
+              href="/admin/coupons"
+              className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+                url.startsWith('/admin/coupons')
+                  ? 'bg-[#111111] text-white shadow-xs'
+                  : 'text-gray-600 hover:text-black hover:bg-gray-100/70'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Tag
+                  className={`w-4 h-4 ${url.startsWith('/admin/coupons') ? 'text-amber-300' : 'text-gray-500'}`}
+                />
+                <span>Coupons & Promo</span>
+              </div>
+              {url.startsWith('/admin/coupons') && <ChevronRight className="w-3.5 h-3.5 text-gray-400" />}
             </Link>
 
             {/* Homepage CMS Link */}

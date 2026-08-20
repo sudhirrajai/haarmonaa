@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Attribute;
 use App\Models\Category;
 use App\Models\Collection;
+use App\Models\Coupon;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -769,5 +770,49 @@ class DatabaseSeeder extends Seeder
             ]
         );
         $c3->products()->sync($allCreatedProducts->slice(12, 6)->pluck('id'));
+
+        // 8. Sample Coupons & Promo Codes
+        $coupons = [
+            [
+                'code' => 'WELCOME10',
+                'description' => 'Welcome 10% discount on all luxury jewelry items',
+                'type' => 'percent',
+                'value' => 10.00,
+                'min_spend' => 0.00,
+                'max_discount' => 500.00,
+                'usage_limit' => 500,
+                'usage_limit_per_user' => 1,
+                'usage_count' => 12,
+                'is_active' => true,
+            ],
+            [
+                'code' => 'JEWEL500',
+                'description' => 'Flat ₹500 discount on orders above ₹1,999',
+                'type' => 'fixed',
+                'value' => 500.00,
+                'min_spend' => 1999.00,
+                'max_discount' => null,
+                'usage_limit' => 100,
+                'usage_limit_per_user' => 2,
+                'usage_count' => 5,
+                'is_active' => true,
+            ],
+            [
+                'code' => 'FESTIVE15',
+                'description' => 'Festive offer 15% discount on all purchases',
+                'type' => 'percent',
+                'value' => 15.00,
+                'min_spend' => 999.00,
+                'max_discount' => 1000.00,
+                'usage_limit' => 200,
+                'usage_limit_per_user' => 1,
+                'usage_count' => 8,
+                'is_active' => true,
+            ],
+        ];
+
+        foreach ($coupons as $cpData) {
+            Coupon::updateOrCreate(['code' => $cpData['code']], $cpData);
+        }
     }
 }
