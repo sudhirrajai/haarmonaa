@@ -82,12 +82,50 @@ class CheckoutController extends Controller
         }
 
         $taxRatePercent = (float) Setting::get('tax_rate_percent', 0);
-        $freeShippingThreshold = (float) Setting::get('free_shipping_min_order', 999);
+        $freeShippingThreshold = (float) Setting::get('free_shipping_min_order', Setting::get('free_shipping_threshold', 999));
+        $standardShippingFee = (float) Setting::get('shipping_fee', 49.00);
+        $enableFreeShipping = (bool) Setting::get('enable_free_shipping', true);
         $currencySymbol = Setting::get('currency_symbol', '₹');
 
         $taxableAmount = max(0, $subtotal - $discountAmount);
         $tax = $taxRatePercent > 0 ? round($taxableAmount * ($taxRatePercent / 100), 2) : 0.00;
-        $shipping = ($freeShippingThreshold > 0 && $subtotal >= $freeShippingThreshold) || $subtotal === 0 ? 0.00 : 49.00;
+
+        // Dynamic Shipping Rule Calculation (WordPress-style Shipping Classes)
+        if (empty($validated['items']) || $subtotal == 0) {
+            $shipping = 0.00;
+        } else {
+            $allFreeShipping = true;
+            $customFlatFee = null;
+            $hasExcludeFree = false;
+
+            foreach ($validated['items'] as $item) {
+                $prod = Product::find($item['product_id'] ?? null);
+                if ($prod) {
+                    if ($prod->shipping_type !== 'free') {
+                        $allFreeShipping = false;
+                    }
+                    if ($prod->shipping_type === 'flat_rate' && $prod->shipping_fee !== null) {
+                        $customFlatFee = (float) $prod->shipping_fee;
+                    }
+                    if ($prod->shipping_type === 'exclude_free_shipping') {
+                        $hasExcludeFree = true;
+                    }
+                } else {
+                    $allFreeShipping = false;
+                }
+            }
+
+            if ($allFreeShipping) {
+                $shipping = 0.00;
+            } elseif ($customFlatFee !== null) {
+                $shipping = $customFlatFee;
+            } elseif (! $hasExcludeFree && $enableFreeShipping && ($freeShippingThreshold == 0 || $subtotal >= $freeShippingThreshold)) {
+                $shipping = 0.00;
+            } else {
+                $shipping = $standardShippingFee;
+            }
+        }
+
         $totalAmount = round($taxableAmount + $tax + $shipping, 2);
 
         $customerName = trim($validated['first_name'].' '.$validated['last_name']);

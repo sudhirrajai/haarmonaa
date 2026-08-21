@@ -79,6 +79,8 @@ class ProductController extends Controller
             'in_stock' => 'boolean',
             'is_featured' => 'boolean',
             'is_best_seller' => 'boolean',
+            'shipping_type' => 'nullable|string|in:default,free,flat_rate,exclude_free_shipping',
+            'shipping_fee' => 'nullable|numeric|min:0',
             'variants' => 'nullable|array',
         ]);
 
@@ -178,6 +180,8 @@ class ProductController extends Controller
             'in_stock' => 'boolean',
             'is_featured' => 'boolean',
             'is_best_seller' => 'boolean',
+            'shipping_type' => 'nullable|string|in:default,free,flat_rate,exclude_free_shipping',
+            'shipping_fee' => 'nullable|numeric|min:0',
             'variants' => 'nullable|array',
         ]);
 

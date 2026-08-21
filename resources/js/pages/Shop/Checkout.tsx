@@ -605,7 +605,7 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                         disabled={applyingCoupon || !couponInput.trim()}
                         className="px-4 py-2 bg-[#111111] hover:bg-[#d0473e] text-white font-bold text-xs rounded-[8px] transition-all disabled:opacity-50 cursor-pointer shrink-0"
                       >
-                        {applyingCoupon ? 'Checking...' : appliedCoupons.length > 0 ? 'Add / Stack' : 'Apply'}
+                        {applyingCoupon ? 'Checking...' : 'Apply Coupon'}
                       </button>
                     </div>
 

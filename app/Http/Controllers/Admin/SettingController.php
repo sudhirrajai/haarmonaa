@@ -33,11 +33,18 @@ class SettingController extends Controller
             'store_address' => 'nullable|string',
             'currency_symbol' => 'required|string|max:10',
             'tax_rate_percent' => 'required|numeric|min:0|max:100',
+            'shipping_fee' => 'required|numeric|min:0',
             'free_shipping_min_order' => 'required|numeric|min:0',
+            'enable_free_shipping' => 'nullable|boolean',
         ]);
 
         foreach ($validated as $key => $val) {
             Setting::set($key, $val ?? '');
+        }
+
+        // Keep legacy alias in sync
+        if (isset($validated['free_shipping_min_order'])) {
+            Setting::set('free_shipping_threshold', $validated['free_shipping_min_order']);
         }
 
         return back()->with('success', 'Store settings and branding updated successfully.');

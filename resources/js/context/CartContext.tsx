@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { Product, ProductVariant } from '@/types/shop';
 
 export interface CartItem {
@@ -61,7 +61,28 @@ const CART_STORAGE_KEY = 'haarmonaa_cart_v1';
 const WISHLIST_STORAGE_KEY = 'haarmonaa_wishlist_v1';
 const COUPONS_STORAGE_KEY = 'haarmonaa_applied_coupons_v1';
 
-export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const CartProvider: React.FC<{ children: React.ReactNode; initialSettings?: any }> = ({
+  children,
+  initialSettings,
+}) => {
+  const [storeSettings, setStoreSettings] = useState<any>(initialSettings || null);
+
+  useEffect(() => {
+    if (initialSettings) {
+      setStoreSettings(initialSettings);
+    }
+  }, [initialSettings]);
+
+  useEffect(() => {
+    const unbind = router.on('success', (event: any) => {
+      const pageSettings = event.detail.page?.props?.settings;
+      if (pageSettings) {
+        setStoreSettings(pageSettings);
+      }
+    });
+    return () => unbind();
+  }, []);
+
   const [cart, setCart] = useState<CartItem[]>(() => {
     try {
       const saved = localStorage.getItem(CART_STORAGE_KEY);
@@ -333,29 +354,56 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setWishlist((prev) => prev.filter((p) => p.id !== productId));
   };
 
-  // Calculations from dynamic store settings
-  let taxRatePercent = 0;
-  let freeShippingThreshold = 999;
-  try {
-    const pageProps = usePage()?.props as any;
-    const settings = pageProps?.settings;
-    if (settings) {
-      if (settings.tax_rate_percent !== undefined) {
-        taxRatePercent = Number(settings.tax_rate_percent) || 0;
-      }
-      if (settings.free_shipping_min_order !== undefined) {
-        freeShippingThreshold = Number(settings.free_shipping_min_order) || 999;
-      }
-    }
-  } catch {
-    // SSR or outside Inertia tree fallback
-  }
+  // Calculations from dynamic store settings & product rules
+  const taxRatePercent = typeof storeSettings?.tax_rate_percent === 'number'
+    ? storeSettings.tax_rate_percent
+    : Number(storeSettings?.tax_rate_percent || 0);
+
+  const freeShippingThreshold = typeof storeSettings?.free_shipping_min_order === 'number'
+    ? storeSettings.free_shipping_min_order
+    : (storeSettings?.free_shipping_min_order !== undefined
+        ? Number(storeSettings.free_shipping_min_order)
+        : (storeSettings?.free_shipping_threshold !== undefined
+            ? Number(storeSettings.free_shipping_threshold)
+            : 999));
+
+  const standardShippingFee = typeof storeSettings?.shipping_fee === 'number'
+    ? storeSettings.shipping_fee
+    : (storeSettings?.shipping_fee !== undefined ? Number(storeSettings.shipping_fee) : 49);
+
+  const enableFreeShipping = storeSettings?.enable_free_shipping !== undefined
+    ? Boolean(storeSettings.enable_free_shipping)
+    : true;
 
   const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
   const couponDiscount = appliedCoupons.reduce((sum, c) => sum + (Number(c.discount) || 0), 0);
   const taxableSubtotal = Math.max(0, subtotal - couponDiscount);
   const tax = taxRatePercent > 0 ? Number((taxableSubtotal * (taxRatePercent / 100)).toFixed(2)) : 0;
-  const shipping = (freeShippingThreshold > 0 && subtotal >= freeShippingThreshold) || subtotal === 0 ? 0 : 49;
+
+  // Dynamic Shipping Calculation (WordPress / WooCommerce style)
+  let calculatedShipping = standardShippingFee;
+
+  if (cart.length === 0 || subtotal === 0) {
+    calculatedShipping = 0;
+  } else {
+    const allFreeShipping = cart.every((item) => item.product?.shipping_type === 'free');
+    const flatRateItem = cart.find(
+      (item) => item.product?.shipping_type === 'flat_rate' && typeof item.product?.shipping_fee === 'number'
+    );
+    const hasExcludeFreeItem = cart.some((item) => item.product?.shipping_type === 'exclude_free_shipping');
+
+    if (allFreeShipping) {
+      calculatedShipping = 0;
+    } else if (flatRateItem && flatRateItem.product.shipping_fee !== undefined) {
+      calculatedShipping = Number(flatRateItem.product.shipping_fee) || 0;
+    } else if (!hasExcludeFreeItem && enableFreeShipping && (freeShippingThreshold === 0 || subtotal >= freeShippingThreshold)) {
+      calculatedShipping = 0;
+    } else {
+      calculatedShipping = standardShippingFee;
+    }
+  }
+
+  const shipping = calculatedShipping;
   const total = Number((taxableSubtotal + tax + shipping).toFixed(2));
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const wishlistCount = wishlist.length;

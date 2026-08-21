@@ -277,9 +277,9 @@ export default function Cart({ products = [] }: CartProps) {
                     <button
                       type="submit"
                       disabled={applying || !couponCode.trim()}
-                      className="px-6 py-2.5 bg-black hover:bg-[#d0473e] text-white text-xs font-bold uppercase rounded-[8px] transition-all cursor-pointer disabled:opacity-50"
+                      className="px-6 py-2.5 bg-black hover:bg-[#d0473e] text-white text-xs font-bold uppercase rounded-[8px] transition-all cursor-pointer disabled:opacity-50 shrink-0"
                     >
-                      {applying ? 'Checking...' : appliedCoupons.length > 0 ? 'Add / Stack' : 'Apply'}
+                      {applying ? 'Checking...' : 'Apply Coupon'}
                     </button>
                   </form>
 

@@ -31,6 +31,8 @@ class Product extends Model
         'stock_quantity',
         'is_featured',
         'is_best_seller',
+        'shipping_type',
+        'shipping_fee',
     ];
 
     protected $casts = [
@@ -43,6 +45,7 @@ class Product extends Model
         'stock_quantity' => 'integer',
         'is_featured' => 'boolean',
         'is_best_seller' => 'boolean',
+        'shipping_fee' => 'float',
         'images' => 'array',
         'upsell_ids' => 'array',
     ];

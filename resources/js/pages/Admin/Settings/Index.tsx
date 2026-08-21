@@ -19,6 +19,7 @@ export default function Index({ settings }: SettingsProps) {
     store_phone: settings.store_phone ?? '',
     currency_symbol: settings.currency_symbol ?? '₹',
     tax_rate_percent: settings.tax_rate_percent !== undefined ? String(settings.tax_rate_percent) : '0',
+    shipping_fee: settings.shipping_fee !== undefined ? String(settings.shipping_fee) : '49',
     free_shipping_min_order: settings.free_shipping_min_order !== undefined ? String(settings.free_shipping_min_order) : '999',
     store_address: settings.store_address ?? '',
   });
@@ -192,7 +193,7 @@ export default function Index({ settings }: SettingsProps) {
             <h2 className="text-sm font-bold text-gray-900">Currency, Taxes & Shipping Rules</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1.5">Currency Symbol</label>
               <input
@@ -219,7 +220,25 @@ export default function Index({ settings }: SettingsProps) {
                 className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
               />
               <span className="text-[10.5px] text-gray-500 mt-1 block">
-                Set to <strong>0</strong> to disable tax calculation and hide the GST row completely at checkout.
+                Set to <strong>0</strong> to hide GST completely.
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                Standard Shipping Fee (₹)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                value={formData.shipping_fee}
+                onChange={(e) => setFormData({ ...formData, shipping_fee: e.target.value })}
+                className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
+              />
+              <span className="text-[10.5px] text-gray-500 mt-1 block">
+                Charged when order is below Free Shipping threshold.
               </span>
             </div>
 
@@ -235,6 +254,9 @@ export default function Index({ settings }: SettingsProps) {
                 onChange={(e) => setFormData({ ...formData, free_shipping_min_order: e.target.value })}
                 className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
               />
+              <span className="text-[10.5px] text-gray-500 mt-1 block">
+                Orders &ge; this subtotal receive Free Shipping. Set to <strong>0</strong> for free shipping on all orders.
+              </span>
             </div>
           </div>
         </div>

@@ -53,7 +53,9 @@ class HandleInertiaRequests extends Middleware
                 'store_address' => Setting::get('store_address', ''),
                 'currency_symbol' => Setting::get('currency_symbol', '₹'),
                 'tax_rate_percent' => (float) Setting::get('tax_rate_percent', 0),
+                'shipping_fee' => (float) Setting::get('shipping_fee', 49),
                 'free_shipping_min_order' => (float) Setting::get('free_shipping_min_order', 999),
+                'enable_free_shipping' => (bool) Setting::get('enable_free_shipping', true),
             ],
         ];
     }

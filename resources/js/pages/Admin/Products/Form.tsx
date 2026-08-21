@@ -18,6 +18,7 @@ import {
   Layers,
   Image as ImageIcon,
   Search,
+  Truck,
 } from 'lucide-react';
 
 interface AttributeValueItem {
@@ -121,6 +122,8 @@ export default function Form({
     in_stock: product?.in_stock ?? true,
     is_featured: product?.is_featured ?? false,
     is_best_seller: product?.is_best_seller ?? false,
+    shipping_type: product?.shipping_type || 'default',
+    shipping_fee: product?.shipping_fee ?? '',
     variants: product?.variants || [],
   });
 
@@ -421,6 +424,140 @@ export default function Form({
                       className="w-full bg-gray-100 border border-gray-200 rounded-xl py-2.5 px-3.5 text-xs text-gray-500 font-bold"
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Card 2.5: Shipping Class & Delivery Rules (WordPress/WooCommerce Style) */}
+              <div className="bg-white p-6 rounded-3xl border border-gray-200/80 shadow-2xs space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                  <div className="p-1.5 bg-amber-50 text-amber-700 rounded-lg">
+                    <Truck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-gray-900">Shipping & Fulfillment Class</h2>
+                    <p className="text-[11px] text-gray-400">
+                      Configure custom courier rules, always-free delivery, or exclude this jewelry piece from free shipping threshold.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-2">
+                      Shipping Rule Class
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <label
+                        className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
+                          data.shipping_type === 'default'
+                            ? 'bg-amber-50/70 border-amber-300 shadow-2xs'
+                            : 'border-gray-200 hover:bg-gray-50'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="shipping_type"
+                          value="default"
+                          checked={data.shipping_type === 'default'}
+                          onChange={() => setData({ ...data, shipping_type: 'default' })}
+                          className="mt-0.5 text-black focus:ring-black"
+                        />
+                        <div>
+                          <span className="text-xs font-bold text-gray-900 block">Standard Store Rule</span>
+                          <span className="text-[10.5px] text-gray-500 block mt-0.5 leading-snug">
+                            Inherits store courier fee and qualifies for Free Shipping order threshold.
+                          </span>
+                        </div>
+                      </label>
+
+                      <label
+                        className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
+                          data.shipping_type === 'free'
+                            ? 'bg-emerald-50/70 border-emerald-300 shadow-2xs'
+                            : 'border-gray-200 hover:bg-gray-50'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="shipping_type"
+                          value="free"
+                          checked={data.shipping_type === 'free'}
+                          onChange={() => setData({ ...data, shipping_type: 'free' })}
+                          className="mt-0.5 text-emerald-600 focus:ring-emerald-600"
+                        />
+                        <div>
+                          <span className="text-xs font-bold text-gray-900 block">Always Free Shipping</span>
+                          <span className="text-[10.5px] text-gray-500 block mt-0.5 leading-snug">
+                            Complimentary shipping on this piece regardless of cart total.
+                          </span>
+                        </div>
+                      </label>
+
+                      <label
+                        className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
+                          data.shipping_type === 'flat_rate'
+                            ? 'bg-blue-50/70 border-blue-300 shadow-2xs'
+                            : 'border-gray-200 hover:bg-gray-50'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="shipping_type"
+                          value="flat_rate"
+                          checked={data.shipping_type === 'flat_rate'}
+                          onChange={() => setData({ ...data, shipping_type: 'flat_rate' })}
+                          className="mt-0.5 text-blue-600 focus:ring-blue-600"
+                        />
+                        <div>
+                          <span className="text-xs font-bold text-gray-900 block">Custom Flat Rate Fee</span>
+                          <span className="text-[10.5px] text-gray-500 block mt-0.5 leading-snug">
+                            Override with a fixed courier charge for insured shipping.
+                          </span>
+                        </div>
+                      </label>
+
+                      <label
+                        className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
+                          data.shipping_type === 'exclude_free_shipping'
+                            ? 'bg-rose-50/70 border-rose-300 shadow-2xs'
+                            : 'border-gray-200 hover:bg-gray-50'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="shipping_type"
+                          value="exclude_free_shipping"
+                          checked={data.shipping_type === 'exclude_free_shipping'}
+                          onChange={() => setData({ ...data, shipping_type: 'exclude_free_shipping' })}
+                          className="mt-0.5 text-rose-600 focus:ring-rose-600"
+                        />
+                        <div>
+                          <span className="text-xs font-bold text-gray-900 block">Exclude from Free Shipping</span>
+                          <span className="text-[10.5px] text-gray-500 block mt-0.5 leading-snug">
+                            Always charges shipping even if cart exceeds the threshold.
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {data.shipping_type === 'flat_rate' && (
+                    <div className="pt-2 animate-fade-in">
+                      <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                        Custom Product Shipping Charge (₹)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        required
+                        value={data.shipping_fee}
+                        onChange={(e) => setData({ ...data, shipping_fee: e.target.value })}
+                        placeholder="e.g. 99.00"
+                        className="w-full sm:w-48 bg-gray-50 border border-gray-200 rounded-xl py-2 px-3 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black focus:bg-white"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

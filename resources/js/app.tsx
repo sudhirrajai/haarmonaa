@@ -8,8 +8,9 @@ createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     setup({ el, App, props }) {
         if (el) {
+            const initialSettings = (props.initialPage.props as any)?.settings;
             createRoot(el).render(
-                <CartProvider>
+                <CartProvider initialSettings={initialSettings}>
                     <App {...props} />
                 </CartProvider>
             );
