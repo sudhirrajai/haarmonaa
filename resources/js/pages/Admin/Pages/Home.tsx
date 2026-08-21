@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Category, Product } from '@/types/shop';
 import { SingleImageUploader } from '@/components/admin/SingleImageUploader';
+import { VisualIconPicker } from '@/components/admin/VisualIconPicker';
 import {
   Sparkles,
   Sliders,
@@ -33,6 +34,7 @@ import {
   Gift,
   ArrowLeft,
   Zap,
+  Upload,
 } from 'lucide-react';
 
 interface SplitSlideCMS {
@@ -86,6 +88,7 @@ interface InstagramPostItem {
 interface StoreFeatureItem {
   id: string | number;
   icon: string;
+  custom_icon?: string;
   title: string;
   description: string;
 }
@@ -464,40 +467,42 @@ export default function Home({
                 {instagram.posts.map((post, idx) => (
                   <div
                     key={post.id || idx}
-                    className="p-4 bg-gray-50/80 border border-gray-200/80 rounded-[10px] space-y-3 relative group"
+                    className="p-4 bg-gray-50/80 border border-gray-200/80 rounded-[10px] space-y-3 relative group flex flex-col justify-between"
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="w-16 h-16 rounded-[8px] overflow-hidden bg-gray-200 shrink-0 border border-gray-300">
-                        <img
-                          src={post.image}
-                          alt={post.alt || 'Gram'}
-                          onError={(e) => {
-                            e.currentTarget.src =
-                              'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop';
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="text-[11px] font-extrabold uppercase px-2 py-0.5 bg-rose-100 text-rose-800 rounded-full">
+                          Post #{idx + 1}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setInstagram((prev) => ({
+                              ...prev,
+                              posts: prev.posts.filter((_, i) => i !== idx),
+                            }));
                           }}
-                          className="w-full h-full object-cover"
-                        />
+                          className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-[6px] transition-colors cursor-pointer"
+                          title="Remove Post"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
 
-                      <div className="flex-1 space-y-2 text-xs">
-                        <div>
-                          <label className="block text-[10.5px] font-bold text-gray-500 mb-0.5">
-                            Image URL / Upload Link
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            value={post.image}
-                            onChange={(e) => {
-                              const updated = [...instagram.posts];
-                              updated[idx] = { ...updated[idx], image: e.target.value };
-                              setInstagram({ ...instagram, posts: updated });
-                            }}
-                            placeholder="https://..."
-                            className="w-full bg-white border border-gray-200 rounded-[6px] py-1.5 px-2 text-[11px] text-gray-900 focus:outline-hidden focus:border-black"
-                          />
-                        </div>
+                      {/* Image Upload Component */}
+                      <SingleImageUploader
+                        label="Post Image / Screenshot"
+                        placeholder="Upload image or paste URL..."
+                        value={post.image}
+                        onChange={(url) => {
+                          const updated = [...instagram.posts];
+                          updated[idx] = { ...updated[idx], image: url };
+                          setInstagram({ ...instagram, posts: updated });
+                        }}
+                      />
 
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                           <label className="block text-[10.5px] font-bold text-gray-500 mb-0.5">
                             Post Handle
@@ -510,25 +515,28 @@ export default function Home({
                               updated[idx] = { ...updated[idx], handle: e.target.value };
                               setInstagram({ ...instagram, posts: updated });
                             }}
-                            placeholder="@haarmonaa_muse"
+                            placeholder="@haarmonaa_"
+                            className="w-full bg-white border border-gray-200 rounded-[6px] py-1 px-2 text-[11px] text-gray-900 focus:outline-hidden focus:border-black"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10.5px] font-bold text-gray-500 mb-0.5">
+                            Post URL Link
+                          </label>
+                          <input
+                            type="url"
+                            value={post.url || ''}
+                            onChange={(e) => {
+                              const updated = [...instagram.posts];
+                              updated[idx] = { ...updated[idx], url: e.target.value };
+                              setInstagram({ ...instagram, posts: updated });
+                            }}
+                            placeholder="https://instagram.com/p/..."
                             className="w-full bg-white border border-gray-200 rounded-[6px] py-1 px-2 text-[11px] text-gray-900 focus:outline-hidden focus:border-black"
                           />
                         </div>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setInstagram((prev) => ({
-                            ...prev,
-                            posts: prev.posts.filter((_, i) => i !== idx),
-                          }));
-                        }}
-                        className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-[6px] transition-colors cursor-pointer"
-                        title="Remove Post"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
                     </div>
                   </div>
                 ))}
@@ -620,31 +628,27 @@ export default function Home({
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-start">
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        Card Icon
-                      </label>
-                      <select
-                        value={feat.icon}
-                        onChange={(e) => {
+                      <VisualIconPicker
+                        selectedIcon={feat.icon}
+                        customIconUrl={feat.custom_icon || ''}
+                        onSelectIcon={(newIcon) => {
                           const updated = [...features];
-                          updated[idx] = { ...updated[idx], icon: e.target.value };
+                          updated[idx] = { ...updated[idx], icon: newIcon, custom_icon: '' };
                           setFeatures(updated);
                         }}
-                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 font-medium focus:outline-hidden focus:border-black"
-                      >
-                        {AVAILABLE_ICONS.map((ic) => (
-                          <option key={ic.value} value={ic.value}>
-                            {ic.label}
-                          </option>
-                        ))}
-                      </select>
+                        onCustomIconChange={(newCustomIcon) => {
+                          const updated = [...features];
+                          updated[idx] = { ...updated[idx], custom_icon: newCustomIcon };
+                          setFeatures(updated);
+                        }}
+                      />
                     </div>
 
-                    <div className="sm:col-span-2">
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        Card Title
+                    <div className="sm:col-span-2 space-y-1">
+                      <label className="block text-[11px] font-bold text-gray-700">
+                        Card Title <span className="text-[#d0473e]">*</span>
                       </label>
                       <input
                         type="text"
@@ -656,7 +660,7 @@ export default function Home({
                           setFeatures(updated);
                         }}
                         placeholder="e.g. Free Worldwide Shipping"
-                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black"
+                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black"
                       />
                     </div>
                   </div>

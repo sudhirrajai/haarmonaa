@@ -379,6 +379,7 @@ class PageController extends Controller
             'features' => 'required|array|min:3',
             'features.*.id' => 'required',
             'features.*.icon' => 'required|string',
+            'features.*.custom_icon' => 'nullable|string',
             'features.*.title' => 'required|string|max:255',
             'features.*.description' => 'required|string|max:500',
         ]);

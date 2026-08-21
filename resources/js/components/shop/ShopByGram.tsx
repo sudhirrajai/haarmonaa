@@ -28,6 +28,7 @@ interface InstagramPostItem {
 interface StoreFeatureItem {
   id: string | number;
   icon: string;
+  custom_icon?: string;
   title: string;
   description: string;
 }
@@ -133,6 +134,20 @@ const renderFeatureIcon = (iconName: string) => {
       return <Headphones {...iconProps} />;
     case 'gift':
       return <Gift {...iconProps} />;
+    case 'lock':
+      return <Lock {...iconProps} />;
+    case 'star':
+      return <Star {...iconProps} />;
+    case 'percent':
+      return <Percent {...iconProps} />;
+    case 'tag':
+      return <Tag {...iconProps} />;
+    case 'sunmedium':
+    case 'sun':
+      return <SunMedium {...iconProps} />;
+    case 'checkcircle2':
+    case 'check':
+      return <CheckCircle2 {...iconProps} />;
     case 'package':
     default:
       return <Package {...iconProps} />;
@@ -244,7 +259,15 @@ export const ShopByGram: React.FC = () => {
           {rawFeatures.map((feat, idx) => (
             <div key={feat.id || idx} className="space-y-2.5 px-2">
               <div className="w-10 h-10 mx-auto flex items-center justify-center text-gray-900">
-                {renderFeatureIcon(feat.icon)}
+                {feat.custom_icon ? (
+                  <img
+                    src={feat.custom_icon}
+                    alt={feat.title}
+                    className="w-8 h-8 object-contain mx-auto"
+                  />
+                ) : (
+                  renderFeatureIcon(feat.icon)
+                )}
               </div>
               <h3 className="font-bold text-gray-900 text-sm tracking-tight">
                 {feat.title}
