@@ -4,6 +4,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Category, Product } from '@/types/shop';
 import { SingleImageUploader } from '@/components/admin/SingleImageUploader';
 import { VisualIconPicker } from '@/components/admin/VisualIconPicker';
+import { AdminToggle } from '@/components/admin/AdminToggle';
 import {
   Sparkles,
   Sliders,
@@ -125,6 +126,35 @@ export default function Home({
   const [saving, setSaving] = useState(false);
   const [fetchingInsta, setFetchingInsta] = useState(false);
   const [instaMessage, setInstaMessage] = useState<string | null>(null);
+  const [instantFeedback, setInstantFeedback] = useState<string | null>(null);
+
+  const handleAsyncSectionToggle = async (section: string, enabled: boolean, itemId?: any) => {
+    try {
+      const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
+      const response = await fetch('/admin/pages/home/toggle-section', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-CSRF-TOKEN': csrfToken,
+        },
+        body: JSON.stringify({
+          section,
+          enabled,
+          item_id: itemId,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setInstantFeedback(data.message || 'Visibility updated immediately');
+        setTimeout(() => setInstantFeedback(null), 3000);
+      }
+    } catch {
+      setInstantFeedback('Network error while toggling section');
+      setTimeout(() => setInstantFeedback(null), 3000);
+    }
+  };
 
   // States
   const [slides, setSlides] = useState<SplitSlideCMS[]>(Array.isArray(initialSlides) ? initialSlides : []);
@@ -384,6 +414,14 @@ export default function Home({
         </button>
       </div>
 
+      {/* Floating Instant Live Feedback Toast */}
+      {instantFeedback && (
+        <div className="fixed bottom-6 right-6 z-50 p-4 bg-black text-white text-xs font-bold rounded-[10px] shadow-2xl flex items-center gap-3 animate-bounce border border-gray-800">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>{instantFeedback}</span>
+        </div>
+      )}
+
       {/* TAB 1: 50/50 HERO SPLIT SLIDER */}
       {activeTab === 'slider' && (
         <form onSubmit={handleSaveSlider} className="space-y-6">
@@ -421,18 +459,17 @@ export default function Home({
                       <span className="text-sm font-bold text-gray-900">{slide.title || `Slide #${idx + 1}`}</span>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={slide.enabled}
-                          onChange={(e) => handleUpdateSlide(idx, 'enabled', e.target.checked)}
-                          className="w-4 h-4 text-black focus:ring-black rounded-sm cursor-pointer"
-                        />
-                        <span className={slide.enabled ? 'text-emerald-700 font-bold' : 'text-gray-400'}>
-                          {slide.enabled ? 'Active on Storefront' : 'Disabled'}
-                        </span>
-                      </label>
+                    <div className="flex items-center gap-4">
+                      <AdminToggle
+                        label={slide.enabled ? 'Active on Storefront' : 'Disabled'}
+                        checked={slide.enabled}
+                        onChange={(val) => {
+                          handleUpdateSlide(idx, 'enabled', val);
+                          handleAsyncSectionToggle('slide_item', val, slide.id);
+                        }}
+                        activeColor="bg-emerald-600"
+                        size="sm"
+                      />
 
                       {slides.length > 1 && (
                         <button
@@ -502,18 +539,12 @@ export default function Home({
 
                   {/* Button & Link Settings */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1 items-center bg-gray-50/60 p-4 rounded-[10px] border border-gray-100">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id={`btn_show_${idx}`}
-                        checked={slide.showButton !== false}
-                        onChange={(e) => handleUpdateSlide(idx, 'showButton', e.target.checked)}
-                        className="w-4 h-4 text-black focus:ring-black rounded-sm cursor-pointer"
-                      />
-                      <label htmlFor={`btn_show_${idx}`} className="text-xs font-bold text-gray-800 cursor-pointer">
-                        Display CTA Button
-                      </label>
-                    </div>
+                    <AdminToggle
+                      label="Display CTA Button"
+                      checked={slide.showButton !== false}
+                      onChange={(val) => handleUpdateSlide(idx, 'showButton', val)}
+                      size="sm"
+                    />
 
                     {slide.showButton !== false && (
                       <>
@@ -576,21 +607,18 @@ export default function Home({
                       Promo Card #{idx + 1}
                     </h3>
 
-                    <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={card.enabled !== false}
-                        onChange={(e) => {
-                          const updated = [...banners];
-                          updated[idx].enabled = e.target.checked;
-                          setBanners(updated);
-                        }}
-                        className="w-4 h-4 text-black focus:ring-black rounded-sm cursor-pointer"
-                      />
-                      <span className={card.enabled !== false ? 'text-emerald-700 font-bold' : 'text-gray-400'}>
-                        {card.enabled !== false ? 'Enabled' : 'Hidden'}
-                      </span>
-                    </label>
+                    <AdminToggle
+                      label={card.enabled !== false ? 'Enabled' : 'Hidden'}
+                      checked={card.enabled !== false}
+                      onChange={(val) => {
+                        const updated = [...banners];
+                        updated[idx].enabled = val;
+                        setBanners(updated);
+                        handleAsyncSectionToggle('banner_item', val, card.id);
+                      }}
+                      activeColor="bg-emerald-600"
+                      size="sm"
+                    />
                   </div>
 
                   <div>
@@ -713,17 +741,16 @@ export default function Home({
                 </p>
               </div>
 
-              <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-gray-900">
-                <input
-                  type="checkbox"
-                  checked={seasonal.enabled}
-                  onChange={(e) => setSeasonal({ ...seasonal, enabled: e.target.checked })}
-                  className="w-4 h-4 text-black focus:ring-black rounded-sm cursor-pointer"
-                />
-                <span className={seasonal.enabled ? 'text-emerald-700 font-bold' : 'text-gray-400'}>
-                  {seasonal.enabled ? 'Section Active' : 'Section Hidden'}
-                </span>
-              </label>
+              <AdminToggle
+                label={seasonal.enabled ? 'Section Active on Landing Page' : 'Section Hidden from Landing Page'}
+                checked={seasonal.enabled}
+                onChange={(val) => {
+                  setSeasonal({ ...seasonal, enabled: val });
+                  handleAsyncSectionToggle('seasonal_collection', val);
+                }}
+                activeColor="bg-emerald-600"
+                size="md"
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

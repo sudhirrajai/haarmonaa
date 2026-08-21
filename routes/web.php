@@ -91,6 +91,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     // Pages Management & Sections Builder
     Route::get('/pages', [AdminPageController::class, 'index'])->name('pages.index');
     Route::get('/pages/home', [AdminPageController::class, 'home'])->name('pages.home');
+    Route::post('/pages/home/toggle-section', [AdminPageController::class, 'toggleSection'])->name('pages.home.toggle-section');
     Route::post('/pages/home/instagram-fetch', [AdminPageController::class, 'fetchInstagram'])->name('pages.home.instagram-fetch');
     Route::post('/pages/home/instagram', [AdminPageController::class, 'updateInstagram'])->name('pages.home.instagram');
     Route::post('/pages/home/trust-badges', [AdminPageController::class, 'updateTrustBadges'])->name('pages.home.trust-badges');

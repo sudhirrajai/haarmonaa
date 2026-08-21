@@ -278,11 +278,66 @@ class PageController extends Controller
                 'handle' => Setting::get('instagram_handle', '@haarmonaa'),
                 'access_token' => Setting::get('instagram_access_token', ''),
                 'posts' => $instagramPosts,
+                'enabled' => Setting::get('homepage_shop_by_gram_enabled', '1') !== '0',
             ],
             'storeFeatures' => $storeFeatures,
+            'trustBadgesEnabled' => Setting::get('homepage_trust_badges_enabled', '1') !== '0',
             'categories' => $categories,
             'collections' => $collections,
             'products' => $products,
+        ]);
+    }
+
+    /**
+     * Instantly toggle individual homepage section or sub-item without saving whole page.
+     */
+    public function toggleSection(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'section' => 'required|string|in:hero_slider,promo_banners,seasonal_collection,shop_by_gram,trust_badges,slide_item,banner_item',
+            'enabled' => 'required|boolean',
+            'item_id' => 'nullable',
+        ]);
+
+        $section = $validated['section'];
+        $enabled = $validated['enabled'];
+
+        if ($section === 'hero_slider') {
+            Setting::set('homepage_hero_slider_enabled', $enabled ? '1' : '0');
+        } elseif ($section === 'promo_banners') {
+            Setting::set('homepage_promo_banners_enabled', $enabled ? '1' : '0');
+        } elseif ($section === 'seasonal_collection') {
+            $seasonal = json_decode(Setting::get('homepage_seasonal_collection', '{}'), true) ?: [];
+            $seasonal['enabled'] = $enabled;
+            Setting::set('homepage_seasonal_collection', json_encode($seasonal));
+            Setting::set('homepage_seasonal_collection_enabled', $enabled ? '1' : '0');
+        } elseif ($section === 'shop_by_gram') {
+            Setting::set('homepage_shop_by_gram_enabled', $enabled ? '1' : '0');
+        } elseif ($section === 'trust_badges') {
+            Setting::set('homepage_trust_badges_enabled', $enabled ? '1' : '0');
+        } elseif ($section === 'slide_item' && $request->filled('item_id')) {
+            $slides = json_decode(Setting::get('homepage_slides', '[]'), true) ?: [];
+            foreach ($slides as &$slide) {
+                if ((string) $slide['id'] === (string) $request->input('item_id')) {
+                    $slide['enabled'] = $enabled;
+                }
+            }
+            Setting::set('homepage_slides', json_encode($slides));
+        } elseif ($section === 'banner_item' && $request->filled('item_id')) {
+            $banners = json_decode(Setting::get('homepage_promo_banners', '[]'), true) ?: [];
+            foreach ($banners as &$banner) {
+                if ((string) $banner['id'] === (string) $request->input('item_id')) {
+                    $banner['enabled'] = $enabled;
+                }
+            }
+            Setting::set('homepage_promo_banners', json_encode($banners));
+        }
+
+        return response()->json([
+            'success' => true,
+            'section' => $section,
+            'enabled' => $enabled,
+            'message' => 'Section visibility updated immediately in real-time.',
         ]);
     }
 

@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 
 import { AdminPagination, PaginationData } from '@/components/admin/AdminPagination';
+import { AdminToggle } from '@/components/admin/AdminToggle';
 
 interface OrderItemData {
   id: number;
@@ -826,22 +827,15 @@ export default function Index({
                     />
                   </div>
 
-                  <label className="flex items-start gap-2.5 p-2 bg-white/90 border border-rose-200 rounded-[8px] cursor-pointer">
-                    <input
-                      type="checkbox"
+                  <div className="p-3 bg-white/90 border border-rose-200 rounded-[8px]">
+                    <AdminToggle
+                      label="Send Suspension Notice Email to Client"
+                      description={`Sends an email notice to ${formData.email || 'customer'} containing the reason above and support concierge contact.`}
                       checked={formData.send_email}
-                      onChange={(e) => setFormData({ ...formData, send_email: e.target.checked })}
-                      className="mt-0.5 w-4 h-4 text-rose-600 focus:ring-rose-500 rounded-xs cursor-pointer"
+                      onChange={(val) => setFormData({ ...formData, send_email: val })}
+                      activeColor="bg-rose-600"
                     />
-                    <div>
-                      <span className="text-xs font-bold text-gray-900 block">
-                        Send Suspension Notice Email to Client
-                      </span>
-                      <span className="text-[10.5px] text-gray-500 block leading-snug">
-                        Sends an email notice to {formData.email || 'customer'} containing the reason above and support concierge contact.
-                      </span>
-                    </div>
-                  </label>
+                  </div>
                 </div>
               )}
 

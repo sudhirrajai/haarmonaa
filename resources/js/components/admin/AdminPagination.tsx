@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, router } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Check } from 'lucide-react';
 
 export interface PaginationData<T = any> {
   data: T[];
@@ -30,12 +30,25 @@ export const AdminPagination: React.FC<AdminPaginationProps> = ({
   perPageOptions = [10, 15, 20, 50, 100],
   onPerPageChange,
 }) => {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   if (!pagination || pagination.total === 0) {
     return null;
   }
 
-  const handlePerPageSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newPerPage = Number(e.target.value);
+  const selectPerPage = (newPerPage: number) => {
+    setDropdownOpen(false);
     if (onPerPageChange) {
       onPerPageChange(newPerPage);
     } else {
@@ -48,29 +61,60 @@ export const AdminPagination: React.FC<AdminPaginationProps> = ({
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-white border-t border-gray-100 rounded-b-[10px]">
-      {/* Left: Per Page Selector & Showing Count */}
+      {/* Left: Per Page Custom Dropdown & Showing Count */}
       <div className="flex items-center gap-3 text-xs text-gray-500">
-        <div className="flex items-center gap-1.5">
-          <span>Show:</span>
-          <select
-            value={pagination.per_page}
-            onChange={handlePerPageSelect}
-            className="bg-gray-50 border border-gray-200 rounded-[6px] py-1 px-2 text-xs font-bold text-gray-900 focus:outline-hidden focus:border-black cursor-pointer"
-          >
-            {perPageOptions.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt} / page
-              </option>
-            ))}
-          </select>
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-gray-600">Rows per page:</span>
+
+          {/* Luxury Custom Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              type="button"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-900 border border-gray-200 rounded-[8px] text-xs font-bold transition-all shadow-2xs hover:border-black cursor-pointer focus:outline-hidden"
+            >
+              <span>{pagination.per_page} items</span>
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${
+                  dropdownOpen ? 'rotate-180 text-black' : ''
+                }`}
+              />
+            </button>
+
+            {dropdownOpen && (
+              <div className="absolute left-0 bottom-full mb-1.5 w-32 bg-white border border-gray-200 rounded-[10px] shadow-xl py-1.5 z-50 animate-fade-in">
+                <div className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                  Select Page Size
+                </div>
+                {perPageOptions.map((opt) => {
+                  const isSelected = pagination.per_page === opt;
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => selectPerPage(opt)}
+                      className={`w-full flex items-center justify-between px-3 py-1.5 text-xs text-left font-medium transition-colors cursor-pointer ${
+                        isSelected
+                          ? 'bg-black text-white font-bold'
+                          : 'text-gray-700 hover:bg-gray-50 hover:text-black'
+                      }`}
+                    >
+                      <span>{opt} per page</span>
+                      {isSelected && <Check className="w-3 h-3 text-white" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
         <span className="text-gray-300">|</span>
 
         <span>
-          Showing <strong className="font-bold text-gray-900">{pagination.from || 0}</strong> to{' '}
+          Showing <strong className="font-bold text-gray-900">{pagination.from || 0}</strong>–
           <strong className="font-bold text-gray-900">{pagination.to || 0}</strong> of{' '}
-          <strong className="font-bold text-gray-900">{pagination.total}</strong> items
+          <strong className="font-bold text-gray-900">{pagination.total}</strong>
         </span>
       </div>
 
@@ -83,13 +127,13 @@ export const AdminPagination: React.FC<AdminPaginationProps> = ({
               href={pagination.prev_page_url}
               preserveScroll
               preserveState
-              className="p-1.5 rounded-[6px] border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-black transition-colors"
+              className="p-1.5 rounded-[8px] border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-black transition-colors"
               title="Previous Page"
             >
               <ChevronLeft className="w-4 h-4" />
             </Link>
           ) : (
-            <span className="p-1.5 rounded-[6px] border border-gray-100 text-gray-300 cursor-not-allowed">
+            <span className="p-1.5 rounded-[8px] border border-gray-100 text-gray-300 cursor-not-allowed">
               <ChevronLeft className="w-4 h-4" />
             </span>
           )}
@@ -116,7 +160,7 @@ export const AdminPagination: React.FC<AdminPaginationProps> = ({
                     href={link.url}
                     preserveScroll
                     preserveState
-                    className={`px-3 py-1 rounded-[6px] text-xs font-bold transition-all ${
+                    className={`px-3 py-1 rounded-[8px] text-xs font-bold transition-all ${
                       link.active
                         ? 'bg-black text-white shadow-2xs'
                         : 'text-gray-700 hover:bg-gray-100 border border-transparent hover:border-gray-200'
@@ -133,13 +177,13 @@ export const AdminPagination: React.FC<AdminPaginationProps> = ({
               href={pagination.next_page_url}
               preserveScroll
               preserveState
-              className="p-1.5 rounded-[6px] border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-black transition-colors"
+              className="p-1.5 rounded-[8px] border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-black transition-colors"
               title="Next Page"
             >
               <ChevronRight className="w-4 h-4" />
             </Link>
           ) : (
-            <span className="p-1.5 rounded-[6px] border border-gray-100 text-gray-300 cursor-not-allowed">
+            <span className="p-1.5 rounded-[8px] border border-gray-100 text-gray-300 cursor-not-allowed">
               <ChevronRight className="w-4 h-4" />
             </span>
           )}

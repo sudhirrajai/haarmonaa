@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { SearchableMultiSelect } from '@/components/admin/SearchableMultiSelect';
+import { AdminToggle } from '@/components/admin/AdminToggle';
 import {
   ArrowLeft,
   Save,
@@ -434,33 +435,22 @@ export default function Form({
                 />
               </div>
 
-              <div className="pt-3 border-t border-gray-100 space-y-3">
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={data.allow_stacking}
-                    onChange={(e) => setData({ ...data, allow_stacking: e.target.checked })}
-                    className="w-4 h-4 rounded-xs border-gray-300 text-black focus:ring-black cursor-pointer mt-0.5"
-                  />
-                  <div>
-                    <span className="text-xs font-bold text-gray-900 block">
-                      Allow Coupon Stacking / Overlap
-                    </span>
-                    <span className="text-[11px] text-gray-500 block leading-relaxed">
-                      Allow customers to combine and apply this coupon alongside other stackable coupons on the same order.
-                    </span>
-                  </div>
-                </label>
+              <div className="pt-3 border-t border-gray-100 space-y-4">
+                <AdminToggle
+                  label="Allow Coupon Stacking / Overlap"
+                  description="Allow customers to combine and apply this coupon alongside other stackable coupons on the same order."
+                  checked={data.allow_stacking}
+                  onChange={(val) => setData({ ...data, allow_stacking: val })}
+                  activeColor="bg-amber-500"
+                />
 
-                <label className="flex items-center gap-3 cursor-pointer pt-2 border-t border-gray-50">
-                  <input
-                    type="checkbox"
-                    checked={data.is_active}
-                    onChange={(e) => setData({ ...data, is_active: e.target.checked })}
-                    className="w-4 h-4 rounded-xs border-gray-300 text-black focus:ring-black cursor-pointer"
-                  />
-                  <span className="text-xs font-bold text-gray-800">Coupon Active & Redeemable</span>
-                </label>
+                <AdminToggle
+                  label="Coupon Active & Redeemable"
+                  description="Enable or temporarily pause coupon redemption at checkout."
+                  checked={data.is_active}
+                  onChange={(val) => setData({ ...data, is_active: val })}
+                  activeColor="bg-emerald-600"
+                />
               </div>
             </div>
           </div>

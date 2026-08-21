@@ -4,6 +4,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { MultiCategorySelect } from '@/components/admin/MultiCategorySelect';
 import { ProductMediaManager } from '@/components/admin/ProductMediaManager';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
+import { AdminToggle } from '@/components/admin/AdminToggle';
 import {
   ArrowLeft,
   Save,
@@ -656,37 +657,35 @@ export default function Form({
 
               {/* Card 4: Product Badges & Visibility */}
               <div className="bg-white p-6 rounded-3xl border border-gray-200/80 shadow-2xs space-y-4">
-                <h2 className="text-sm font-bold text-gray-900">Badges & Tags</h2>
+                <h2 className="text-sm font-bold text-gray-900 pb-2 border-b border-gray-100">
+                  Inventory & Featured Tags
+                </h2>
 
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
+                <div className="space-y-3">
+                  <AdminToggle
+                    label="In Stock Available"
+                    description="Allow shoppers to add this piece to cart."
                     checked={data.in_stock}
-                    onChange={(e) => setData({ ...data, in_stock: e.target.checked })}
-                    className="w-4 h-4 rounded-xs border-gray-300 text-black focus:ring-black"
+                    onChange={(val) => setData({ ...data, in_stock: val })}
+                    activeColor="bg-emerald-600"
                   />
-                  <span className="text-xs font-bold text-gray-800">In Stock Available</span>
-                </label>
 
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
+                  <AdminToggle
+                    label="Featured on Homepage"
+                    description="Highlight this product on curated home showcase."
                     checked={data.is_featured}
-                    onChange={(e) => setData({ ...data, is_featured: e.target.checked })}
-                    className="w-4 h-4 rounded-xs border-gray-300 text-black focus:ring-black"
+                    onChange={(val) => setData({ ...data, is_featured: val })}
+                    activeColor="bg-amber-500"
                   />
-                  <span className="text-xs font-bold text-gray-800">Featured on Homepage</span>
-                </label>
 
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
+                  <AdminToggle
+                    label="Best Seller Tag"
+                    description="Showcase luxury Best Seller ribbon badge."
                     checked={data.is_best_seller}
-                    onChange={(e) => setData({ ...data, is_best_seller: e.target.checked })}
-                    className="w-4 h-4 rounded-xs border-gray-300 text-black focus:ring-black"
+                    onChange={(val) => setData({ ...data, is_best_seller: val })}
+                    activeColor="bg-purple-600"
                   />
-                  <span className="text-xs font-bold text-gray-800">Best Seller Tag</span>
-                </label>
+                </div>
               </div>
 
               {/* Card 5: Collections Assignment */}
