@@ -36,10 +36,18 @@ class SettingController extends Controller
             'shipping_fee' => 'required|numeric|min:0',
             'free_shipping_min_order' => 'required|numeric|min:0',
             'enable_free_shipping' => 'nullable|boolean',
+            'instagram_url' => 'nullable|string|max:500',
+            'instagram_handle' => 'nullable|string|max:100',
+            'instagram_posts' => 'nullable',
+            'store_features' => 'nullable',
         ]);
 
         foreach ($validated as $key => $val) {
-            Setting::set($key, $val ?? '');
+            if (is_array($val)) {
+                Setting::set($key, json_encode($val));
+            } else {
+                Setting::set($key, $val ?? '');
+            }
         }
 
         // Keep legacy alias in sync
@@ -47,6 +55,6 @@ class SettingController extends Controller
             Setting::set('free_shipping_threshold', $validated['free_shipping_min_order']);
         }
 
-        return back()->with('success', 'Store settings and branding updated successfully.');
+        return back()->with('success', 'Store settings and homepage sections updated successfully.');
     }
 }

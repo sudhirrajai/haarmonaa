@@ -56,6 +56,10 @@ class HandleInertiaRequests extends Middleware
                 'shipping_fee' => (float) Setting::get('shipping_fee', 49),
                 'free_shipping_min_order' => (float) Setting::get('free_shipping_min_order', 999),
                 'enable_free_shipping' => (bool) Setting::get('enable_free_shipping', true),
+                'instagram_url' => Setting::get('instagram_url', 'https://instagram.com/haarmonaa'),
+                'instagram_handle' => Setting::get('instagram_handle', '@haarmonaa'),
+                'instagram_posts' => json_decode(Setting::get('instagram_posts', '[]'), true) ?: null,
+                'store_features' => json_decode(Setting::get('store_features', '[]'), true) ?: null,
             ],
         ];
     }
