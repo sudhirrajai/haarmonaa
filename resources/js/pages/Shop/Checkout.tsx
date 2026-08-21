@@ -39,6 +39,7 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
     removeCoupon,
     couponDiscount,
     tax,
+    taxRate,
     shipping,
     total,
     clearCart,
@@ -636,10 +637,12 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                       </div>
                     )}
 
-                    <div className="flex justify-between text-gray-600">
-                      <span>GST (3% Jewelry Tax)</span>
-                      <span className="font-bold text-gray-900">₹{tax.toFixed(2)}</span>
-                    </div>
+                    {taxRate > 0 && tax > 0 && (
+                      <div className="flex justify-between text-gray-600">
+                        <span>GST ({taxRate}% Tax)</span>
+                        <span className="font-bold text-gray-900">₹{tax.toFixed(2)}</span>
+                      </div>
+                    )}
 
                     <div className="flex justify-between text-gray-600">
                       <span>Insured Express Shipping</span>

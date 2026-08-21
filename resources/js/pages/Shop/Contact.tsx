@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { GlozinLayout } from '@/components/layout/GlozinLayout';
 import { Product } from '@/types/shop';
-import { CheckCircle2, Phone, Mail, Clock, Send } from 'lucide-react';
+import { CheckCircle2, Phone, Mail, Clock, Send, MapPin } from 'lucide-react';
 
 interface ContactProps {
   products?: Product[];
 }
 
 export default function Contact({ products = [] }: ContactProps) {
+  const { settings } = (usePage().props as any) || {};
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -33,6 +35,10 @@ export default function Contact({ products = [] }: ContactProps) {
     }, 600);
   };
 
+  const supportEmail = settings?.store_email || 'support@haarmonaa.in';
+  const supportPhone = settings?.store_phone || '';
+  const storeAddress = settings?.store_address || '';
+
   return (
     <GlozinLayout allProducts={products}>
       <Head title="Contact Us — Haarmonaa Luxury Jewelry" />
@@ -56,11 +62,17 @@ export default function Contact({ products = [] }: ContactProps) {
 
           {/* Subtitle */}
           <p className="text-[14px] sm:text-[14.5px] text-gray-500 max-w-2xl mx-auto leading-relaxed">
-            Please use the below form. You can also call customer service on{' '}
-            <a href="tel:+19734353638" className="text-gray-900 font-semibold hover:underline">
-              +1 (973) 435-3638
-            </a>
-            .
+            {supportPhone ? (
+              <>
+                Please use the form below. You can also contact customer concierge at{' '}
+                <a href={`tel:${supportPhone.replace(/[^0-9+]/g, '')}`} className="text-gray-900 font-semibold hover:underline">
+                  {supportPhone}
+                </a>
+                .
+              </>
+            ) : (
+              'Our concierge team is available to assist you with bespoke enquiries, orders, and jewelry care.'
+            )}
           </p>
         </div>
       </section>
@@ -72,44 +84,48 @@ export default function Contact({ products = [] }: ContactProps) {
           <div className="lg:col-span-5 space-y-8">
             <div>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mb-3">
-                Support Customer
+                Customer Concierge
               </h2>
               <p className="text-xs sm:text-[13px] text-gray-500 leading-relaxed">
-                Have a question? Please contact us using the customer support channels below.
+                Have a question regarding sizing, shipping, or materials? Contact us using the channels below.
               </p>
             </div>
 
             {/* Channel 1: Customer Care */}
             <div className="space-y-1.5 text-xs sm:text-[13px] text-gray-600">
               <h3 className="font-bold text-gray-900 text-sm">Customer Care:</h3>
-              <p>Phone: +1 (973) 435-3638</p>
+              {supportPhone && (
+                <p>
+                  Phone:{' '}
+                  <a href={`tel:${supportPhone.replace(/[^0-9+]/g, '')}`} className="text-gray-900 hover:underline">
+                    {supportPhone}
+                  </a>
+                </p>
+              )}
               <p>
                 Email:{' '}
-                <a href="mailto:support@haarmonaa.in" className="text-gray-900 hover:underline">
-                  support@haarmonaa.in
+                <a href={`mailto:${supportEmail}`} className="text-gray-900 hover:underline">
+                  {supportEmail}
                 </a>
               </p>
-              <p>Opening hours: Everyday 8:00am - 5:00pm</p>
+              <p>Opening hours: Monday – Saturday (9:00am – 6:00pm IST)</p>
             </div>
 
-            {/* Channel 2: Wholesale */}
-            <div className="space-y-1.5 text-xs sm:text-[13px] text-gray-600">
-              <h3 className="font-bold text-gray-900 text-sm">Wholesale:</h3>
-              <p>
-                Email:{' '}
-                <a href="mailto:wholesale@haarmonaa.in" className="text-gray-900 hover:underline">
-                  wholesale@haarmonaa.in
-                </a>
-              </p>
-            </div>
+            {/* Channel 2: Store Location / Address */}
+            {storeAddress && (
+              <div className="space-y-1.5 text-xs sm:text-[13px] text-gray-600">
+                <h3 className="font-bold text-gray-900 text-sm">Boutique & Studio:</h3>
+                <p>{storeAddress}</p>
+              </div>
+            )}
 
-            {/* Channel 3: Press Enquiries */}
+            {/* Channel 3: Press & Partnerships */}
             <div className="space-y-1.5 text-xs sm:text-[13px] text-gray-600">
-              <h3 className="font-bold text-gray-900 text-sm">Press Enquiries:</h3>
+              <h3 className="font-bold text-gray-900 text-sm">Press & Partnerships:</h3>
               <p>
                 Email:{' '}
-                <a href="mailto:press@haarmonaa.in" className="text-gray-900 hover:underline">
-                  press@haarmonaa.in
+                <a href={`mailto:${supportEmail}`} className="text-gray-900 hover:underline">
+                  {supportEmail}
                 </a>
               </p>
             </div>

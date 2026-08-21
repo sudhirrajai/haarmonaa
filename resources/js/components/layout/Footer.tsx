@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { HaarmonaaLogo } from '@/components/layout/HaarmonaaLogo';
-import { ChevronUp } from 'lucide-react';
+import { ChevronUp, Phone, MapPin, Mail } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const { settings } = (usePage().props as any) || {};
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,22 +25,48 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12 pb-16">
           {/* Column 1: Brand & Socials (4 Cols) */}
-          <div className="lg:col-span-4 space-y-6">
+          <div className="lg:col-span-4 space-y-5">
             <Link href="/" className="inline-block">
               <HaarmonaaLogo variant="dark" className="h-9 sm:h-10 w-auto" />
             </Link>
 
             <p className="text-xs text-gray-400 leading-relaxed max-w-sm">
-              Discover timeless elegance with Haarmonaa's curated fine jewelry collection. Meticulously handcrafted with anti-tarnish, hypoallergenic luxury materials.
+              {settings?.store_tagline
+                ? settings.store_tagline
+                : "Discover timeless elegance with Haarmonaa's curated fine jewelry collection. Meticulously handcrafted with anti-tarnish, hypoallergenic luxury materials."}
             </p>
 
-            <div>
-              <a
-                href="mailto:support@haarmonaa.in"
-                className="text-xs sm:text-[13px] font-bold text-white hover:text-[#d0473e] transition-colors"
-              >
-                support@haarmonaa.in
-              </a>
+            <div className="space-y-2 text-xs">
+              {settings?.store_email && (
+                <div>
+                  <a
+                    href={`mailto:${settings.store_email}`}
+                    className="inline-flex items-center gap-1.5 font-bold text-white hover:text-[#d0473e] transition-colors"
+                  >
+                    <Mail className="w-3.5 h-3.5 text-gray-400" />
+                    <span>{settings.store_email}</span>
+                  </a>
+                </div>
+              )}
+
+              {settings?.store_phone && (
+                <div>
+                  <a
+                    href={`tel:${settings.store_phone.replace(/[^0-9+]/g, '')}`}
+                    className="inline-flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors"
+                  >
+                    <Phone className="w-3.5 h-3.5 text-gray-400" />
+                    <span>{settings.store_phone}</span>
+                  </a>
+                </div>
+              )}
+
+              {settings?.store_address && (
+                <div className="flex items-start gap-1.5 text-gray-400">
+                  <MapPin className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
+                  <span>{settings.store_address}</span>
+                </div>
+              )}
             </div>
 
             {/* Circular Social Outline Icons */}

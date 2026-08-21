@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { usePage } from '@inertiajs/react';
 import { Product, ProductVariant } from '@/types/shop';
 
 export interface CartItem {
@@ -45,6 +46,7 @@ interface CartContextType {
   subtotal: number;
   couponDiscount: number;
   tax: number;
+  taxRate: number;
   shipping: number;
   total: number;
   cartCount: number;
@@ -331,12 +333,29 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setWishlist((prev) => prev.filter((p) => p.id !== productId));
   };
 
-  // Calculations
+  // Calculations from dynamic store settings
+  let taxRatePercent = 0;
+  let freeShippingThreshold = 999;
+  try {
+    const pageProps = usePage()?.props as any;
+    const settings = pageProps?.settings;
+    if (settings) {
+      if (settings.tax_rate_percent !== undefined) {
+        taxRatePercent = Number(settings.tax_rate_percent) || 0;
+      }
+      if (settings.free_shipping_min_order !== undefined) {
+        freeShippingThreshold = Number(settings.free_shipping_min_order) || 999;
+      }
+    }
+  } catch {
+    // SSR or outside Inertia tree fallback
+  }
+
   const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
   const couponDiscount = appliedCoupons.reduce((sum, c) => sum + (Number(c.discount) || 0), 0);
   const taxableSubtotal = Math.max(0, subtotal - couponDiscount);
-  const tax = Number((taxableSubtotal * 0.03).toFixed(2)); // 3% GST on jewelry
-  const shipping = subtotal >= 999 || subtotal === 0 ? 0 : 49; // Free shipping above ₹999
+  const tax = taxRatePercent > 0 ? Number((taxableSubtotal * (taxRatePercent / 100)).toFixed(2)) : 0;
+  const shipping = (freeShippingThreshold > 0 && subtotal >= freeShippingThreshold) || subtotal === 0 ? 0 : 49;
   const total = Number((taxableSubtotal + tax + shipping).toFixed(2));
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const wishlistCount = wishlist.length;
@@ -360,6 +379,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         subtotal,
         couponDiscount,
         tax,
+        taxRate: taxRatePercent,
         shipping,
         total,
         cartCount,
@@ -390,6 +410,7 @@ const defaultCartContext: CartContextType = {
   subtotal: 0,
   couponDiscount: 0,
   tax: 0,
+  taxRate: 0,
   shipping: 0,
   total: 0,
   cartCount: 0,

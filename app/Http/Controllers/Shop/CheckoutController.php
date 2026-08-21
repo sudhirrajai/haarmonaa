@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Setting;
 use App\Services\CouponService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -80,9 +81,13 @@ class CheckoutController extends Controller
             }
         }
 
+        $taxRatePercent = (float) Setting::get('tax_rate_percent', 0);
+        $freeShippingThreshold = (float) Setting::get('free_shipping_min_order', 999);
+        $currencySymbol = Setting::get('currency_symbol', '₹');
+
         $taxableAmount = max(0, $subtotal - $discountAmount);
-        $tax = round($taxableAmount * 0.03, 2); // 3% GST on fine jewelry after discount
-        $shipping = $subtotal >= 999 ? 0.00 : 49.00;
+        $tax = $taxRatePercent > 0 ? round($taxableAmount * ($taxRatePercent / 100), 2) : 0.00;
+        $shipping = ($freeShippingThreshold > 0 && $subtotal >= $freeShippingThreshold) || $subtotal === 0 ? 0.00 : 49.00;
         $totalAmount = round($taxableAmount + $tax + $shipping, 2);
 
         $customerName = trim($validated['first_name'].' '.$validated['last_name']);
@@ -103,7 +108,7 @@ class CheckoutController extends Controller
             'tax' => $tax,
             'shipping' => $shipping,
             'total_amount' => $totalAmount,
-            'currency' => '₹',
+            'currency' => $currencySymbol,
             'status' => $validated['payment_method'] === 'cod' ? 'processing' : 'pending',
             'payment_method' => strtoupper($validated['payment_method']),
             'payment_status' => $validated['payment_method'] === 'cod' ? 'pending' : 'pending',
