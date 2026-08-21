@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Shop\CheckoutController;
 use App\Http\Controllers\Shop\CouponController as ShopCouponController;
+use App\Http\Controllers\Shop\SearchController;
 use App\Http\Controllers\ShopController;
 use Illuminate\Support\Facades\Route;
 
@@ -31,8 +32,11 @@ Route::post('/checkout/apply-coupon', [ShopCouponController::class, 'apply'])->n
 Route::post('/checkout/recalculate-coupons', [ShopCouponController::class, 'recalculate'])->name('shop.coupon.recalculate');
 Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('shop.checkout.process');
 Route::post('/payment/razorpay/verify', [CheckoutController::class, 'verifyRazorpay'])->name('shop.razorpay.verify');
-Route::get('/order-success/{order_number}', [CheckoutController::class, 'orderSuccess'])->name('shop.orderSuccess');
 Route::get('/wishlist', [ShopController::class, 'wishlist'])->name('shop.wishlist');
+
+// Dynamic Search Logging & Popular Keyword Suggestions
+Route::post('/api/search/log', [SearchController::class, 'log'])->name('search.log');
+Route::get('/api/search/popular', [SearchController::class, 'popular'])->name('search.popular');
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\SearchKeyword;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -60,6 +61,7 @@ class HandleInertiaRequests extends Middleware
                 'instagram_handle' => Setting::get('instagram_handle', '@haarmonaa'),
                 'instagram_posts' => json_decode(Setting::get('instagram_posts', '[]'), true) ?: null,
                 'store_features' => json_decode(Setting::get('store_features', '[]'), true) ?: null,
+                'popular_search_keywords' => SearchKeyword::getPopular(8),
             ],
         ];
     }
