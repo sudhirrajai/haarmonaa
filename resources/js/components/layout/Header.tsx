@@ -146,31 +146,25 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="relative" ref={accountRef}>
               <button
                 onClick={() => setAccountMenuOpen(!accountMenuOpen)}
-                className={`p-1.5 rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
-                  user
-                    ? 'text-black bg-amber-100/60 hover:bg-amber-100 border border-amber-300/60'
-                    : 'text-gray-800 hover:text-[#d0473e] hover:bg-gray-100'
-                }`}
+                className="p-1 text-gray-800 hover:text-[#d0473e] transition-colors relative flex items-center justify-center cursor-pointer"
                 title={user ? `Signed in as ${user.name}` : 'Account'}
               >
                 <UserIcon className="w-5 h-5 stroke-[1.8]" />
                 {user && (
-                  <span className="hidden xl:inline text-xs font-bold text-gray-900 max-w-[100px] truncate">
-                    {user.name.split(' ')[0]}
-                  </span>
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white" />
                 )}
               </button>
 
               {/* Account Dropdown Floating Popover */}
               {accountMenuOpen && (
-                <div className="absolute right-0 mt-3 w-64 bg-white text-gray-900 border border-gray-200/90 rounded-2xl shadow-xl p-4 z-50 animate-fade-in space-y-3">
+                <div className="absolute right-0 mt-3 w-64 bg-white text-gray-900 border border-gray-200/90 rounded-[10px] shadow-xl p-4 z-50 animate-fade-in space-y-3">
                   {user ? (
                     <>
                       <div className="pb-3 border-b border-gray-100">
-                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#d0473e] block">
-                          Authenticated Profile
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block">
+                          My Account
                         </span>
-                        <h4 className="text-sm font-extrabold text-gray-900 truncate">{user.name}</h4>
+                        <h4 className="text-sm font-bold text-gray-900 truncate">{user.name}</h4>
                         <p className="text-xs text-gray-500 truncate">{user.email}</p>
                       </div>
 
@@ -178,25 +172,25 @@ export const Header: React.FC<HeaderProps> = ({
                         <Link
                           href="/admin"
                           onClick={() => setAccountMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-gray-700 hover:text-black hover:bg-gray-50 rounded-xl transition-all"
+                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-gray-700 hover:text-black hover:bg-gray-50 rounded-[8px] transition-all"
                         >
-                          <LayoutDashboard className="w-4 h-4 text-amber-600" />
+                          <LayoutDashboard className="w-4 h-4 text-gray-500" />
                           <span>Admin Dashboard</span>
                         </Link>
                         <Link
                           href="/admin/orders"
                           onClick={() => setAccountMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-gray-700 hover:text-black hover:bg-gray-50 rounded-xl transition-all"
+                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-gray-700 hover:text-black hover:bg-gray-50 rounded-[8px] transition-all"
                         >
-                          <PackageCheck className="w-4 h-4 text-emerald-600" />
+                          <PackageCheck className="w-4 h-4 text-gray-500" />
                           <span>Orders & Shipments</span>
                         </Link>
                         <Link
                           href="/admin/products"
                           onClick={() => setAccountMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-gray-700 hover:text-black hover:bg-gray-50 rounded-xl transition-all"
+                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-gray-700 hover:text-black hover:bg-gray-50 rounded-[8px] transition-all"
                         >
-                          <Gem className="w-4 h-4 text-blue-600" />
+                          <Gem className="w-4 h-4 text-gray-500" />
                           <span>Jewelry Inventory</span>
                         </Link>
                       </div>
@@ -204,7 +198,7 @@ export const Header: React.FC<HeaderProps> = ({
                       <div className="pt-2 border-t border-gray-100">
                         <button
                           onClick={handleLogout}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition-all cursor-pointer"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-[8px] transition-all cursor-pointer"
                         >
                           <LogOut className="w-4 h-4" />
                           <span>Sign Out</span>
@@ -214,13 +208,9 @@ export const Header: React.FC<HeaderProps> = ({
                   ) : (
                     <>
                       <div className="pb-3 border-b border-gray-100 text-center space-y-1">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-50 text-amber-800 text-[10px] font-extrabold uppercase rounded-full border border-amber-200">
-                          <Sparkles className="w-3 h-3 text-amber-600" />
-                          <span>Haarmonaa Concierge</span>
-                        </span>
-                        <h4 className="text-sm font-extrabold text-gray-900">Welcome Guest</h4>
-                        <p className="text-[11px] text-gray-500">
-                          Sign in to access your administrative suite or boutique client profile.
+                        <h4 className="text-sm font-bold text-gray-900">Welcome</h4>
+                        <p className="text-xs text-gray-500">
+                          Sign in to access your orders and boutique profile.
                         </p>
                       </div>
 
@@ -228,7 +218,7 @@ export const Header: React.FC<HeaderProps> = ({
                         <Link
                           href="/login"
                           onClick={() => setAccountMenuOpen(false)}
-                          className="w-full py-2.5 bg-[#111111] hover:bg-[#d0473e] text-white font-extrabold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs"
+                          className="w-full py-2.5 bg-[#111111] hover:bg-black text-white font-bold text-xs uppercase tracking-wider rounded-[8px] flex items-center justify-center gap-2 transition-all shadow-xs"
                         >
                           <LogIn className="w-4 h-4" />
                           <span>Sign In</span>
@@ -237,7 +227,7 @@ export const Header: React.FC<HeaderProps> = ({
                         <Link
                           href="/register"
                           onClick={() => setAccountMenuOpen(false)}
-                          className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all"
+                          className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold text-xs uppercase tracking-wider rounded-[8px] flex items-center justify-center gap-2 transition-all"
                         >
                           <UserPlus className="w-4 h-4" />
                           <span>Create Account</span>
