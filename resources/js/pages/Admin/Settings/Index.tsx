@@ -98,36 +98,54 @@ export default function Index({ settings }: SettingsProps) {
                 onChange={(url) => setFormData({ ...formData, store_logo: url })}
               />
 
-              {/* Header Logo Height Slider */}
+              {/* Header Logo Height Slider & Manual Px Input */}
               <div className="pt-2 border-t border-gray-200 space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-bold text-gray-700">
-                    Header Logo Size / Height (px)
+                    Header Logo Size / Height
                   </label>
-                  <span className="text-xs font-extrabold text-gray-900 px-2 py-0.5 bg-white border border-gray-200 rounded-[6px]">
-                    {formData.header_logo_height}px
+                  <span className="text-[10px] text-gray-400 font-semibold">
+                    Adjust slider or type exact px
                   </span>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <input
                     type="range"
-                    min="24"
-                    max="90"
-                    step="2"
+                    min="16"
+                    max="150"
+                    step="1"
                     value={formData.header_logo_height}
                     onChange={(e) =>
                       setFormData({ ...formData, header_logo_height: Number(e.target.value) })
                     }
-                    className="w-full accent-black cursor-pointer"
+                    className="flex-1 accent-black cursor-pointer"
                   />
+
+                  <div className="flex items-center gap-1 bg-white border border-gray-300 focus-within:border-black rounded-[8px] px-2.5 py-1 shadow-2xs">
+                    <input
+                      type="number"
+                      min="16"
+                      max="200"
+                      value={formData.header_logo_height}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setFormData({
+                          ...formData,
+                          header_logo_height: isNaN(val) ? 16 : Math.max(16, Math.min(200, val)),
+                        });
+                      }}
+                      className="w-12 text-xs font-extrabold text-gray-900 text-right focus:outline-hidden bg-transparent"
+                    />
+                    <span className="text-[11px] font-bold text-gray-400">px</span>
+                  </div>
                 </div>
 
                 {/* Live Preview Box */}
                 {formData.store_logo && (
                   <div className="p-3 bg-white border border-gray-200 rounded-[8px] flex flex-col items-center justify-center gap-1.5 overflow-hidden">
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                      Header Preview
+                      Header Preview ({formData.header_logo_height}px)
                     </span>
                     <img
                       src={formData.store_logo}
@@ -150,36 +168,54 @@ export default function Index({ settings }: SettingsProps) {
                 onChange={(url) => setFormData({ ...formData, store_logo_dark: url })}
               />
 
-              {/* Footer Logo Height Slider */}
+              {/* Footer Logo Height Slider & Manual Px Input */}
               <div className="pt-2 border-t border-gray-200 space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-bold text-gray-700">
-                    Footer Logo Size / Height (px)
+                    Footer Logo Size / Height
                   </label>
-                  <span className="text-xs font-extrabold text-gray-900 px-2 py-0.5 bg-white border border-gray-200 rounded-[6px]">
-                    {formData.footer_logo_height}px
+                  <span className="text-[10px] text-gray-400 font-semibold">
+                    Adjust slider or type exact px
                   </span>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <input
                     type="range"
-                    min="24"
-                    max="100"
-                    step="2"
+                    min="16"
+                    max="150"
+                    step="1"
                     value={formData.footer_logo_height}
                     onChange={(e) =>
                       setFormData({ ...formData, footer_logo_height: Number(e.target.value) })
                     }
-                    className="w-full accent-black cursor-pointer"
+                    className="flex-1 accent-black cursor-pointer"
                   />
+
+                  <div className="flex items-center gap-1 bg-white border border-gray-300 focus-within:border-black rounded-[8px] px-2.5 py-1 shadow-2xs">
+                    <input
+                      type="number"
+                      min="16"
+                      max="200"
+                      value={formData.footer_logo_height}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setFormData({
+                          ...formData,
+                          footer_logo_height: isNaN(val) ? 16 : Math.max(16, Math.min(200, val)),
+                        });
+                      }}
+                      className="w-12 text-xs font-extrabold text-gray-900 text-right focus:outline-hidden bg-transparent"
+                    />
+                    <span className="text-[11px] font-bold text-gray-400">px</span>
+                  </div>
                 </div>
 
                 {/* Dark Live Preview Box */}
                 {(formData.store_logo_dark || formData.store_logo) && (
                   <div className="p-3 bg-[#111111] border border-gray-800 rounded-[8px] flex flex-col items-center justify-center gap-1.5 overflow-hidden">
                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                      Footer Preview (Dark Background)
+                      Footer Preview ({formData.footer_logo_height}px)
                     </span>
                     <img
                       src={formData.store_logo_dark || formData.store_logo}

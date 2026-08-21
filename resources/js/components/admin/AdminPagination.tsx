@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { Link, router } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight, ChevronDown, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 
 export interface PaginationData<T = any> {
   data: T[];
@@ -30,25 +30,12 @@ export const AdminPagination: React.FC<AdminPaginationProps> = ({
   perPageOptions = [10, 15, 20, 50, 100],
   onPerPageChange,
 }) => {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   if (!pagination || pagination.total === 0) {
     return null;
   }
 
-  const selectPerPage = (newPerPage: number) => {
-    setDropdownOpen(false);
+  const handlePerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newPerPage = Number(e.target.value);
     if (onPerPageChange) {
       onPerPageChange(newPerPage);
     } else {
@@ -61,51 +48,25 @@ export const AdminPagination: React.FC<AdminPaginationProps> = ({
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-white border-t border-gray-100 rounded-b-[10px]">
-      {/* Left: Per Page Custom Dropdown & Showing Count */}
-      <div className="flex items-center gap-3 text-xs text-gray-500">
+      {/* Left: Per Page Selector & Showing Count */}
+      <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-gray-600">Rows per page:</span>
 
-          {/* Luxury Custom Dropdown */}
-          <div className="relative" ref={dropdownRef}>
-            <button
-              type="button"
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-900 border border-gray-200 rounded-[8px] text-xs font-bold transition-all shadow-2xs hover:border-black cursor-pointer focus:outline-hidden"
+          {/* Luxury Native Styled Select (Never clipped by overflow) */}
+          <div className="relative inline-flex items-center">
+            <select
+              value={pagination.per_page}
+              onChange={handlePerPageChange}
+              className="appearance-none bg-gray-50 hover:bg-gray-100 text-gray-900 border border-gray-200 hover:border-black rounded-[8px] pl-3 pr-8 py-1.5 text-xs font-bold transition-all shadow-2xs cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-black"
             >
-              <span>{pagination.per_page} items</span>
-              <ChevronDown
-                className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${
-                  dropdownOpen ? 'rotate-180 text-black' : ''
-                }`}
-              />
-            </button>
-
-            {dropdownOpen && (
-              <div className="absolute left-0 bottom-full mb-1.5 w-32 bg-white border border-gray-200 rounded-[10px] shadow-xl py-1.5 z-50 animate-fade-in">
-                <div className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                  Select Page Size
-                </div>
-                {perPageOptions.map((opt) => {
-                  const isSelected = pagination.per_page === opt;
-                  return (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => selectPerPage(opt)}
-                      className={`w-full flex items-center justify-between px-3 py-1.5 text-xs text-left font-medium transition-colors cursor-pointer ${
-                        isSelected
-                          ? 'bg-black text-white font-bold'
-                          : 'text-gray-700 hover:bg-gray-50 hover:text-black'
-                      }`}
-                    >
-                      <span>{opt} per page</span>
-                      {isSelected && <Check className="w-3 h-3 text-white" />}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+              {perPageOptions.map((opt) => (
+                <option key={opt} value={opt} className="bg-white text-gray-900 font-medium">
+                  {opt} items
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-gray-500 absolute right-2.5 pointer-events-none" />
           </div>
         </div>
 

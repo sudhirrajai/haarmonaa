@@ -160,7 +160,7 @@ export default function Index({ categories }: CategoriesProps) {
 
       {/* Pagination Footer */}
       {paginationData && (
-        <div className="bg-white rounded-2xl border border-gray-200/80 shadow-2xs overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-200/80 shadow-2xs">
           <AdminPagination pagination={paginationData} />
         </div>
       )}
