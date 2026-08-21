@@ -54,7 +54,9 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
     // Products CRUD
     Route::post('products/upload-media', [AdminProductController::class, 'uploadMedia'])->name('products.upload-media');
+    Route::post('products/bulk-action', [AdminProductController::class, 'bulkAction'])->name('products.bulk-action');
     Route::patch('products/{product}/toggle-featured', [AdminProductController::class, 'toggleFeatured'])->name('products.toggle-featured');
+    Route::patch('products/{product}/toggle-status', [AdminProductController::class, 'toggleStatus'])->name('products.toggle-status');
     Route::resource('products', AdminProductController::class);
 
     // Coupons CRUD

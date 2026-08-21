@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\CustomerBlockedMail;
 use App\Models\Customer;
 use App\Models\Order;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,6 +19,10 @@ class CustomerController extends Controller
     {
         $status = $request->query('status', 'active');
         $search = $request->query('search', '');
+        $perPage = (int) $request->query('per_page', 10);
+        if (! in_array($perPage, [10, 15, 20, 50, 100])) {
+            $perPage = 10;
+        }
 
         if ($status === 'archived' || $status === 'trashed') {
             $query = Customer::onlyTrashed()->latest('deleted_at');
@@ -33,7 +39,10 @@ class CustomerController extends Controller
             });
         }
 
-        $customers = $query->get()->map(function ($customer) {
+        $customers = $query->paginate($perPage)->withQueryString();
+
+        // Attach order history stats to paginated items
+        $customers->getCollection()->transform(function ($customer) {
             $orders = Order::with('items')
                 ->where('customer_email', $customer->email)
                 ->latest()
@@ -58,6 +67,7 @@ class CustomerController extends Controller
             'filters' => [
                 'search' => $search,
                 'status' => $status,
+                'per_page' => $perPage,
             ],
         ]);
     }
@@ -73,6 +83,7 @@ class CustomerController extends Controller
             'postal_code' => 'nullable|string|max:30',
             'address' => 'nullable|string|max:500',
             'status' => 'required|string|in:active,inactive,vip,blocked',
+            'block_reason' => 'nullable|string|max:1000',
             'notes' => 'nullable|string|max:1000',
         ]);
 
@@ -92,10 +103,36 @@ class CustomerController extends Controller
             'postal_code' => 'nullable|string|max:30',
             'address' => 'nullable|string|max:500',
             'status' => 'required|string|in:active,inactive,vip,blocked',
+            'block_reason' => 'nullable|string|max:1000',
+            'send_email' => 'nullable|boolean',
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        $customer->update($validated);
+        $shouldSendEmail = $request->boolean('send_email');
+        $isNowBlocked = $validated['status'] === 'blocked';
+        $wasNotBlocked = $customer->status !== 'blocked';
+
+        $customer->update([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+            'city' => $validated['city'] ?? null,
+            'state' => $validated['state'] ?? null,
+            'postal_code' => $validated['postal_code'] ?? null,
+            'address' => $validated['address'] ?? null,
+            'status' => $validated['status'],
+            'block_reason' => $isNowBlocked ? ($validated['block_reason'] ?? null) : null,
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        // Send email if requested and customer is blocked
+        if ($isNowBlocked && $shouldSendEmail) {
+            try {
+                Mail::to($customer->email)->send(new CustomerBlockedMail($customer, $validated['block_reason'] ?? null));
+            } catch (\Throwable $e) {
+                // Log or ignore mail transport errors in local dev
+            }
+        }
 
         return back()->with('success', 'Customer profile updated successfully.');
     }

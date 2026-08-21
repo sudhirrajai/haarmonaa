@@ -13,6 +13,11 @@ class OrderController extends Controller
 {
     public function index(Request $request): Response
     {
+        $perPage = (int) $request->query('per_page', 10);
+        if (! in_array($perPage, [10, 15, 20, 50, 100])) {
+            $perPage = 10;
+        }
+
         $query = Order::with('items')->latest();
 
         if ($request->filled('status') && $request->query('status') !== 'all') {
@@ -28,13 +33,14 @@ class OrderController extends Controller
             });
         }
 
-        $orders = $query->get();
+        $orders = $query->paginate($perPage)->withQueryString();
 
         return Inertia::render('Admin/Orders/Index', [
             'orders' => $orders,
             'filters' => [
                 'status' => $request->query('status', 'all'),
                 'search' => $request->query('search', ''),
+                'per_page' => $perPage,
             ],
             'statusCounts' => [
                 'all' => Order::count(),

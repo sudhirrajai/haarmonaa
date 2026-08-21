@@ -16,6 +16,11 @@ class CouponController extends Controller
 {
     public function index(Request $request): Response
     {
+        $perPage = (int) $request->query('per_page', 10);
+        if (! in_array($perPage, [10, 15, 20, 50, 100])) {
+            $perPage = 10;
+        }
+
         $query = Coupon::latest();
 
         if ($request->filled('search')) {
@@ -24,12 +29,13 @@ class CouponController extends Controller
                 ->orWhere('description', 'like', "%{$search}%");
         }
 
-        $coupons = $query->get();
+        $coupons = $query->paginate($perPage)->withQueryString();
 
         return Inertia::render('Admin/Coupons/Index', [
             'coupons' => $coupons,
             'filters' => [
                 'search' => $request->query('search', ''),
+                'per_page' => $perPage,
             ],
         ]);
     }

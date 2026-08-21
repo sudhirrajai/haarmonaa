@@ -122,6 +122,7 @@ export default function Form({
     in_stock: product?.in_stock ?? true,
     is_featured: product?.is_featured ?? false,
     is_best_seller: product?.is_best_seller ?? false,
+    status: ((product as any)?.status as 'published' | 'draft') || 'published',
     shipping_type: product?.shipping_type || 'default',
     shipping_fee: product?.shipping_fee ?? '',
     variants: product?.variants || [],
@@ -564,6 +565,79 @@ export default function Form({
 
             {/* Right Column: Visuals & Flags (4 Cols) */}
             <div className="lg:col-span-4 space-y-6">
+              {/* Card 2.8: Publishing Status & Visibility */}
+              <div className="bg-white p-6 rounded-3xl border border-gray-200/80 shadow-2xs space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                  <h2 className="text-sm font-bold text-gray-900">Product Visibility</h2>
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                      data.status === 'published'
+                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                        : 'bg-gray-100 text-gray-700 border border-gray-200'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        data.status === 'published' ? 'bg-emerald-500' : 'bg-gray-400'
+                      }`}
+                    />
+                    {data.status === 'published' ? 'Live' : 'Draft'}
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    className={`flex items-start gap-3 p-3 rounded-2xl border transition-all cursor-pointer ${
+                      data.status === 'published'
+                        ? 'bg-emerald-50/70 border-emerald-300 shadow-2xs'
+                        : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="status"
+                      value="published"
+                      checked={data.status === 'published'}
+                      onChange={() => setData({ ...data, status: 'published' })}
+                      className="mt-0.5 text-emerald-600 focus:ring-emerald-600 cursor-pointer"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-gray-900 block">
+                        Published (Live on Boutique)
+                      </span>
+                      <span className="text-[10.5px] text-gray-500 block mt-0.5 leading-snug">
+                        Product is immediately visible and purchasable by store customers.
+                      </span>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`flex items-start gap-3 p-3 rounded-2xl border transition-all cursor-pointer ${
+                      data.status === 'draft'
+                        ? 'bg-gray-100 border-gray-400 shadow-2xs'
+                        : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="status"
+                      value="draft"
+                      checked={data.status === 'draft'}
+                      onChange={() => setData({ ...data, status: 'draft' })}
+                      className="mt-0.5 text-black focus:ring-black cursor-pointer"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-gray-900 block">
+                        Draft (Hidden from Storefront)
+                      </span>
+                      <span className="text-[10.5px] text-gray-500 block mt-0.5 leading-snug">
+                        Save all details and images privately without displaying on public catalog.
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
               {/* Card 3: Media Images */}
               <div className="bg-white p-6 rounded-3xl border border-gray-200/80 shadow-2xs">
                 <ProductMediaManager

@@ -28,6 +28,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 
+import { AdminPagination, PaginationData } from '@/components/admin/AdminPagination';
+
 interface OrderItemData {
   id: number;
   product_name: string;
@@ -60,6 +62,7 @@ interface CustomerItem {
   postal_code?: string;
   address?: string;
   status?: string;
+  block_reason?: string;
   notes?: string;
   total_orders: number;
   total_spent: number;
@@ -70,21 +73,28 @@ interface CustomerItem {
 }
 
 interface CustomersProps {
-  customers: CustomerItem[];
+  customers: PaginationData<CustomerItem> | CustomerItem[];
   activeCount: number;
   archivedCount: number;
   filters: {
     search: string;
     status: string;
+    per_page?: number;
   };
 }
 
 export default function Index({
-  customers = [],
+  customers,
   activeCount = 0,
   archivedCount = 0,
   filters,
 }: CustomersProps) {
+  const isPaginated = !Array.isArray(customers) && 'data' in customers;
+  const customerList: CustomerItem[] = isPaginated
+    ? (customers as PaginationData<CustomerItem>).data
+    : (customers as CustomerItem[]);
+  const paginationData = isPaginated ? (customers as PaginationData<CustomerItem>) : null;
+
   const [searchTerm, setSearchTerm] = useState(filters.search || '');
   const [currentTab, setCurrentTab] = useState<'active' | 'archived'>(
     (filters.status as any) === 'archived' ? 'archived' : 'active'
@@ -105,6 +115,8 @@ export default function Index({
     postal_code: '',
     address: '',
     status: 'active',
+    block_reason: '',
+    send_email: true,
     notes: '',
   });
   const [processing, setProcessing] = useState(false);
@@ -144,6 +156,8 @@ export default function Index({
       postal_code: '',
       address: '',
       status: 'active',
+      block_reason: '',
+      send_email: true,
       notes: '',
     });
     setErrorMsg(null);
@@ -161,6 +175,8 @@ export default function Index({
       postal_code: c.postal_code || '',
       address: c.address || '',
       status: c.status || 'active',
+      block_reason: c.block_reason || '',
+      send_email: true,
       notes: c.notes || '',
     });
     setErrorMsg(null);
@@ -330,8 +346,8 @@ export default function Index({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 font-medium">
-              {customers.length > 0 ? (
-                customers.map((c) => (
+              {customerList.length > 0 ? (
+                customerList.map((c) => (
                   <tr key={c.id} className="hover:bg-gray-50/60 transition-colors">
                     <td className="py-4 px-5">
                       <div className="flex items-center gap-3">
@@ -361,19 +377,26 @@ export default function Index({
                       </div>
                     </td>
                     <td className="py-4 px-5">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-[6px] text-[10.5px] font-extrabold uppercase ${
-                          c.status === 'vip'
-                            ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                            : c.status === 'blocked'
-                            ? 'bg-rose-100 text-rose-800'
-                            : c.status === 'inactive'
-                            ? 'bg-gray-100 text-gray-600'
-                            : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                        }`}
-                      >
-                        {c.status || 'Active'}
-                      </span>
+                      <div className="space-y-1">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-[6px] text-[10.5px] font-extrabold uppercase ${
+                            c.status === 'vip'
+                              ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                              : c.status === 'blocked'
+                              ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                              : c.status === 'inactive'
+                              ? 'bg-gray-100 text-gray-600'
+                              : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                          }`}
+                        >
+                          {c.status === 'blocked' ? 'Blocked' : c.status || 'Active'}
+                        </span>
+                        {c.status === 'blocked' && c.block_reason && (
+                          <span className="block text-[10px] text-rose-600 truncate max-w-[140px] italic">
+                            {c.block_reason}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-4 px-5 font-bold text-gray-900">
                       {c.total_orders} order(s)
@@ -444,6 +467,9 @@ export default function Index({
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Footer */}
+        {paginationData && <AdminPagination pagination={paginationData} />}
       </div>
 
       {/* VIEW CUSTOMER FULL DETAILS & ORDERS MODAL */}
@@ -764,15 +790,60 @@ export default function Index({
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white font-medium"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white font-bold"
                   >
                     <option value="active">Active Client</option>
-                    <option value="vip">VIP Heirloom Member</option>
                     <option value="inactive">Inactive</option>
-                    <option value="blocked">Blocked</option>
+                    <option value="vip">VIP Heirloom Member</option>
+                    <option value="blocked">Blocked (Suspended)</option>
                   </select>
                 </div>
               </div>
+
+              {/* Dynamic Block / Suspension Reason Card */}
+              {formData.status === 'blocked' && (
+                <div className="p-4 bg-rose-50/80 border border-rose-200 rounded-[10px] space-y-3 animate-fade-in">
+                  <div className="flex items-start gap-2 text-rose-800">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-bold">Account Suspension Details</h4>
+                      <p className="text-[11px] text-rose-600 leading-snug">
+                        Specify the reason for blocking this customer. You can optionally send an automated explanation email.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-rose-900 mb-1">
+                      Reason for Blocking (Optional)
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={formData.block_reason}
+                      onChange={(e) => setFormData({ ...formData, block_reason: e.target.value })}
+                      placeholder="e.g. Fraudulent chargeback history, suspicious checkout activity, or policy violation..."
+                      className="w-full bg-white border border-rose-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-rose-600"
+                    />
+                  </div>
+
+                  <label className="flex items-start gap-2.5 p-2 bg-white/90 border border-rose-200 rounded-[8px] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.send_email}
+                      onChange={(e) => setFormData({ ...formData, send_email: e.target.checked })}
+                      className="mt-0.5 w-4 h-4 text-rose-600 focus:ring-rose-500 rounded-xs cursor-pointer"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-gray-900 block">
+                        Send Suspension Notice Email to Client
+                      </span>
+                      <span className="text-[10.5px] text-gray-500 block leading-snug">
+                        Sends an email notice to {formData.email || 'customer'} containing the reason above and support concierge contact.
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">Street Address</label>

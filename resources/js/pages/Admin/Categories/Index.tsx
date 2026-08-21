@@ -5,6 +5,8 @@ import { DeleteConfirmModal } from '@/components/admin/DeleteConfirmModal';
 import { SingleImageUploader } from '@/components/admin/SingleImageUploader';
 import { Plus, Edit2, Trash2, FolderTree, X, Save } from 'lucide-react';
 
+import { AdminPagination, PaginationData } from '@/components/admin/AdminPagination';
+
 interface CategoryItem {
   id: number;
   name: string;
@@ -15,10 +17,16 @@ interface CategoryItem {
 }
 
 interface CategoriesProps {
-  categories: CategoryItem[];
+  categories: PaginationData<CategoryItem> | CategoryItem[];
 }
 
-export default function Index({ categories = [] }: CategoriesProps) {
+export default function Index({ categories }: CategoriesProps) {
+  const isPaginated = !Array.isArray(categories) && 'data' in categories;
+  const categoryList: CategoryItem[] = isPaginated
+    ? (categories as PaginationData<CategoryItem>).data
+    : (categories as CategoryItem[]);
+  const paginationData = isPaginated ? (categories as PaginationData<CategoryItem>) : null;
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryItem | null>(null);
 
@@ -99,23 +107,23 @@ export default function Index({ categories = [] }: CategoriesProps) {
         </button>
       </div>
 
-      {/* Category Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {categories.map((cat) => (
+      {/* Categories Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {categoryList.map((cat) => (
           <div
             key={cat.id}
-            className="bg-white rounded-3xl border border-gray-200/80 shadow-2xs overflow-hidden flex flex-col justify-between group"
+            className="bg-white rounded-3xl border border-gray-200/80 shadow-2xs overflow-hidden group hover:border-black transition-all"
           >
-            <div className="aspect-4/3 overflow-hidden bg-gray-100 relative">
+            <div className="relative aspect-4/3 bg-gray-100 overflow-hidden">
               {cat.image ? (
                 <img
                   src={cat.image}
                   alt={cat.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  <FolderTree className="w-10 h-10" />
+                <div className="w-full h-full flex items-center justify-center text-gray-300">
+                  <FolderTree className="w-12 h-12 stroke-[1]" />
                 </div>
               )}
               <span className="absolute top-3 right-3 bg-white/90 backdrop-blur-xs text-black text-[11px] font-extrabold px-2.5 py-1 rounded-full shadow-2xs">
@@ -149,6 +157,13 @@ export default function Index({ categories = [] }: CategoriesProps) {
           </div>
         ))}
       </div>
+
+      {/* Pagination Footer */}
+      {paginationData && (
+        <div className="bg-white rounded-2xl border border-gray-200/80 shadow-2xs overflow-hidden">
+          <AdminPagination pagination={paginationData} />
+        </div>
+      )}
 
       {/* Create/Edit Category Modal */}
       {modalOpen && (

@@ -19,7 +19,17 @@ class ProductController extends Controller
 {
     public function index(Request $request): Response
     {
+        $status = $request->query('status', 'all');
+        $perPage = (int) $request->query('per_page', 10);
+        if (! in_array($perPage, [10, 15, 20, 50, 100])) {
+            $perPage = 10;
+        }
+
         $query = Product::with(['category', 'variants', 'collections'])->latest();
+
+        if ($status !== 'all') {
+            $query->where('status', $status);
+        }
 
         if ($request->filled('search')) {
             $search = $request->query('search');
@@ -33,15 +43,22 @@ class ProductController extends Controller
             $query->where('category_name', 'like', "%{$request->query('category')}%");
         }
 
-        $products = $query->get();
+        $products = $query->paginate($perPage)->withQueryString();
         $categories = Category::all();
 
         return Inertia::render('Admin/Products/Index', [
             'products' => $products,
             'categories' => $categories,
+            'statusCounts' => [
+                'all' => Product::count(),
+                'published' => Product::where('status', 'published')->count(),
+                'draft' => Product::where('status', 'draft')->count(),
+            ],
             'filters' => [
                 'search' => $request->query('search', ''),
                 'category' => $request->query('category', 'all'),
+                'status' => $status,
+                'per_page' => $perPage,
             ],
         ]);
     }
@@ -79,10 +96,13 @@ class ProductController extends Controller
             'in_stock' => 'boolean',
             'is_featured' => 'boolean',
             'is_best_seller' => 'boolean',
+            'status' => 'nullable|string|in:published,draft',
             'shipping_type' => 'nullable|string|in:default,free,flat_rate,exclude_free_shipping',
             'shipping_fee' => 'nullable|numeric|min:0',
             'variants' => 'nullable|array',
         ]);
+
+        $validated['status'] = $validated['status'] ?? 'published';
 
         $imagesList = array_values(array_filter($request->input('images', [])));
         if (empty($imagesList) && ! empty($validated['image'])) {
@@ -180,10 +200,13 @@ class ProductController extends Controller
             'in_stock' => 'boolean',
             'is_featured' => 'boolean',
             'is_best_seller' => 'boolean',
+            'status' => 'nullable|string|in:published,draft',
             'shipping_type' => 'nullable|string|in:default,free,flat_rate,exclude_free_shipping',
             'shipping_fee' => 'nullable|numeric|min:0',
             'variants' => 'nullable|array',
         ]);
+
+        $validated['status'] = $validated['status'] ?? ($product->status ?? 'published');
 
         $imagesList = array_values(array_filter($request->input('images', [])));
         if (empty($imagesList) && ! empty($validated['image'])) {
@@ -232,6 +255,53 @@ class ProductController extends Controller
         }
 
         return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
+    }
+
+    public function bulkAction(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'action' => 'required|string|in:delete,publish,draft',
+            'product_ids' => 'required|array|min:1',
+            'product_ids.*' => 'exists:products,id',
+        ]);
+
+        $count = count($validated['product_ids']);
+
+        if ($validated['action'] === 'delete') {
+            Product::whereIn('id', $validated['product_ids'])->delete();
+
+            return back()->with('success', "Successfully deleted {$count} products.");
+        }
+
+        if ($validated['action'] === 'publish') {
+            Product::whereIn('id', $validated['product_ids'])->update(['status' => 'published']);
+
+            return back()->with('success', "Successfully published {$count} products to storefront.");
+        }
+
+        if ($validated['action'] === 'draft') {
+            Product::whereIn('id', $validated['product_ids'])->update(['status' => 'draft']);
+
+            return back()->with('success', "Successfully set {$count} products to draft.");
+        }
+
+        return back();
+    }
+
+    public function toggleStatus(Product $product, Request $request)
+    {
+        $newStatus = $product->status === 'draft' ? 'published' : 'draft';
+        $product->update(['status' => $newStatus]);
+
+        if ($request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return response()->json([
+                'success' => true,
+                'status' => $newStatus,
+                'message' => "Product status changed to {$newStatus}.",
+            ]);
+        }
+
+        return back()->with('success', "Product status changed to {$newStatus}.");
     }
 
     public function uploadMedia(Request $request): JsonResponse

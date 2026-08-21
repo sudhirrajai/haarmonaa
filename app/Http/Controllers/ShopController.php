@@ -48,7 +48,11 @@ class ShopController extends Controller
 
     private function getProducts(): array
     {
-        $products = Product::with(['category', 'categories', 'variants'])->get();
+        $products = Product::with(['category', 'categories', 'variants'])
+            ->where(function ($q) {
+                $q->whereNull('status')->orWhere('status', 'published');
+            })
+            ->get();
 
         return $products->map(fn ($p) => $this->formatProduct($p))->toArray();
     }

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Search, Eye, ShoppingBag, Clock, CheckCircle2, Truck, AlertCircle, XCircle } from 'lucide-react';
+import { AdminPagination, PaginationData } from '@/components/admin/AdminPagination';
 
 interface OrderItem {
   id: number;
@@ -23,10 +24,11 @@ interface OrderItem {
 }
 
 interface OrdersIndexProps {
-  orders: OrderItem[];
+  orders: PaginationData<OrderItem> | OrderItem[];
   filters: {
     status: string;
     search: string;
+    per_page?: number;
   };
   statusCounts: {
     all: number;
@@ -38,18 +40,32 @@ interface OrdersIndexProps {
   };
 }
 
-export default function Index({ orders = [], filters, statusCounts }: OrdersIndexProps) {
+export default function Index({ orders, filters, statusCounts }: OrdersIndexProps) {
+  const isPaginated = !Array.isArray(orders) && 'data' in orders;
+  const orderList: OrderItem[] = isPaginated
+    ? (orders as PaginationData<OrderItem>).data
+    : (orders as OrderItem[]);
+  const paginationData = isPaginated ? (orders as PaginationData<OrderItem>) : null;
+
   const [searchTerm, setSearchTerm] = useState(filters.search || '');
   const [selectedStatus, setSelectedStatus] = useState(filters.status || 'all');
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    router.get('/admin/orders', { status: selectedStatus, search: searchTerm }, { preserveState: true });
+    router.get(
+      '/admin/orders',
+      { status: selectedStatus, search: searchTerm, per_page: filters.per_page || 10 },
+      { preserveState: true }
+    );
   };
 
   const handleStatusTab = (st: string) => {
     setSelectedStatus(st);
-    router.get('/admin/orders', { status: st, search: searchTerm }, { preserveState: true });
+    router.get(
+      '/admin/orders',
+      { status: st, search: searchTerm, per_page: filters.per_page || 10 },
+      { preserveState: true }
+    );
   };
 
   const getStatusBadge = (status: string) => {
@@ -138,8 +154,8 @@ export default function Index({ orders = [], filters, statusCounts }: OrdersInde
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 font-medium">
-              {orders.length > 0 ? (
-                orders.map((o) => (
+              {orderList.length > 0 ? (
+                orderList.map((o) => (
                   <tr key={o.id} className="hover:bg-gray-50/60 transition-colors">
                     <td className="py-4 px-5">
                       <span className="font-extrabold text-gray-900 block">{o.order_number}</span>
@@ -197,6 +213,9 @@ export default function Index({ orders = [], filters, statusCounts }: OrdersInde
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Footer */}
+        {paginationData && <AdminPagination pagination={paginationData} />}
       </div>
     </AdminLayout>
   );

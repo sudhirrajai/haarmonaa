@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { DeleteConfirmModal } from '@/components/admin/DeleteConfirmModal';
 import { Plus, Search, Tag, Edit2, Trash2, CheckCircle2, XCircle, Clock, Percent, IndianRupee, Layers } from 'lucide-react';
+import { AdminPagination, PaginationData } from '@/components/admin/AdminPagination';
 
 interface CouponItem {
   id: number;
@@ -22,25 +23,32 @@ interface CouponItem {
 }
 
 interface CouponsIndexProps {
-  coupons: CouponItem[];
+  coupons: PaginationData<CouponItem> | CouponItem[];
   filters: {
     search: string;
+    per_page?: number;
   };
 }
 
-export default function Index({ coupons = [], filters }: CouponsIndexProps) {
+export default function Index({ coupons, filters }: CouponsIndexProps) {
+  const isPaginated = !Array.isArray(coupons) && 'data' in coupons;
+  const initialList: CouponItem[] = isPaginated
+    ? (coupons as PaginationData<CouponItem>).data
+    : (coupons as CouponItem[]);
+  const paginationData = isPaginated ? (coupons as PaginationData<CouponItem>) : null;
+
   const [searchTerm, setSearchTerm] = useState(filters.search || '');
-  const [couponList, setCouponList] = useState<CouponItem[]>(coupons);
+  const [couponList, setCouponList] = useState<CouponItem[]>(initialList);
 
   useEffect(() => {
-    setCouponList(coupons);
+    setCouponList(initialList);
   }, [coupons]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     router.get(
       '/admin/coupons',
-      { search: searchTerm },
+      { search: searchTerm, per_page: filters.per_page || 10 },
       { preserveState: true, replace: true }
     );
   };
@@ -310,6 +318,9 @@ export default function Index({ coupons = [], filters }: CouponsIndexProps) {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Footer */}
+        {paginationData && <AdminPagination pagination={paginationData} />}
       </div>
 
       {/* Delete Confirmation Modal */}

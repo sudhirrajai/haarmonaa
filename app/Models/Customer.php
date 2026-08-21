@@ -19,6 +19,7 @@ class Customer extends Model
         'postal_code',
         'address',
         'status',
+        'block_reason',
         'notes',
         'total_orders',
         'total_spent',

@@ -31,6 +31,7 @@ class Product extends Model
         'stock_quantity',
         'is_featured',
         'is_best_seller',
+        'status',
         'shipping_type',
         'shipping_fee',
     ];
