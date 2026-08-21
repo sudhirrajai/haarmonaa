@@ -127,11 +127,31 @@ export default function Home({
   const [instaMessage, setInstaMessage] = useState<string | null>(null);
 
   // States
-  const [slides, setSlides] = useState<SplitSlideCMS[]>(initialSlides);
-  const [seasonal, setSeasonal] = useState<SeasonalCollectionCMS>(initialSeasonal);
-  const [banners, setBanners] = useState<PromoBannerCMS[]>(initialBanners);
-  const [instagram, setInstagram] = useState(initialInstagram);
-  const [features, setFeatures] = useState<StoreFeatureItem[]>(initialFeatures);
+  const [slides, setSlides] = useState<SplitSlideCMS[]>(Array.isArray(initialSlides) ? initialSlides : []);
+  const [seasonal, setSeasonal] = useState<SeasonalCollectionCMS>(
+    initialSeasonal || {
+      enabled: false,
+      title: '',
+      subtitle: '',
+      badge: '',
+      description: '',
+      category_slug: 'all',
+      product_ids: [],
+      banner_image: '',
+      button_text: '',
+      button_link: '',
+    }
+  );
+  const [banners, setBanners] = useState<PromoBannerCMS[]>(Array.isArray(initialBanners) ? initialBanners : []);
+  const [instagram, setInstagram] = useState(
+    initialInstagram || {
+      url: 'https://instagram.com/haarmonaa',
+      handle: '@haarmonaa',
+      access_token: '',
+      posts: [],
+    }
+  );
+  const [features, setFeatures] = useState<StoreFeatureItem[]>(Array.isArray(initialFeatures) ? initialFeatures : []);
 
   // --- 1. Split Hero Slider Handlers ---
   const handleAddSlide = () => {

@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -250,9 +251,23 @@ class PageController extends Controller
         $rawFeatures = Setting::get('store_features');
         $storeFeatures = $rawFeatures ? json_decode($rawFeatures, true) : $defaultFeatures;
 
-        $categories = Category::all(['id', 'name', 'slug']);
-        $collections = Collection::all(['id', 'name', 'slug']);
-        $products = Product::all(['id', 'name', 'price', 'image', 'category_name', 'category_id']);
+        try {
+            $categories = Schema::hasTable('categories') ? Category::select(['id', 'name', 'slug'])->get() : collect();
+        } catch (\Throwable $e) {
+            $categories = collect();
+        }
+
+        try {
+            $collections = Schema::hasTable('collections') ? Collection::select(['id', 'name', 'slug'])->get() : collect();
+        } catch (\Throwable $e) {
+            $collections = collect();
+        }
+
+        try {
+            $products = Schema::hasTable('products') ? Product::select(['id', 'name', 'price', 'image', 'category_name', 'category_id'])->limit(100)->get() : collect();
+        } catch (\Throwable $e) {
+            $products = collect();
+        }
 
         return Inertia::render('Admin/Pages/Home', [
             'slides' => $slides,
