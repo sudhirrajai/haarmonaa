@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\Order;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -32,7 +33,21 @@ class CustomerController extends Controller
             });
         }
 
-        $customers = $query->get();
+        $customers = $query->get()->map(function ($customer) {
+            $orders = Order::with('items')
+                ->where('customer_email', $customer->email)
+                ->latest()
+                ->get();
+
+            $customer->orders = $orders;
+            if ($orders->isNotEmpty()) {
+                $customer->total_orders = $orders->count();
+                $customer->total_spent = (float) $orders->sum('total_amount');
+            }
+
+            return $customer;
+        });
+
         $activeCount = Customer::count();
         $archivedCount = Customer::onlyTrashed()->count();
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { DeleteConfirmModal } from '@/components/admin/DeleteConfirmModal';
 import { SingleImageUploader } from '@/components/admin/SingleImageUploader';
 import { Plus, Edit2, Trash2, FolderTree, X, Save } from 'lucide-react';
 
@@ -56,10 +57,22 @@ export default function Index({ categories = [] }: CategoriesProps) {
     }
   };
 
+  const [categoryToDelete, setCategoryToDelete] = useState<{ id: number; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const handleDelete = (id: number, name: string) => {
-    if (confirm(`Are you sure you want to delete category "${name}"?`)) {
-      router.delete(`/admin/categories/${id}`);
-    }
+    setCategoryToDelete({ id, name });
+  };
+
+  const confirmDelete = () => {
+    if (!categoryToDelete) return;
+    setDeleting(true);
+    router.delete(`/admin/categories/${categoryToDelete.id}`, {
+      onFinish: () => {
+        setDeleting(false);
+        setCategoryToDelete(null);
+      },
+    });
   };
 
   return (
@@ -201,6 +214,18 @@ export default function Index({ categories = [] }: CategoriesProps) {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={!!categoryToDelete}
+        onClose={() => setCategoryToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete Jewelry Category?"
+        itemName={categoryToDelete?.name}
+        message={`Are you sure you want to delete category "${categoryToDelete?.name}"? Any products assigned to this category will become uncategorized.`}
+        confirmLabel="Delete Category"
+        processing={deleting}
+      />
     </AdminLayout>
   );
 }

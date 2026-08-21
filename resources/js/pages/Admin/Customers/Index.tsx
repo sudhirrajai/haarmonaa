@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { DeleteConfirmModal } from '@/components/admin/DeleteConfirmModal';
 import {
   Search,
   Users,
@@ -17,8 +18,37 @@ import {
   AlertCircle,
   Archive,
   UserCheck,
-  ShieldAlert,
+  Eye,
+  Calendar,
+  IndianRupee,
+  Package,
+  ExternalLink,
+  CreditCard,
+  Clock,
+  Sparkles,
 } from 'lucide-react';
+
+interface OrderItemData {
+  id: number;
+  product_name: string;
+  product_image?: string;
+  unit_price: number;
+  quantity: number;
+  subtotal: number;
+}
+
+interface OrderData {
+  id: number;
+  order_number: string;
+  created_at: string;
+  status: string;
+  payment_method: string;
+  payment_status: string;
+  total_amount: number;
+  subtotal: number;
+  discount_amount: number;
+  items?: OrderItemData[];
+}
 
 interface CustomerItem {
   id: number;
@@ -36,6 +66,7 @@ interface CustomerItem {
   avatar?: string;
   deleted_at?: string | null;
   created_at?: string;
+  orders?: OrderData[];
 }
 
 interface CustomersProps {
@@ -59,7 +90,10 @@ export default function Index({
     (filters.status as any) === 'archived' ? 'archived' : 'active'
   );
 
-  // Modal State
+  // View Modal State
+  const [viewCustomer, setViewCustomer] = useState<CustomerItem | null>(null);
+
+  // Edit / Create Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<CustomerItem | null>(null);
   const [formData, setFormData] = useState({
@@ -163,7 +197,7 @@ export default function Index({
     }
   };
 
-  const handleSoftDelete = (customer: CustomerItem) => {
+  const handleSoftDeletePrompt = (customer: CustomerItem) => {
     setCustomerToDelete(customer);
     setIsPermanentDelete(false);
     setDeleteModalOpen(true);
@@ -349,6 +383,15 @@ export default function Index({
                     </td>
                     <td className="py-4 px-5 text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        {/* View Customer Button */}
+                        <button
+                          onClick={() => setViewCustomer(c)}
+                          className="p-2 text-gray-600 hover:text-black hover:bg-gray-100 rounded-[8px] transition-colors cursor-pointer"
+                          title="View Client Details & Orders"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+
                         {currentTab === 'active' ? (
                           <>
                             <button
@@ -359,7 +402,7 @@ export default function Index({
                               <Edit2 className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => handleSoftDelete(c)}
+                              onClick={() => handleSoftDeletePrompt(c)}
                               className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-[8px] transition-colors cursor-pointer"
                               title="Archive Client (Soft Delete)"
                             >
@@ -403,6 +446,249 @@ export default function Index({
         </div>
       </div>
 
+      {/* VIEW CUSTOMER FULL DETAILS & ORDERS MODAL */}
+      {viewCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs"
+            onClick={() => setViewCustomer(null)}
+          />
+
+          <div className="relative bg-white w-full max-w-3xl rounded-[10px] shadow-2xl p-6 sm:p-8 z-10 space-y-6 animate-scale-in max-h-[90vh] overflow-y-auto border border-gray-100">
+            {/* Header */}
+            <div className="flex items-start justify-between pb-4 border-b border-gray-100">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-[#111111] text-amber-300 font-extrabold text-lg flex items-center justify-center shadow-xs shrink-0">
+                  {viewCustomer.name.substring(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <h3 className="text-xl font-extrabold text-gray-900 tracking-tight">
+                      {viewCustomer.name}
+                    </h3>
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-[6px] text-[10.5px] font-extrabold uppercase ${
+                        viewCustomer.status === 'vip'
+                          ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                          : viewCustomer.status === 'blocked'
+                          ? 'bg-rose-100 text-rose-800'
+                          : viewCustomer.status === 'inactive'
+                          ? 'bg-gray-100 text-gray-600'
+                          : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                      }`}
+                    >
+                      {viewCustomer.status || 'Active'}
+                    </span>
+                  </div>
+                  <span className="text-xs text-gray-500 block mt-0.5">
+                    Client ID #{viewCustomer.id} • Registered Member
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setViewCustomer(null)}
+                className="p-1.5 text-gray-400 hover:text-gray-900 rounded-[8px] hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Quick Metrics KPI Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 bg-gray-50/80 rounded-[8px] border border-gray-200/60">
+                <span className="text-[11px] font-bold text-gray-500 block uppercase">Total Orders</span>
+                <span className="text-lg font-extrabold text-gray-900 mt-0.5 block">
+                  {viewCustomer.total_orders}
+                </span>
+              </div>
+
+              <div className="p-3.5 bg-gray-50/80 rounded-[8px] border border-gray-200/60">
+                <span className="text-[11px] font-bold text-gray-500 block uppercase">Lifetime Spent</span>
+                <span className="text-lg font-extrabold text-gray-900 mt-0.5 block">
+                  ₹{Number(viewCustomer.total_spent).toFixed(2)}
+                </span>
+              </div>
+
+              <div className="p-3.5 bg-gray-50/80 rounded-[8px] border border-gray-200/60">
+                <span className="text-[11px] font-bold text-gray-500 block uppercase">Avg Order Value</span>
+                <span className="text-lg font-extrabold text-gray-900 mt-0.5 block">
+                  ₹{viewCustomer.total_orders > 0 ? (viewCustomer.total_spent / viewCustomer.total_orders).toFixed(2) : '0.00'}
+                </span>
+              </div>
+
+              <div className="p-3.5 bg-gray-50/80 rounded-[8px] border border-gray-200/60">
+                <span className="text-[11px] font-bold text-gray-500 block uppercase">Location</span>
+                <span className="text-xs font-extrabold text-gray-900 mt-1 block truncate">
+                  {viewCustomer.city || 'India'}
+                </span>
+              </div>
+            </div>
+
+            {/* Contact & Address Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="p-4 bg-white rounded-[8px] border border-gray-200/80 space-y-2">
+                <h4 className="font-bold text-gray-900 uppercase tracking-wider text-[11px] pb-1 border-b border-gray-100 flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5 text-gray-500" />
+                  <span>Contact Information</span>
+                </h4>
+                <div className="space-y-1.5 text-gray-600">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Email:</span>
+                    <a href={`mailto:${viewCustomer.email}`} className="font-bold text-gray-900 hover:underline">
+                      {viewCustomer.email}
+                    </a>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Phone:</span>
+                    <span className="font-bold text-gray-900">{viewCustomer.phone || 'Not provided'}</span>
+                  </div>
+                  {viewCustomer.notes && (
+                    <div className="pt-1 text-[11px] text-gray-500 italic bg-amber-50/60 p-2 rounded-[6px] border border-amber-200/60">
+                      Note: {viewCustomer.notes}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-4 bg-white rounded-[8px] border border-gray-200/80 space-y-2">
+                <h4 className="font-bold text-gray-900 uppercase tracking-wider text-[11px] pb-1 border-b border-gray-100 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-gray-500" />
+                  <span>Shipping Address</span>
+                </h4>
+                <div className="text-gray-600 space-y-1">
+                  <p className="font-bold text-gray-900">{viewCustomer.address || 'No street address on file'}</p>
+                  <p>{[viewCustomer.city, viewCustomer.state, viewCustomer.postal_code].filter(Boolean).join(', ') || 'India'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Orders History Table */}
+            <div className="space-y-3">
+              <h4 className="font-bold text-gray-900 text-sm flex items-center gap-2">
+                <Package className="w-4 h-4 text-[#d0473e]" />
+                <span>Client Orders History ({viewCustomer.orders?.length || 0})</span>
+              </h4>
+
+              {viewCustomer.orders && viewCustomer.orders.length > 0 ? (
+                <div className="border border-gray-200/80 rounded-[8px] overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-gray-50/80 text-gray-500 font-bold border-b border-gray-100">
+                      <tr>
+                        <th className="py-2.5 px-4">Order #</th>
+                        <th className="py-2.5 px-4">Date</th>
+                        <th className="py-2.5 px-4">Items</th>
+                        <th className="py-2.5 px-4">Status</th>
+                        <th className="py-2.5 px-4">Payment</th>
+                        <th className="py-2.5 px-4 text-right">Total Amount</th>
+                        <th className="py-2.5 px-4 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {viewCustomer.orders.map((ord) => (
+                        <tr key={ord.id} className="hover:bg-gray-50/50">
+                          <td className="py-3 px-4 font-mono font-bold text-gray-900">
+                            {ord.order_number}
+                          </td>
+                          <td className="py-3 px-4 text-gray-500">
+                            {new Date(ord.created_at).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-1.5 max-w-[200px] overflow-hidden">
+                              {ord.items && ord.items.length > 0 ? (
+                                ord.items.slice(0, 3).map((it, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="w-7 h-7 rounded-[4px] bg-gray-50 border border-gray-200 overflow-hidden shrink-0"
+                                    title={`${it.quantity}x ${it.product_name}`}
+                                  >
+                                    {it.product_image ? (
+                                      <img src={it.product_image} alt={it.product_name} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <span className="text-[9px] flex items-center justify-center h-full text-gray-400">💍</span>
+                                    )}
+                                  </div>
+                                ))
+                              ) : (
+                                <span className="text-gray-400 text-[11px]">—</span>
+                              )}
+                              {ord.items && ord.items.length > 3 && (
+                                <span className="text-[10px] text-gray-500 font-bold">+{ord.items.length - 3}</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-[4px] text-[10px] font-extrabold uppercase ${
+                                ord.status === 'delivered'
+                                  ? 'bg-emerald-50 text-emerald-800'
+                                  : ord.status === 'processing'
+                                  ? 'bg-blue-50 text-blue-800'
+                                  : ord.status === 'cancelled'
+                                  ? 'bg-rose-50 text-rose-800'
+                                  : 'bg-amber-50 text-amber-800'
+                              }`}
+                            >
+                              {ord.status}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-gray-600 font-mono text-[11px]">
+                            {ord.payment_method}
+                          </td>
+                          <td className="py-3 px-4 text-right font-extrabold text-gray-900">
+                            ₹{Number(ord.total_amount).toFixed(2)}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <Link
+                              href={`/admin/orders/${ord.id}`}
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-gray-600 hover:text-black hover:underline"
+                            >
+                              <span>View</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="p-6 bg-gray-50/70 border border-gray-200/60 rounded-[8px] text-center text-gray-400 text-xs">
+                  No previous orders placed by this customer yet.
+                </div>
+              )}
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => setViewCustomer(null)}
+                className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-[8px] transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const target = viewCustomer;
+                  setViewCustomer(null);
+                  openEditModal(target);
+                }}
+                className="px-5 py-2.5 bg-[#111111] hover:bg-[#d0473e] text-white text-xs font-bold uppercase tracking-wider rounded-[8px] transition-all cursor-pointer"
+              >
+                Edit Client Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* CREATE / EDIT CUSTOMER MODAL */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -411,7 +697,7 @@ export default function Index({
             onClick={() => setModalOpen(false)}
           />
 
-          <div className="relative bg-white w-full max-w-lg rounded-[10px] shadow-2xl p-6 sm:p-8 z-10 space-y-5 animate-fade-in max-h-[90vh] overflow-y-auto">
+          <div className="relative bg-white w-full max-w-lg rounded-[10px] shadow-2xl p-6 sm:p-8 z-10 space-y-5 animate-scale-in max-h-[90vh] overflow-y-auto border border-gray-100">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <h3 className="text-lg font-bold text-gray-900">
                 {editingCustomer ? 'Edit Client Profile' : 'Create Client Profile'}
@@ -566,69 +852,22 @@ export default function Index({
         </div>
       )}
 
-      {/* DELETE / ARCHIVE CONFIRMATION MODAL */}
-      {deleteModalOpen && customerToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs"
-            onClick={() => setDeleteModalOpen(false)}
-          />
-
-          <div className="relative bg-white w-full max-w-md rounded-[10px] shadow-2xl p-6 z-10 space-y-4 animate-fade-in">
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  isPermanentDelete ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-700'
-                }`}
-              >
-                {isPermanentDelete ? (
-                  <ShieldAlert className="w-5 h-5" />
-                ) : (
-                  <Archive className="w-5 h-5" />
-                )}
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-gray-900">
-                  {isPermanentDelete ? 'Permanently Delete Client?' : 'Archive Client Profile?'}
-                </h3>
-                <span className="text-xs text-gray-500">{customerToDelete.name}</span>
-              </div>
-            </div>
-
-            <p className="text-xs text-gray-600 leading-relaxed">
-              {isPermanentDelete
-                ? 'This action cannot be undone. All client information and records will be permanently removed.'
-                : 'Soft deleting moves this client to the archive while securely preserving their historical orders and expenditure data. You can restore this client anytime.'}
-            </p>
-
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={() => setDeleteModalOpen(false)}
-                className="px-4 py-2 text-xs font-bold text-gray-600 hover:text-black rounded-[8px]"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmDeleteAction}
-                disabled={processing}
-                className={`px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-[8px] text-white transition-all cursor-pointer ${
-                  isPermanentDelete
-                    ? 'bg-rose-600 hover:bg-rose-700'
-                    : 'bg-amber-600 hover:bg-amber-700'
-                }`}
-              >
-                {processing
-                  ? 'Processing...'
-                  : isPermanentDelete
-                  ? 'Permanently Delete'
-                  : 'Archive (Soft Delete)'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* REUSABLE DELETE CONFIRM MODAL */}
+      <DeleteConfirmModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={confirmDeleteAction}
+        title={isPermanentDelete ? 'Permanently Delete Client?' : 'Archive Client Profile?'}
+        itemName={customerToDelete?.name}
+        message={
+          isPermanentDelete
+            ? 'This action cannot be undone. All client information and records will be permanently removed.'
+            : 'Soft deleting moves this client to the archive while securely preserving their historical orders and expenditure data. You can restore this client anytime.'
+        }
+        confirmLabel={isPermanentDelete ? 'Permanently Delete' : 'Archive (Soft Delete)'}
+        variant={isPermanentDelete ? 'danger' : 'warning'}
+        processing={processing}
+      />
     </AdminLayout>
   );
 }

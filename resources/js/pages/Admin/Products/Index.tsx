@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { DeleteConfirmModal } from '@/components/admin/DeleteConfirmModal';
 import { Plus, Search, Filter, Edit2, Trash2, Eye, Gem, Check, X, ArrowUpDown, Star, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ProductItem {
@@ -133,10 +134,22 @@ export default function Index({ products = [], categories = [], filters }: Produ
     }
   };
 
+  const [productToDelete, setProductToDelete] = useState<{ id: number; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const handleDelete = (id: number, name: string) => {
-    if (confirm(`Are you sure you want to delete "${name}"?`)) {
-      router.delete(`/admin/products/${id}`);
-    }
+    setProductToDelete({ id, name });
+  };
+
+  const confirmDelete = () => {
+    if (!productToDelete) return;
+    setDeleting(true);
+    router.delete(`/admin/products/${productToDelete.id}`, {
+      onFinish: () => {
+        setDeleting(false);
+        setProductToDelete(null);
+      },
+    });
   };
 
   return (
@@ -371,6 +384,18 @@ export default function Index({ products = [], categories = [], filters }: Produ
           </table>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={!!productToDelete}
+        onClose={() => setProductToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete Jewelry Product?"
+        itemName={productToDelete?.name}
+        message={`Are you sure you want to delete "${productToDelete?.name}"? This will permanently remove its pricing, variants, and gallery assets from the boutique.`}
+        confirmLabel="Delete Product"
+        processing={deleting}
+      />
     </AdminLayout>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { DeleteConfirmModal } from '@/components/admin/DeleteConfirmModal';
 import { Plus, Edit2, Trash2, Sliders, X, Palette, Tag, Check, Sparkles } from 'lucide-react';
 import { SingleImageUploader } from '@/components/admin/SingleImageUploader';
 
@@ -74,10 +75,23 @@ export default function Index({ attributes = [] }: AttributesProps) {
     }
   };
 
+  const [attrToDelete, setAttrToDelete] = useState<{ id: number; name: string } | null>(null);
+  const [valueToDelete, setValueToDelete] = useState<{ id: number; name?: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const handleAttrDelete = (id: number, name: string) => {
-    if (confirm(`Delete attribute "${name}" and all its assigned variation terms?`)) {
-      router.delete(`/admin/attributes/${id}`);
-    }
+    setAttrToDelete({ id, name });
+  };
+
+  const confirmAttrDelete = () => {
+    if (!attrToDelete) return;
+    setDeleting(true);
+    router.delete(`/admin/attributes/${attrToDelete.id}`, {
+      onFinish: () => {
+        setDeleting(false);
+        setAttrToDelete(null);
+      },
+    });
   };
 
   const openAddValueModal = (attr: AttributeItem) => {
@@ -95,10 +109,19 @@ export default function Index({ attributes = [] }: AttributesProps) {
     });
   };
 
-  const handleValueDelete = (valueId: number) => {
-    if (confirm('Delete this term value?')) {
-      router.delete(`/admin/attribute-values/${valueId}`);
-    }
+  const handleValueDelete = (valueId: number, valueName?: string) => {
+    setValueToDelete({ id: valueId, name: valueName });
+  };
+
+  const confirmValueDelete = () => {
+    if (!valueToDelete) return;
+    setDeleting(true);
+    router.delete(`/admin/attribute-values/${valueToDelete.id}`, {
+      onFinish: () => {
+        setDeleting(false);
+        setValueToDelete(null);
+      },
+    });
   };
 
   const getTypeBadge = (type: string) => {
@@ -198,7 +221,7 @@ export default function Index({ attributes = [] }: AttributesProps) {
                       )}
                       <span>{val.name}</span>
                       <button
-                        onClick={() => handleValueDelete(val.id)}
+                        onClick={() => handleValueDelete(val.id, val.name)}
                         className="text-gray-300 group-hover:text-rose-500 hover:scale-110 transition-all cursor-pointer"
                         title="Remove Term"
                       >
@@ -397,6 +420,30 @@ export default function Index({ attributes = [] }: AttributesProps) {
           </div>
         </div>
       )}
+
+      {/* Delete Attribute Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={!!attrToDelete}
+        onClose={() => setAttrToDelete(null)}
+        onConfirm={confirmAttrDelete}
+        title="Delete Jewelry Attribute?"
+        itemName={attrToDelete?.name}
+        message={`Are you sure you want to delete attribute "${attrToDelete?.name}"? This will permanently delete this attribute and all its assigned variation terms across all jewelry products.`}
+        confirmLabel="Delete Attribute"
+        processing={deleting}
+      />
+
+      {/* Delete Attribute Term Value Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={!!valueToDelete}
+        onClose={() => setValueToDelete(null)}
+        onConfirm={confirmValueDelete}
+        title="Delete Term Value?"
+        itemName={valueToDelete?.name || 'Variation Term'}
+        message={`Are you sure you want to delete term value "${valueToDelete?.name || ''}"? Any product variants utilizing this term will have it unlinked.`}
+        confirmLabel="Delete Term Value"
+        processing={deleting}
+      />
     </AdminLayout>
   );
 }

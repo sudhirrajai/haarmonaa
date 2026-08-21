@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { DeleteConfirmModal } from '@/components/admin/DeleteConfirmModal';
 import { SingleImageUploader } from '@/components/admin/SingleImageUploader';
 import { Product } from '@/types/shop';
 import {
@@ -177,10 +178,22 @@ export default function CollectionsIndex({
     }
   };
 
+  const [collectionToDelete, setCollectionToDelete] = useState<{ id: number; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const handleDelete = (id: number, name: string) => {
-    if (confirm(`Are you sure you want to delete the collection "${name}"?`)) {
-      router.delete(`/admin/collections/${id}`);
-    }
+    setCollectionToDelete({ id, name });
+  };
+
+  const confirmDelete = () => {
+    if (!collectionToDelete) return;
+    setDeleting(true);
+    router.delete(`/admin/collections/${collectionToDelete.id}`, {
+      onFinish: () => {
+        setDeleting(false);
+        setCollectionToDelete(null);
+      },
+    });
   };
 
   // Filtered products for modal picker
@@ -604,6 +617,18 @@ export default function CollectionsIndex({
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={!!collectionToDelete}
+        onClose={() => setCollectionToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete Jewelry Collection?"
+        itemName={collectionToDelete?.name}
+        message={`Are you sure you want to delete the collection "${collectionToDelete?.name}"? Assigned products will remain intact in your inventory, but this curated collection and its banner will be removed.`}
+        confirmLabel="Delete Collection"
+        processing={deleting}
+      />
     </AdminLayout>
   );
 }

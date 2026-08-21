@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { DeleteConfirmModal } from '@/components/admin/DeleteConfirmModal';
 import { Plus, Search, Tag, Edit2, Trash2, CheckCircle2, XCircle, Clock, Percent, IndianRupee, Layers } from 'lucide-react';
 
 interface CouponItem {
@@ -82,10 +83,22 @@ export default function Index({ coupons = [], filters }: CouponsIndexProps) {
     }
   };
 
+  const [couponToDelete, setCouponToDelete] = useState<{ id: number; code: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const handleDelete = (id: number, code: string) => {
-    if (confirm(`Are you sure you want to delete coupon code "${code}"?`)) {
-      router.delete(`/admin/coupons/${id}`);
-    }
+    setCouponToDelete({ id, code });
+  };
+
+  const confirmDelete = () => {
+    if (!couponToDelete) return;
+    setDeleting(true);
+    router.delete(`/admin/coupons/${couponToDelete.id}`, {
+      onFinish: () => {
+        setDeleting(false);
+        setCouponToDelete(null);
+      },
+    });
   };
 
   const getStatusBadge = (c: CouponItem) => {
@@ -298,6 +311,18 @@ export default function Index({ coupons = [], filters }: CouponsIndexProps) {
           </table>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={!!couponToDelete}
+        onClose={() => setCouponToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete Coupon Voucher?"
+        itemName={couponToDelete?.code}
+        message={`Are you sure you want to delete coupon "${couponToDelete?.code}"? Customers will no longer be able to apply or stack this promo discount at checkout.`}
+        confirmLabel="Delete Coupon"
+        processing={deleting}
+      />
     </AdminLayout>
   );
 }
