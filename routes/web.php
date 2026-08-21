@@ -2,12 +2,12 @@
 
 use App\Http\Controllers\Admin\AttributeController as AdminAttributeController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
-use App\Http\Controllers\Admin\CmsController;
 use App\Http\Controllers\Admin\CollectionController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\PageController as AdminPageController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Auth\AuthController;
@@ -82,9 +82,20 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings.index');
     Route::post('/settings', [AdminSettingController::class, 'update'])->name('settings.update');
 
-    // Homepage CMS & Website Customizer
-    Route::get('/cms', [CmsController::class, 'index'])->name('cms.index');
-    Route::post('/cms/slider', [CmsController::class, 'updateSlider'])->name('cms.slider');
-    Route::post('/cms/seasonal-collection', [CmsController::class, 'updateSeasonalCollection'])->name('cms.seasonal');
-    Route::post('/cms/promo-banners', [CmsController::class, 'updatePromoBanners'])->name('cms.banners');
+    // Pages Management & Sections Builder
+    Route::get('/pages', [AdminPageController::class, 'index'])->name('pages.index');
+    Route::get('/pages/home', [AdminPageController::class, 'home'])->name('pages.home');
+    Route::post('/pages/home/instagram-fetch', [AdminPageController::class, 'fetchInstagram'])->name('pages.home.instagram-fetch');
+    Route::post('/pages/home/instagram', [AdminPageController::class, 'updateInstagram'])->name('pages.home.instagram');
+    Route::post('/pages/home/trust-badges', [AdminPageController::class, 'updateTrustBadges'])->name('pages.home.trust-badges');
+    Route::post('/pages/home/slider', [AdminPageController::class, 'updateSlider'])->name('pages.home.slider');
+    Route::post('/pages/home/seasonal-collection', [AdminPageController::class, 'updateSeasonalCollection'])->name('pages.home.seasonal');
+    Route::post('/pages/home/promo-banners', [AdminPageController::class, 'updatePromoBanners'])->name('pages.home.banners');
+    Route::get('/pages/product', [AdminPageController::class, 'product'])->name('pages.product');
+    Route::get('/pages/about', [AdminPageController::class, 'about'])->name('pages.about');
+    Route::get('/pages/contact', [AdminPageController::class, 'contact'])->name('pages.contact');
+    Route::get('/pages/faq', [AdminPageController::class, 'faq'])->name('pages.faq');
+
+    // Legacy CMS redirect
+    Route::redirect('/cms', '/admin/pages/home')->name('cms.index');
 });

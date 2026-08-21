@@ -20,6 +20,7 @@ import {
   Sparkles,
   Layers,
   Tag,
+  Layout,
 } from 'lucide-react';
 
 
@@ -278,22 +279,22 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Das
               {url.startsWith('/admin/coupons') && <ChevronRight className="w-3.5 h-3.5 text-gray-400" />}
             </Link>
 
-            {/* Homepage CMS Link */}
+            {/* Pages & Section Builder Link */}
             <Link
-              href="/admin/cms"
+              href="/admin/pages"
               className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
-                url.startsWith('/admin/cms')
+                url.startsWith('/admin/pages') || url.startsWith('/admin/cms')
                   ? 'bg-[#111111] text-white shadow-xs'
                   : 'text-gray-600 hover:text-black hover:bg-gray-100/70'
               }`}
             >
               <div className="flex items-center gap-3">
-                <Sparkles
-                  className={`w-4 h-4 ${url.startsWith('/admin/cms') ? 'text-amber-300' : 'text-gray-500'}`}
+                <Layout
+                  className={`w-4 h-4 ${url.startsWith('/admin/pages') || url.startsWith('/admin/cms') ? 'text-amber-300' : 'text-gray-500'}`}
                 />
-                <span>Homepage CMS</span>
+                <span>Pages & Sections</span>
               </div>
-              {url.startsWith('/admin/cms') && <ChevronRight className="w-3.5 h-3.5 text-gray-400" />}
+              {(url.startsWith('/admin/pages') || url.startsWith('/admin/cms')) && <ChevronRight className="w-3.5 h-3.5 text-gray-400" />}
             </Link>
 
             {/* Settings Link */}
@@ -403,12 +404,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Das
                     <span>Customers</span>
                   </Link>
                   <Link
-                    href="/admin/cms"
+                    href="/admin/pages"
                     onClick={() => setMobileSidebarOpen(false)}
                     className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-gray-700 hover:bg-gray-100"
                   >
-                    <Sparkles className="w-4 h-4 text-amber-500" />
-                    <span>Homepage CMS</span>
+                    <Layout className="w-4 h-4 text-amber-500" />
+                    <span>Pages & Sections</span>
                   </Link>
                   <Link
                     href="/admin/settings"
