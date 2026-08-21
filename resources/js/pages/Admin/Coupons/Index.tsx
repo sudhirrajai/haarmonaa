@@ -17,6 +17,7 @@ interface CouponItem {
   start_date?: string;
   expires_at?: string;
   is_active: boolean;
+  allow_stacking?: boolean;
 }
 
 interface CouponsIndexProps {
@@ -190,9 +191,20 @@ export default function Index({ coupons = [], filters }: CouponsIndexProps) {
                           <Tag className="w-4 h-4 text-amber-600" />
                         </div>
                         <div>
-                          <span className="block font-extrabold text-gray-900 font-mono text-sm tracking-wide">
-                            {c.code}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-gray-900 font-mono text-sm tracking-wide">
+                              {c.code}
+                            </span>
+                            {c.allow_stacking ? (
+                              <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-extrabold rounded-full border border-blue-200" title="Can be combined with other stackable coupons">
+                                Stackable
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-full" title="Cannot be combined with other coupons">
+                                Single Use
+                              </span>
+                            )}
+                          </div>
                           {c.description ? (
                             <span className="text-[11px] text-gray-500 line-clamp-1">{c.description}</span>
                           ) : (

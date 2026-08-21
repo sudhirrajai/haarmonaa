@@ -46,6 +46,7 @@ interface CouponData {
   start_date?: string;
   expires_at?: string;
   is_active: boolean;
+  allow_stacking?: boolean;
   applicable_products?: number[];
   applicable_categories?: number[];
   applicable_collections?: number[];
@@ -78,6 +79,7 @@ export default function Form({
     start_date: coupon?.start_date ? coupon.start_date.substring(0, 16) : '',
     expires_at: coupon?.expires_at ? coupon.expires_at.substring(0, 16) : '',
     is_active: coupon?.is_active ?? true,
+    allow_stacking: coupon?.allow_stacking ?? false,
     applicable_products: coupon?.applicable_products || [],
     applicable_categories: coupon?.applicable_categories || [],
     applicable_collections: coupon?.applicable_collections || [],
@@ -432,8 +434,25 @@ export default function Form({
                 />
               </div>
 
-              <div className="pt-2 border-t border-gray-100">
-                <label className="flex items-center gap-3 cursor-pointer">
+              <div className="pt-3 border-t border-gray-100 space-y-3">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={data.allow_stacking}
+                    onChange={(e) => setData({ ...data, allow_stacking: e.target.checked })}
+                    className="w-4 h-4 rounded-xs border-gray-300 text-black focus:ring-black cursor-pointer mt-0.5"
+                  />
+                  <div>
+                    <span className="text-xs font-bold text-gray-900 block">
+                      Allow Coupon Stacking / Overlap
+                    </span>
+                    <span className="text-[11px] text-gray-500 block leading-relaxed">
+                      Allow customers to combine and apply this coupon alongside other stackable coupons on the same order.
+                    </span>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-3 cursor-pointer pt-2 border-t border-gray-50">
                   <input
                     type="checkbox"
                     checked={data.is_active}

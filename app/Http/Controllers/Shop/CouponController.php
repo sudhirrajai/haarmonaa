@@ -18,12 +18,15 @@ class CouponController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'email' => 'nullable|email',
+            'existing_codes' => 'nullable|array',
+            'existing_codes.*' => 'string',
         ]);
 
         $result = CouponService::validateAndCalculate(
             $validated['code'],
             $validated['items'],
-            $validated['email'] ?? null
+            $validated['email'] ?? null,
+            $validated['existing_codes'] ?? []
         );
 
         if (! $result['valid']) {
@@ -36,7 +39,36 @@ class CouponController extends Controller
         return response()->json([
             'success' => true,
             'message' => $result['message'],
+            'replaced' => $result['replaced'] ?? false,
+            'coupons' => $result['coupons'],
             'coupon' => $result['coupon'],
+            'total_discount' => $result['total_discount'],
+        ]);
+    }
+
+    public function recalculate(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'codes' => 'nullable|array',
+            'codes.*' => 'string',
+            'items' => 'required|array',
+            'items.*.product_id' => 'required|integer',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.unit_price' => 'required|numeric|min:0',
+            'email' => 'nullable|email',
+        ]);
+
+        $result = CouponService::recalculateAll(
+            $validated['codes'] ?? [],
+            $validated['items'],
+            $validated['email'] ?? null
+        );
+
+        return response()->json([
+            'success' => true,
+            'coupons' => $result['coupons'],
+            'coupon' => $result['coupons'][0] ?? null,
+            'total_discount' => $result['total_discount'],
         ]);
     }
 }

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { GlozinLayout } from '@/components/layout/GlozinLayout';
 import { Product } from '@/types/shop';
-import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, Truck, Tag, ShieldCheck } from 'lucide-react';
+import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, Truck, Tag, ShieldCheck, X, CheckCircle2 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 interface CartProps {
@@ -14,7 +14,11 @@ export default function Cart({ products = [] }: CartProps) {
     cart,
     updateQuantity,
     removeFromCart,
+    appliedCoupons,
+    applyCoupon,
+    removeCoupon,
     subtotal,
+    couponDiscount,
     tax,
     shipping,
     total,
@@ -22,26 +26,35 @@ export default function Cart({ products = [] }: CartProps) {
   } = useCart();
 
   const [couponCode, setCouponCode] = useState('');
-  const [discountAmount, setDiscountAmount] = useState(0);
+  const [applying, setApplying] = useState(false);
   const [couponMessage, setCouponMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const freeShippingThreshold = 999;
   const progressPercent = Math.min((subtotal / freeShippingThreshold) * 100, 100);
   const remainingForFreeShipping = Math.max(freeShippingThreshold - subtotal, 0);
 
-  const applyCoupon = (e: React.FormEvent) => {
+  const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (couponCode.trim().toUpperCase() === 'HAARMONAA10' || couponCode.trim().toUpperCase() === 'GLOZIN2026') {
-      const disc = Math.round(subtotal * 0.1);
-      setDiscountAmount(disc);
-      setCouponMessage({ type: 'success', text: `Promo code applied! You saved ₹${disc.toFixed(2)} (10% OFF)` });
+    if (!couponCode.trim()) return;
+
+    setApplying(true);
+    setCouponMessage(null);
+
+    const result = await applyCoupon(couponCode.trim());
+    setApplying(false);
+
+    if (result.success) {
+      setCouponMessage({ type: 'success', text: result.message });
+      setCouponCode('');
     } else {
-      setDiscountAmount(0);
-      setCouponMessage({ type: 'error', text: 'Invalid promo code. Try "HAARMONAA10" for 10% off.' });
+      setCouponMessage({ type: 'error', text: result.message });
     }
   };
 
-  const grandTotal = Math.max(0, total - discountAmount);
+  const handleRemoveCoupon = async (code: string) => {
+    await removeCoupon(code);
+    setCouponMessage(null);
+  };
 
   return (
     <GlozinLayout allProducts={products}>
@@ -64,7 +77,7 @@ export default function Cart({ products = [] }: CartProps) {
       <section className="py-12 sm:py-16 bg-[#fafafa]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {cart.length === 0 ? (
-            <div className="text-center py-20 bg-white border border-gray-200/80 rounded-3xl p-10 max-w-lg mx-auto shadow-2xs space-y-5">
+            <div className="text-center py-20 bg-white border border-gray-200/80 rounded-[10px] p-10 max-w-lg mx-auto shadow-2xs space-y-5">
               <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto text-amber-700">
                 <ShoppingBag className="w-8 h-8 stroke-[1.5]" />
               </div>
@@ -77,7 +90,7 @@ export default function Cart({ products = [] }: CartProps) {
               <div className="pt-2">
                 <Link
                   href="/shop"
-                  className="inline-block bg-[#111111] hover:bg-[#d0473e] text-white px-8 py-3.5 rounded-full text-xs font-extrabold uppercase tracking-wider transition-all shadow-md cursor-pointer"
+                  className="inline-block bg-[#111111] hover:bg-[#d0473e] text-white px-8 py-3.5 rounded-[10px] text-xs font-extrabold uppercase tracking-wider transition-all shadow-md cursor-pointer"
                 >
                   Explore Fine Jewelry
                 </Link>
@@ -88,7 +101,7 @@ export default function Cart({ products = [] }: CartProps) {
               {/* Left 8 Cols: Free Shipping Bar & Items Table */}
               <div className="lg:col-span-8 space-y-6">
                 {/* Free Shipping Alert Bar */}
-                <div className="bg-white p-5 rounded-3xl border border-gray-200/80 shadow-2xs space-y-2.5">
+                <div className="bg-white p-5 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-2.5">
                   <div className="flex items-center gap-2 text-xs font-bold text-gray-900">
                     <Truck className="w-4 h-4 text-[#d0473e]" />
                     {remainingForFreeShipping > 0 ? (
@@ -101,92 +114,103 @@ export default function Cart({ products = [] }: CartProps) {
                       </span>
                     )}
                   </div>
-                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-amber-400 to-[#d0473e] transition-all duration-500 rounded-full"
+                      className="bg-[#111111] h-1.5 rounded-full transition-all duration-500"
                       style={{ width: `${progressPercent}%` }}
                     />
                   </div>
                 </div>
 
-                {/* Items Table Card */}
-                <div className="bg-white rounded-3xl border border-gray-200/80 shadow-2xs overflow-hidden">
+                {/* Items Table Container */}
+                <div className="bg-white rounded-[10px] border border-gray-200/80 shadow-2xs overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse text-xs">
-                      <thead>
-                        <tr className="bg-gray-50/80 text-[11px] font-extrabold uppercase tracking-wider text-gray-500 border-b border-gray-100">
-                          <th className="py-4 px-6">Jewelry Item</th>
+                    <table className="w-full text-left">
+                      <thead className="bg-gray-50/80 text-gray-500 font-bold text-xs uppercase tracking-wider border-b border-gray-100">
+                        <tr>
+                          <th className="py-4 px-6">Product</th>
+                          <th className="py-4 px-4">Price</th>
                           <th className="py-4 px-4 text-center">Quantity</th>
-                          <th className="py-4 px-6 text-right">Price</th>
-                          <th className="py-4 px-4"></th>
+                          <th className="py-4 px-4 text-right">Subtotal</th>
+                          <th className="py-4 px-4 text-right"></th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100">
+                      <tbody className="divide-y divide-gray-100 font-medium text-xs">
                         {cart.map((item) => (
                           <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                            {/* Product Info */}
                             <td className="py-5 px-6">
-                              <div className="flex gap-4 items-center">
-                                <img
-                                  src={item.variant?.image || item.product.image}
-                                  alt={item.product.name}
-                                  className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-2xl bg-gray-50 border border-gray-100 flex-shrink-0"
-                                />
+                              <div className="flex items-center gap-4">
+                                <div className="w-16 h-16 rounded-[8px] bg-gray-50 border border-gray-100 overflow-hidden flex-shrink-0">
+                                  <img
+                                    src={item.variant?.image || item.product.image}
+                                    alt={item.product.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
                                 <div className="space-y-1">
                                   <Link
                                     href={`/product/${item.product.slug}`}
-                                    className="font-bold text-gray-900 hover:text-[#d0473e] transition-colors text-sm line-clamp-1"
+                                    className="font-bold text-gray-900 hover:text-[#d0473e] text-xs leading-snug line-clamp-1"
                                   >
                                     {item.product.name}
                                   </Link>
-                                  <div className="flex flex-wrap gap-1.5 text-[11px] text-gray-500">
+                                  <div className="flex flex-wrap gap-2 text-[11px] text-gray-500">
                                     {item.selectedColor && (
-                                      <span className="bg-gray-100 px-2 py-0.5 rounded-md font-medium">
-                                        {item.selectedColor}
+                                      <span className="bg-gray-100 px-2 py-0.5 rounded-[4px]">
+                                        Finish: {item.selectedColor}
                                       </span>
                                     )}
                                     {item.selectedSize && (
-                                      <span className="bg-gray-100 px-2 py-0.5 rounded-md font-medium">
+                                      <span className="bg-gray-100 px-2 py-0.5 rounded-[4px]">
                                         Size: {item.selectedSize}
                                       </span>
                                     )}
                                   </div>
-                                  <span className="text-[11px] font-mono text-gray-400 block">
-                                    Unit: ₹{item.unitPrice.toFixed(2)}
-                                  </span>
                                 </div>
                               </div>
                             </td>
 
+                            {/* Unit Price */}
+                            <td className="py-5 px-4 font-bold text-gray-900 whitespace-nowrap">
+                              ₹{item.unitPrice.toFixed(2)}
+                            </td>
+
+                            {/* Quantity Controls */}
                             <td className="py-5 px-4 text-center">
-                              <div className="inline-flex items-center border border-gray-200 rounded-full px-2.5 py-1 bg-white">
+                              <div className="inline-flex items-center border border-gray-200 rounded-[8px] overflow-hidden bg-white">
                                 <button
                                   type="button"
                                   onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                  className="text-gray-400 hover:text-black p-1 cursor-pointer"
+                                  className="p-2 text-gray-500 hover:text-black hover:bg-gray-50 transition-colors cursor-pointer"
                                 >
-                                  <Minus className="w-3.5 h-3.5" />
+                                  <Minus className="w-3 h-3" />
                                 </button>
-                                <span className="px-3 font-bold text-xs text-gray-900">{item.quantity}</span>
+                                <span className="w-8 text-center text-xs font-bold text-gray-900">
+                                  {item.quantity}
+                                </span>
                                 <button
                                   type="button"
                                   onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                  className="text-gray-400 hover:text-black p-1 cursor-pointer"
+                                  className="p-2 text-gray-500 hover:text-black hover:bg-gray-50 transition-colors cursor-pointer"
                                 >
-                                  <Plus className="w-3.5 h-3.5" />
+                                  <Plus className="w-3 h-3" />
                                 </button>
                               </div>
                             </td>
 
-                            <td className="py-5 px-6 text-right font-extrabold text-sm text-gray-900">
+                            {/* Subtotal */}
+                            <td className="py-5 px-4 text-right font-extrabold text-gray-900 whitespace-nowrap">
                               ₹{item.subtotal.toFixed(2)}
                             </td>
 
+                            {/* Remove */}
                             <td className="py-5 px-4 text-right">
                               <button
                                 type="button"
                                 onClick={() => removeFromCart(item.id)}
-                                className="p-2 text-gray-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
-                                title="Remove item"
+                                className="p-2 text-gray-400 hover:text-[#d0473e] hover:bg-rose-50 rounded-[6px] transition-colors cursor-pointer"
+                                title="Remove from bag"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -199,25 +223,62 @@ export default function Cart({ products = [] }: CartProps) {
                 </div>
 
                 {/* Promo Code Box */}
-                <div className="bg-white p-6 rounded-3xl border border-gray-200/80 shadow-2xs space-y-3">
+                <div className="bg-white p-6 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-4">
                   <div className="flex items-center gap-2 text-xs font-bold text-gray-900">
                     <Tag className="w-4 h-4 text-[#d0473e]" />
-                    <span>Have a Promo or Gift Voucher?</span>
+                    <span>Have a Promo Code or Gift Voucher?</span>
                   </div>
 
-                  <form onSubmit={applyCoupon} className="flex gap-2">
+                  {/* Applied Coupons List */}
+                  {appliedCoupons.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                        Applied Coupon(s):
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {appliedCoupons.map((c) => (
+                          <div
+                            key={c.code}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-[8px] text-xs font-mono font-bold text-emerald-900"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span>{c.code}</span>
+                            <span className="text-[11px] text-emerald-700 font-sans">
+                              (-₹{Number(c.discount).toFixed(2)})
+                            </span>
+                            {c.allow_stacking && (
+                              <span className="px-1.5 py-0.2 bg-blue-100 text-blue-800 text-[9px] rounded-full font-sans uppercase">
+                                Stacked
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveCoupon(c.code)}
+                              className="text-emerald-800 hover:text-rose-600 ml-1 p-0.5 rounded-full hover:bg-emerald-100 cursor-pointer"
+                              title="Remove coupon"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleApplyCoupon} className="flex gap-2">
                     <input
                       type="text"
                       value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value)}
-                      placeholder="Enter promo code (e.g. HAARMONAA10)"
-                      className="flex-1 bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-xs text-gray-900 uppercase font-mono placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white"
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      placeholder="Enter promo voucher code..."
+                      className="flex-1 bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-4 text-xs text-gray-900 uppercase font-mono placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white"
                     />
                     <button
                       type="submit"
-                      className="px-6 py-2.5 bg-black hover:bg-[#d0473e] text-white text-xs font-bold uppercase rounded-xl transition-all cursor-pointer"
+                      disabled={applying || !couponCode.trim()}
+                      className="px-6 py-2.5 bg-black hover:bg-[#d0473e] text-white text-xs font-bold uppercase rounded-[8px] transition-all cursor-pointer disabled:opacity-50"
                     >
-                      Apply
+                      {applying ? 'Checking...' : appliedCoupons.length > 0 ? 'Add / Stack' : 'Apply'}
                     </button>
                   </form>
 
@@ -235,7 +296,7 @@ export default function Cart({ products = [] }: CartProps) {
 
               {/* Right 4 Cols: Order Summary Card */}
               <div className="lg:col-span-4 space-y-6">
-                <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200/80 shadow-2xs space-y-6">
+                <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
                   <h3 className="text-base font-extrabold text-gray-900 tracking-tight pb-3 border-b border-gray-100">
                     Order Summary
                   </h3>
@@ -246,10 +307,12 @@ export default function Cart({ products = [] }: CartProps) {
                       <span className="font-bold text-gray-900">₹{subtotal.toFixed(2)}</span>
                     </div>
 
-                    {discountAmount > 0 && (
+                    {couponDiscount > 0 && (
                       <div className="flex justify-between text-emerald-600 font-bold">
-                        <span>Promo Code Discount (10%)</span>
-                        <span>-₹{discountAmount.toFixed(2)}</span>
+                        <span>
+                          Promo Discount ({appliedCoupons.map((c) => c.code).join(', ')})
+                        </span>
+                        <span>-₹{couponDiscount.toFixed(2)}</span>
                       </div>
                     )}
 
@@ -272,14 +335,14 @@ export default function Cart({ products = [] }: CartProps) {
                     <div className="pt-4 border-t border-gray-100 flex justify-between items-baseline">
                       <span className="text-sm font-extrabold text-gray-900 uppercase">Estimated Total</span>
                       <span className="text-2xl font-extrabold text-gray-900 tracking-tight">
-                        ₹{grandTotal.toFixed(2)}
+                        ₹{total.toFixed(2)}
                       </span>
                     </div>
                   </div>
 
                   <Link
                     href="/checkout"
-                    className="w-full py-4 bg-[#111111] hover:bg-[#d0473e] text-white font-extrabold text-xs uppercase tracking-wider rounded-full flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
+                    className="w-full py-4 bg-[#111111] hover:bg-[#d0473e] text-white font-extrabold text-xs uppercase tracking-wider rounded-[10px] flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
                   >
                     <span>Proceed to Checkout</span>
                     <ArrowRight className="w-4 h-4" />
@@ -288,9 +351,11 @@ export default function Cart({ products = [] }: CartProps) {
                   <div className="pt-2 text-center text-[11px] text-gray-500 space-y-1.5 border-t border-gray-100">
                     <div className="flex items-center justify-center gap-1.5 font-bold text-gray-700">
                       <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                      <span>256-Bit SSL Bank Grade Encryption</span>
+                      <span>Authentic 18k Vermeil & Lifetime Quality</span>
                     </div>
-                    <p>Free Insured Transit & 30-Day Easy Returns</p>
+                    <p className="text-[10px]">
+                      Complimentary tamper-evident insurance packaging included on every order.
+                    </p>
                   </div>
                 </div>
               </div>

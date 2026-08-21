@@ -16,6 +16,7 @@ import {
   ShoppingBag,
   Tag,
   X,
+  Plus,
 } from 'lucide-react';
 
 interface CheckoutProps {
@@ -30,7 +31,19 @@ declare global {
 }
 
 export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo123456' }: CheckoutProps) {
-  const { cart, subtotal, tax, shipping, total, clearCart, cartCount } = useCart();
+  const {
+    cart,
+    subtotal,
+    appliedCoupons,
+    applyCoupon,
+    removeCoupon,
+    couponDiscount,
+    tax,
+    shipping,
+    total,
+    clearCart,
+    cartCount,
+  } = useCart();
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -49,19 +62,8 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
   // Coupon state
   const [couponInput, setCouponInput] = useState('');
   const [applyingCoupon, setApplyingCoupon] = useState(false);
-  const [appliedCoupon, setAppliedCoupon] = useState<{
-    code: string;
-    discount: number;
-    description?: string;
-  } | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
-
-  // Dynamic Discount & Total Calculations
-  const discountAmount = appliedCoupon ? appliedCoupon.discount : 0;
-  const taxableSubtotal = Math.max(0, subtotal - discountAmount);
-  const calculatedTax = Math.round(taxableSubtotal * 0.03 * 100) / 100;
-  const calculatedTotal = Math.round((taxableSubtotal + calculatedTax + shipping) * 100) / 100;
 
   // Load Razorpay Script
   useEffect(() => {
@@ -82,47 +84,21 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
     setCouponError(null);
     setCouponSuccess(null);
 
-    try {
-      const response = await fetch('/checkout/apply-coupon', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
-        },
-        body: JSON.stringify({
-          code: couponInput,
-          email: formData.email || null,
-          items: cart.map((item) => ({
-            product_id: item.product.id,
-            quantity: item.quantity,
-            unit_price: item.unitPrice,
-          })),
-        }),
-      });
+    const result = await applyCoupon(couponInput.trim(), formData.email);
+    setApplyingCoupon(false);
 
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        setCouponError(data.message || 'Invalid coupon code.');
-        setAppliedCoupon(null);
-      } else {
-        setAppliedCoupon(data.coupon);
-        setCouponSuccess(data.message || 'Coupon applied successfully!');
-        setCouponError(null);
-      }
-    } catch {
-      setCouponError('Network error validating coupon. Please try again.');
-    } finally {
-      setApplyingCoupon(false);
+    if (!result.success) {
+      setCouponError(result.message);
+    } else {
+      setCouponSuccess(result.message);
+      setCouponInput('');
     }
   };
 
-  const handleRemoveCoupon = () => {
-    setAppliedCoupon(null);
-    setCouponInput('');
-    setCouponError(null);
+  const handleRemoveCoupon = async (code: string) => {
+    await removeCoupon(code);
     setCouponSuccess(null);
+    setCouponError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -140,6 +116,8 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
     setProcessing(true);
     setErrorMessage(null);
 
+    const appliedCodes = appliedCoupons.map((c) => c.code);
+
     const payload = {
       first_name: formData.firstName,
       last_name: formData.lastName,
@@ -149,11 +127,14 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
       city: formData.city,
       postal_code: formData.postalCode,
       payment_method: formData.paymentMethod,
-      coupon_code: appliedCoupon ? appliedCoupon.code : null,
+      coupon_code: appliedCodes.length > 0 ? appliedCodes.join(',') : null,
+      coupon_codes: appliedCodes,
       items: cart.map((item) => ({
         product_id: item.product.id,
         variant_id: item.variant?.id || null,
-        product_name: item.product.name + (item.selectedColor ? ` (${item.selectedColor}${item.selectedSize ? `, ${item.selectedSize}` : ''})` : ''),
+        product_name:
+          item.product.name +
+          (item.selectedColor ? ` (${item.selectedColor}${item.selectedSize ? `, ${item.selectedSize}` : ''})` : ''),
         product_image: item.variant?.image || item.product.image,
         quantity: item.quantity,
         unit_price: item.unitPrice,
@@ -161,12 +142,14 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
     };
 
     try {
+      const csrfToken =
+        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
       const response = await fetch('/checkout/process', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+          'X-CSRF-TOKEN': csrfToken,
         },
         body: JSON.stringify(payload),
       });
@@ -197,68 +180,75 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
 
         const options = {
           key: razorpayKey,
-          amount: Math.round(calculatedTotal * 100), // in paise
+          amount: Math.round(total * 100), // in paise
           currency: 'INR',
-          name: 'Haarmonaa Luxury Jewelry',
+          name: 'Haarmonaa Fine Jewelry',
           description: `Order #${orderNumber}`,
-          image: 'https://haarmonaa.vmcore.in/wp-content/uploads/2026/01/1.png',
-          prefill: {
-            name: `${formData.firstName} ${formData.lastName}`,
-            email: formData.email,
-            contact: formData.phone.replace(/\D/g, ''),
-          },
-          theme: {
-            color: '#111111',
-          },
-          handler: async function (paymentRes: any) {
+          image: '/images/logo.png',
+          order_id: resData.razorpay_order_id,
+          handler: async function (response: any) {
             try {
               const verifyRes = await fetch('/payment/razorpay/verify', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
                   'Accept': 'application/json',
-                  'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                  'X-CSRF-TOKEN': csrfToken,
                 },
                 body: JSON.stringify({
                   order_number: orderNumber,
-                  razorpay_payment_id: paymentRes.razorpay_payment_id,
-                  razorpay_order_id: paymentRes.razorpay_order_id,
-                  razorpay_signature: paymentRes.razorpay_signature,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature,
                 }),
               });
 
               const verifyData = await verifyRes.json();
-              clearCart();
-              window.location.href = verifyData.redirect_url || resData.redirect_url;
+              if (verifyData.success) {
+                clearCart();
+                window.location.href = verifyData.redirect_url;
+              } else {
+                setErrorMessage('Payment verification failed. Please contact boutique concierge.');
+                setProcessing(false);
+              }
             } catch {
-              clearCart();
-              window.location.href = resData.redirect_url;
+              setErrorMessage('Error verifying payment. If amount was deducted, your order is safe.');
+              setProcessing(false);
             }
+          },
+          prefill: {
+            name: `${formData.firstName} ${formData.lastName}`.trim(),
+            email: formData.email,
+            contact: formData.phone,
+          },
+          theme: {
+            color: '#111111',
           },
           modal: {
             ondismiss: function () {
               setProcessing(false);
-              setErrorMessage('Payment was cancelled. Your order is reserved; you can retry anytime.');
             },
           },
         };
 
         const rzp = new window.Razorpay(options);
         rzp.on('payment.failed', function (resp: any) {
+          setErrorMessage(
+            resp.error?.description || 'Payment was declined by your bank or UPI app.'
+          );
           setProcessing(false);
-          setErrorMessage(`Payment failed: ${resp.error.description}`);
         });
         rzp.open();
       }
     } catch (err: any) {
+      setErrorMessage(err.message || 'An unexpected error occurred during checkout.');
       setProcessing(false);
-      setErrorMessage(err.message || 'An error occurred while creating your order.');
     }
   };
 
   return (
     <GlozinLayout allProducts={products}>
-      <Head title="Secure Checkout — Haarmonaa Luxury Jewelry" />
+      <Head title="Secure Checkout — Haarmonaa Fine Jewelry" />
 
       {/* Header & Breadcrumbs */}
       <section className="pt-10 pb-8 bg-white text-center border-b border-gray-100/60">
@@ -266,51 +256,54 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
           <nav className="text-[13px] font-semibold text-gray-500 mb-4">
             <Link href="/" className="hover:text-black">Home</Link>
             <span className="mx-2 text-gray-400">•</span>
-            <Link href="/cart" className="hover:text-black">Bag</Link>
+            <Link href="/cart" className="hover:text-black">Shopping Bag</Link>
             <span className="mx-2 text-gray-400">•</span>
             <span className="text-gray-900 font-bold">Secure Checkout</span>
           </nav>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
-            Express Boutique Checkout
+            Express Checkout
           </h1>
+          <p className="text-xs sm:text-[13px] text-gray-500 mt-2 flex items-center justify-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <span>256-bit Encrypted Checkout • Complimentary Insured Shipping</span>
+          </p>
         </div>
       </section>
 
-      <div className="py-12 sm:py-16 bg-[#fafafa]">
+      <div className="bg-[#fafafa] py-10 sm:py-16 min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {cart.length === 0 ? (
-            <div className="text-center py-20 bg-white border border-gray-200/80 rounded-3xl p-10 max-w-lg mx-auto shadow-2xs space-y-5">
-              <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto text-amber-700">
-                <ShoppingBag className="w-8 h-8 stroke-[1.5]" />
+            <div className="text-center py-20 bg-white border border-gray-200/80 rounded-[10px] p-10 max-w-lg mx-auto shadow-2xs space-y-4">
+              <div className="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center mx-auto text-amber-700">
+                <ShoppingBag className="w-7 h-7 stroke-[1.5]" />
               </div>
-              <h2 className="text-2xl font-extrabold text-gray-900">Your shopping bag is empty</h2>
-              <p className="text-xs text-gray-500 max-w-sm mx-auto">
-                Add heirloom rings, necklaces, or bracelets to your cart before proceeding to checkout.
+              <h2 className="text-xl font-bold text-gray-900">Your bag is empty</h2>
+              <p className="text-xs text-gray-500">
+                Add delicate 18k vermeil pieces to your bag before proceeding to checkout.
               </p>
               <div className="pt-2">
                 <Link
                   href="/shop"
-                  className="inline-block bg-[#111111] hover:bg-[#d0473e] text-white px-8 py-3.5 rounded-full text-xs font-extrabold uppercase tracking-wider transition-all shadow-md cursor-pointer"
+                  className="inline-block bg-black hover:bg-[#d0473e] text-white px-7 py-3 rounded-[10px] text-xs font-bold uppercase tracking-wider transition-all shadow-xs"
                 >
-                  Explore Fine Jewelry
+                  Browse Catalog
                 </Link>
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-              {/* Left Column: Shipping & Payment (8 Cols) */}
-              <div className="lg:col-span-7 space-y-8">
-                {/* 1. Contact & Shipping Address */}
-                <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200/80 shadow-2xs space-y-5">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+              {/* Left Column: Shipping & Payment Details (7 Cols) */}
+              <div className="lg:col-span-7 space-y-6">
+                {/* 1. Shipping Information */}
+                <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
                   <div className="flex items-center justify-between pb-3 border-b border-gray-100">
                     <h2 className="text-base font-extrabold text-gray-900 tracking-tight">
                       1. Delivery Address & Contact
                     </h2>
-                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                      Insured Transit
-                    </span>
+                    <span className="text-[11px] font-bold text-gray-400">Step 1 of 2</span>
                   </div>
 
+                  {/* Name Fields */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-700 mb-1.5">
@@ -321,8 +314,8 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                         required
                         value={formData.firstName}
                         onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                        placeholder="Ananya"
-                        className="w-full bg-gray-50/70 border border-gray-200 rounded-2xl py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
+                        placeholder="E.g. Priya"
+                        className="w-full bg-gray-50/70 border border-gray-200 rounded-[8px] py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
                       />
                     </div>
 
@@ -335,12 +328,13 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                         required
                         value={formData.lastName}
                         onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                        placeholder="Sharma"
-                        className="w-full bg-gray-50/70 border border-gray-200 rounded-2xl py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
+                        placeholder="E.g. Sharma"
+                        className="w-full bg-gray-50/70 border border-gray-200 rounded-[8px] py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
                       />
                     </div>
                   </div>
 
+                  {/* Contact Fields */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-700 mb-1.5">
@@ -351,23 +345,30 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="ananya@domain.com"
-                        className="w-full bg-gray-50/70 border border-gray-200 rounded-2xl py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
+                        placeholder="priya@example.com"
+                        className="w-full bg-gray-50/70 border border-gray-200 rounded-[8px] py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
                       />
+                      <span className="text-[10.5px] text-gray-400 mt-1 block">
+                        Order confirmation & invoice will be sent here.
+                      </span>
                     </div>
 
                     <div>
                       <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                        Phone Number <span className="text-[#d0473e]">*</span>
+                        Mobile Number <span className="text-[#d0473e]">*</span>
                       </label>
                       <PhoneInput
                         value={formData.phone}
                         onChange={(val) => setFormData({ ...formData, phone: val })}
-                        required={true}
+                        required
                       />
+                      <span className="text-[10.5px] text-gray-400 mt-1 block">
+                        For delivery courier tracking SMS & OTP.
+                      </span>
                     </div>
                   </div>
 
+                  {/* Street Address */}
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1.5">
                       Street Address & Apartment <span className="text-[#d0473e]">*</span>
@@ -377,15 +378,16 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                       required
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      placeholder="Flat 402, Sea Breeze Heights, Hill Road"
-                      className="w-full bg-gray-50/70 border border-gray-200 rounded-2xl py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
+                      placeholder="House / Flat No., Building Name, Street & Landmark"
+                      className="w-full bg-gray-50/70 border border-gray-200 rounded-[8px] py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
                     />
                   </div>
 
+                  {/* City & PIN */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                        City <span className="text-[#d0473e]">*</span>
+                        City / District <span className="text-[#d0473e]">*</span>
                       </label>
                       <input
                         type="text"
@@ -393,7 +395,7 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                         value={formData.city}
                         onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                         placeholder="Mumbai"
-                        className="w-full bg-gray-50/70 border border-gray-200 rounded-2xl py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
+                        className="w-full bg-gray-50/70 border border-gray-200 rounded-[8px] py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
                       />
                     </div>
 
@@ -407,14 +409,14 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                         value={formData.postalCode}
                         onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
                         placeholder="400050"
-                        className="w-full bg-gray-50/70 border border-gray-200 rounded-2xl py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
+                        className="w-full bg-gray-50/70 border border-gray-200 rounded-[8px] py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* 2. Payment Method Options */}
-                <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200/80 shadow-2xs space-y-5">
+                <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-5">
                   <div className="flex items-center justify-between pb-3 border-b border-gray-100">
                     <h2 className="text-base font-extrabold text-gray-900 tracking-tight">
                       2. Payment Method
@@ -427,7 +429,7 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                   <div className="space-y-3">
                     {/* Option 1: Razorpay */}
                     <label
-                      className={`block p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                      className={`block p-4 rounded-[10px] border-2 transition-all cursor-pointer ${
                         formData.paymentMethod === 'razorpay'
                           ? 'border-black bg-gray-50/80 shadow-xs'
                           : 'border-gray-200 hover:border-gray-300'
@@ -458,7 +460,7 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
 
                     {/* Option 2: Cash on Delivery (COD) */}
                     <label
-                      className={`block p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                      className={`block p-4 rounded-[10px] border-2 transition-all cursor-pointer ${
                         formData.paymentMethod === 'cod'
                           ? 'border-black bg-gray-50/80 shadow-xs'
                           : 'border-gray-200 hover:border-gray-300'
@@ -489,7 +491,7 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                   </div>
 
                   {errorMessage && (
-                    <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl font-medium">
+                    <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-[8px] font-medium">
                       {errorMessage}
                     </div>
                   )}
@@ -498,7 +500,7 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
 
               {/* Right Column: Order Summary & Coupon Promo (5 Cols) */}
               <div className="lg:col-span-5 space-y-6">
-                <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200/80 shadow-2xs space-y-6">
+                <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
                   <div className="flex items-center justify-between pb-3 border-b border-gray-100">
                     <h3 className="text-base font-extrabold text-gray-900 tracking-tight">
                       Order Summary ({cartCount})
@@ -512,13 +514,13 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                   <div className="space-y-4 max-h-72 overflow-y-auto divide-y divide-gray-100 pr-1">
                     {cart.map((item) => (
                       <div key={item.id} className="pt-4 first:pt-0 flex gap-3.5 items-center">
-                        <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex-shrink-0">
+                        <div className="relative w-14 h-14 rounded-[8px] overflow-hidden bg-gray-50 border border-gray-100 flex-shrink-0">
                           <img
                             src={item.variant?.image || item.product.image}
                             alt={item.product.name}
                             className="w-full h-full object-cover"
                           />
-                          <span className="absolute top-0 right-0 bg-black text-white text-[10px] font-bold w-4 h-4 rounded-bl-lg flex items-center justify-center">
+                          <span className="absolute top-0 right-0 bg-black text-white text-[10px] font-bold w-4 h-4 rounded-bl-[6px] flex items-center justify-center">
                             {item.quantity}
                           </span>
                         </div>
@@ -547,56 +549,72 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                       <span>Have a Promo Code or Voucher?</span>
                     </div>
 
-                    {!appliedCoupon ? (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={couponInput}
-                          onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                          placeholder="e.g. SUMMER20"
-                          className="flex-1 bg-gray-50 border border-gray-200 rounded-full py-2 px-3.5 text-xs font-mono font-bold uppercase text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleApplyCoupon}
-                          disabled={applyingCoupon || !couponInput.trim()}
-                          className="px-4 py-2 bg-[#111111] hover:bg-[#d0473e] text-white font-bold text-xs rounded-full transition-all disabled:opacity-50 cursor-pointer shrink-0"
-                        >
-                          {applyingCoupon ? 'Checking...' : 'Apply'}
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                          <div>
-                            <span className="text-xs font-extrabold text-emerald-900 font-mono">
-                              {appliedCoupon.code}
-                            </span>
-                            <span className="block text-[10.5px] text-emerald-700 font-semibold">
-                              Saved ₹{appliedCoupon.discount.toFixed(2)} on this order
-                            </span>
-                          </div>
-                        </div>
+                    {/* Applied Coupons List */}
+                    {appliedCoupons.length > 0 && (
+                      <div className="space-y-2">
+                        {appliedCoupons.map((c) => (
+                          <div
+                            key={c.code}
+                            className="p-3 bg-emerald-50 border border-emerald-200 rounded-[8px] flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-2">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-extrabold text-emerald-900 font-mono">
+                                    {c.code}
+                                  </span>
+                                  {c.allow_stacking && (
+                                    <span className="px-1.5 py-0.2 bg-blue-100 text-blue-800 text-[9px] font-bold rounded-full font-sans uppercase">
+                                      Stacked
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="block text-[10.5px] text-emerald-700 font-semibold">
+                                  Saved ₹{Number(c.discount).toFixed(2)} on this order
+                                </span>
+                              </div>
+                            </div>
 
-                        <button
-                          type="button"
-                          onClick={handleRemoveCoupon}
-                          className="p-1 text-emerald-800 hover:text-rose-600 rounded-full hover:bg-emerald-100 transition-colors cursor-pointer"
-                          title="Remove Coupon"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveCoupon(c.code)}
+                              className="p-1 text-emerald-800 hover:text-rose-600 rounded-full hover:bg-emerald-100 transition-colors cursor-pointer"
+                              title={`Remove ${c.code}`}
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     )}
 
+                    {/* Coupon Input Form */}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                        placeholder={appliedCoupons.length > 0 ? "Enter another stackable code..." : "Enter promo code..."}
+                        className="flex-1 bg-gray-50 border border-gray-200 rounded-[8px] py-2 px-3.5 text-xs font-mono font-bold uppercase text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyCoupon}
+                        disabled={applyingCoupon || !couponInput.trim()}
+                        className="px-4 py-2 bg-[#111111] hover:bg-[#d0473e] text-white font-bold text-xs rounded-[8px] transition-all disabled:opacity-50 cursor-pointer shrink-0"
+                      >
+                        {applyingCoupon ? 'Checking...' : appliedCoupons.length > 0 ? 'Add / Stack' : 'Apply'}
+                      </button>
+                    </div>
+
                     {couponError && (
-                      <div className="text-[11px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 p-2.5 rounded-xl">
+                      <div className="text-[11px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 p-2.5 rounded-[8px]">
                         {couponError}
                       </div>
                     )}
-                    {couponSuccess && !appliedCoupon && (
-                      <div className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl">
+                    {couponSuccess && (
+                      <div className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 p-2.5 rounded-[8px]">
                         {couponSuccess}
                       </div>
                     )}
@@ -609,16 +627,18 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                       <span className="font-bold text-gray-900">₹{subtotal.toFixed(2)}</span>
                     </div>
 
-                    {appliedCoupon && (
+                    {couponDiscount > 0 && (
                       <div className="flex justify-between text-emerald-700 font-bold">
-                        <span>Coupon Discount ({appliedCoupon.code})</span>
-                        <span>- ₹{discountAmount.toFixed(2)}</span>
+                        <span>
+                          Coupon Discount ({appliedCoupons.map((c) => c.code).join(', ')})
+                        </span>
+                        <span>- ₹{couponDiscount.toFixed(2)}</span>
                       </div>
                     )}
 
                     <div className="flex justify-between text-gray-600">
                       <span>GST (3% Jewelry Tax)</span>
-                      <span className="font-bold text-gray-900">₹{calculatedTax.toFixed(2)}</span>
+                      <span className="font-bold text-gray-900">₹{tax.toFixed(2)}</span>
                     </div>
 
                     <div className="flex justify-between text-gray-600">
@@ -631,7 +651,7 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                     <div className="pt-3 border-t border-gray-100 flex justify-between items-baseline">
                       <span className="text-sm font-extrabold text-gray-900 uppercase">Grand Total</span>
                       <span className="text-2xl font-extrabold text-gray-900 tracking-tight">
-                        ₹{calculatedTotal.toFixed(2)}
+                        ₹{total.toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -640,15 +660,15 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                   <button
                     type="submit"
                     disabled={processing}
-                    className="w-full py-4 bg-[#111111] hover:bg-[#d0473e] text-white font-extrabold text-xs uppercase tracking-wider rounded-full flex items-center justify-center gap-2 transition-all shadow-md disabled:opacity-50 cursor-pointer"
+                    className="w-full py-4 bg-[#111111] hover:bg-[#d0473e] text-white font-extrabold text-xs uppercase tracking-wider rounded-[10px] flex items-center justify-center gap-2 transition-all shadow-md disabled:opacity-50 cursor-pointer"
                   >
                     <Lock className="w-4 h-4" />
                     <span>
                       {processing
                         ? 'Processing Order...'
                         : formData.paymentMethod === 'cod'
-                        ? `Confirm COD Order (₹${calculatedTotal.toFixed(2)})`
-                        : `Pay Online (₹${calculatedTotal.toFixed(2)})`}
+                        ? `Confirm COD Order (₹${total.toFixed(2)})`
+                        : `Pay Online (₹${total.toFixed(2)})`}
                     </span>
                   </button>
 

@@ -40,6 +40,8 @@ class CheckoutController extends Controller
             'postal_code' => 'required|string|max:20',
             'payment_method' => 'required|string|in:razorpay,cod,card,upi',
             'coupon_code' => 'nullable|string',
+            'coupon_codes' => 'nullable|array',
+            'coupon_codes.*' => 'string',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.variant_id' => 'nullable|integer',
@@ -54,22 +56,27 @@ class CheckoutController extends Controller
             $subtotal += $item['unit_price'] * $item['quantity'];
         }
 
-        // Coupon Processing
-        $appliedCouponCode = null;
-        $discountAmount = 0.00;
-        $couponId = null;
+        // Coupon Processing (Single or Multiple Stacked)
+        $appliedCodes = [];
+        if (! empty($validated['coupon_codes'])) {
+            $appliedCodes = $validated['coupon_codes'];
+        } elseif (! empty($validated['coupon_code'])) {
+            $appliedCodes = explode(',', $validated['coupon_code']);
+        }
 
-        if (! empty($validated['coupon_code'])) {
-            $couponResult = CouponService::validateAndCalculate(
-                $validated['coupon_code'],
+        $appliedCoupons = [];
+        $discountAmount = 0.00;
+
+        if (! empty($appliedCodes)) {
+            $couponResult = CouponService::recalculateAll(
+                $appliedCodes,
                 $validated['items'],
                 $validated['email']
             );
 
-            if ($couponResult['valid']) {
-                $appliedCouponCode = $couponResult['coupon']['code'];
-                $discountAmount = (float) $couponResult['coupon']['discount'];
-                $couponId = $couponResult['coupon']['id'];
+            if ($couponResult['valid'] && ! empty($couponResult['coupons'])) {
+                $appliedCoupons = $couponResult['coupons'];
+                $discountAmount = (float) $couponResult['total_discount'];
             }
         }
 
@@ -80,6 +87,7 @@ class CheckoutController extends Controller
 
         $customerName = trim($validated['first_name'].' '.$validated['last_name']);
         $orderNumber = 'ORD-'.date('Y').'-'.strtoupper(Str::random(6));
+        $appliedCodesString = ! empty($appliedCoupons) ? implode(', ', array_column($appliedCoupons, 'code')) : null;
 
         $order = Order::create([
             'order_number' => $orderNumber,
@@ -90,7 +98,7 @@ class CheckoutController extends Controller
             'city' => $validated['city'],
             'postal_code' => $validated['postal_code'],
             'subtotal' => $subtotal,
-            'coupon_code' => $appliedCouponCode,
+            'coupon_code' => $appliedCodesString,
             'discount_amount' => $discountAmount,
             'tax' => $tax,
             'shipping' => $shipping,
@@ -102,18 +110,18 @@ class CheckoutController extends Controller
             'notes' => 'Storefront online order',
         ]);
 
-        // Record Coupon Usage
-        if ($couponId) {
+        // Record Coupon Usage for all applied stacked coupons
+        foreach ($appliedCoupons as $applied) {
             CouponUsage::create([
-                'coupon_id' => $couponId,
+                'coupon_id' => $applied['id'],
                 'order_id' => $order->id,
                 'customer_email' => strtolower(trim($validated['email'])),
-                'discount_amount' => $discountAmount,
+                'discount_amount' => $applied['discount'],
             ]);
 
-            $coupon = Coupon::find($couponId);
-            if ($coupon) {
-                $coupon->increment('usage_count');
+            $couponModel = Coupon::find($applied['id']);
+            if ($couponModel) {
+                $couponModel->increment('usage_count');
             }
         }
 

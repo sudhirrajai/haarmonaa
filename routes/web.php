@@ -28,6 +28,7 @@ Route::get('/product/{slug}', [ShopController::class, 'productDetail'])->name('s
 Route::get('/cart', [ShopController::class, 'cart'])->name('shop.cart');
 Route::get('/checkout', [CheckoutController::class, 'showCheckout'])->name('shop.checkout');
 Route::post('/checkout/apply-coupon', [ShopCouponController::class, 'apply'])->name('shop.coupon.apply');
+Route::post('/checkout/recalculate-coupons', [ShopCouponController::class, 'recalculate'])->name('shop.coupon.recalculate');
 Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('shop.checkout.process');
 Route::post('/payment/razorpay/verify', [CheckoutController::class, 'verifyRazorpay'])->name('shop.razorpay.verify');
 Route::get('/order-success/{order_number}', [CheckoutController::class, 'orderSuccess'])->name('shop.orderSuccess');
@@ -72,8 +73,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
 
-    // Customers
-    Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers.index');
+    // Customers Management (CRUD, Soft Delete, Restore & Force Delete)
+    Route::post('/customers/{id}/restore', [AdminCustomerController::class, 'restore'])->name('customers.restore');
+    Route::delete('/customers/{id}/force-delete', [AdminCustomerController::class, 'forceDelete'])->name('customers.force-delete');
+    Route::resource('customers', AdminCustomerController::class)->except(['create', 'show', 'edit']);
 
     // Settings
     Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings.index');
