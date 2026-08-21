@@ -34,7 +34,6 @@ import {
   Gift,
   ArrowLeft,
   Zap,
-  Upload,
 } from 'lucide-react';
 
 interface SplitSlideCMS {
@@ -109,33 +108,19 @@ interface HomePageCMSProps {
   products: Product[];
 }
 
-const AVAILABLE_ICONS = [
-  { value: 'Package', label: 'Package Box' },
-  { value: 'Truck', label: 'Express Delivery Truck' },
-  { value: 'ShieldCheck', label: 'Guarantee Shield' },
-  { value: 'Award', label: 'Certified Quality Award' },
-  { value: 'MessageSquareText', label: '24/7 Concierge Chat' },
-  { value: 'Headphones', label: 'Customer Support' },
-  { value: 'Gem', label: 'Diamond / Gemstone' },
-  { value: 'Sparkles', label: '18K Gold Sparkles' },
-  { value: 'RotateCcw', label: 'Easy Returns & Refund' },
-  { value: 'Heart', label: 'Handcrafted with Love' },
-  { value: 'Clock', label: '24/7 Fast Turnaround' },
-  { value: 'Gift', label: 'Luxury Gift Packaging' },
-];
-
 export default function Home({
-  slides: initialSlides,
+  slides: initialSlides = [],
   seasonalCollection: initialSeasonal,
-  promoBanners: initialBanners,
+  promoBanners: initialBanners = [],
   instagram: initialInstagram,
-  storeFeatures: initialFeatures,
-  categories,
-  products,
+  storeFeatures: initialFeatures = [],
+  categories = [],
+  collections = [],
+  products = [],
 }: HomePageCMSProps) {
   const [activeTab, setActiveTab] = useState<
     'slider' | 'banners' | 'seasonal' | 'instagram' | 'features'
-  >('instagram');
+  >('slider');
 
   const [saving, setSaving] = useState(false);
   const [fetchingInsta, setFetchingInsta] = useState(false);
@@ -148,7 +133,68 @@ export default function Home({
   const [instagram, setInstagram] = useState(initialInstagram);
   const [features, setFeatures] = useState<StoreFeatureItem[]>(initialFeatures);
 
-  // Auto-Fetch Instagram Action
+  // --- 1. Split Hero Slider Handlers ---
+  const handleAddSlide = () => {
+    const newSlide: SplitSlideCMS = {
+      id: Date.now(),
+      subtitle: 'NEW CURATION 2026',
+      title: 'Heirloom Gold Statement',
+      buttonText: 'Shop New Arrivals',
+      buttonLink: '/shop',
+      showButton: true,
+      enabled: true,
+      badge: 'NEW',
+      leftImage: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1200&auto=format&fit=crop',
+      rightImage: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=1200&auto=format&fit=crop',
+    };
+    setSlides([...slides, newSlide]);
+  };
+
+  const handleUpdateSlide = (index: number, field: keyof SplitSlideCMS, value: any) => {
+    const updated = [...slides];
+    updated[index] = { ...updated[index], [field]: value };
+    setSlides(updated);
+  };
+
+  const handleDeleteSlide = (index: number) => {
+    if (slides.length <= 1) {
+      alert('You must keep at least 1 hero slide.');
+      return;
+    }
+    setSlides(slides.filter((_, i) => i !== index));
+  };
+
+  const handleSaveSlider = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    router.post(
+      '/admin/pages/home/slider',
+      { slides },
+      { onFinish: () => setSaving(false) }
+    );
+  };
+
+  // --- 2. Seasonal Collection Handlers ---
+  const handleSaveSeasonal = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    router.post('/admin/pages/home/seasonal-collection', seasonal, {
+      onFinish: () => setSaving(false),
+    });
+  };
+
+  // --- 3. Promo Banners Handlers ---
+  const handleSaveBanners = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    router.post(
+      '/admin/pages/home/promo-banners',
+      { banners },
+      { onFinish: () => setSaving(false) }
+    );
+  };
+
+  // --- 4. Instagram Auto-Fetch & Save ---
   const handleAutoFetchInstagram = async () => {
     setFetchingInsta(true);
     setInstaMessage(null);
@@ -175,42 +221,13 @@ export default function Home({
         }));
         setInstaMessage(data.message || 'Instagram posts successfully synchronized!');
       } else {
-        setInstaMessage('Could not synchronize posts. You can manually edit or upload posts below.');
+        setInstaMessage('Could not synchronize posts. You can upload photos or edit post links below.');
       }
     } catch (err) {
-      setInstaMessage('Auto-fetch connection failed. Check handle or API token.');
+      setInstaMessage('Auto-fetch connection failed. Check handle or upload photos manually.');
     } finally {
       setFetchingInsta(false);
     }
-  };
-
-  // Submit Handlers
-  const handleSaveSlider = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    router.post(
-      '/admin/pages/home/slider',
-      { slides },
-      { onFinish: () => setSaving(false) }
-    );
-  };
-
-  const handleSaveBanners = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    router.post(
-      '/admin/pages/home/promo-banners',
-      { banners },
-      { onFinish: () => setSaving(false) }
-    );
-  };
-
-  const handleSaveSeasonal = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    router.post('/admin/pages/home/seasonal-collection', seasonal, {
-      onFinish: () => setSaving(false),
-    });
   };
 
   const handleSaveInstagram = (e: React.FormEvent) => {
@@ -221,6 +238,7 @@ export default function Home({
     });
   };
 
+  // --- 5. Trust Badges Handlers ---
   const handleSaveFeatures = (e: React.FormEvent) => {
     e.preventDefault();
     if (features.length < 3) {
@@ -253,7 +271,7 @@ export default function Home({
             Homepage Section Customizer
           </h1>
           <p className="text-xs sm:text-[13px] text-gray-500 mt-0.5">
-            Configure live sliders, promo blocks, curated Instagram gallery, and value proposition trust badges.
+            Configure live split sliders, promo blocks, seasonal collections, curated Instagram gallery, and trust badges.
           </p>
         </div>
 
@@ -282,32 +300,6 @@ export default function Home({
       <div className="flex items-center gap-1.5 p-1 bg-white border border-gray-200/80 rounded-[10px] shadow-2xs overflow-x-auto">
         <button
           type="button"
-          onClick={() => setActiveTab('instagram')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-[8px] text-xs font-bold transition-all cursor-pointer shrink-0 ${
-            activeTab === 'instagram'
-              ? 'bg-[#111111] text-white shadow-xs'
-              : 'text-gray-600 hover:text-black hover:bg-gray-50'
-          }`}
-        >
-          <Camera className="w-3.5 h-3.5 text-rose-400" />
-          <span>Shop by Gram (Instagram Feed)</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('features')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-[8px] text-xs font-bold transition-all cursor-pointer shrink-0 ${
-            activeTab === 'features'
-              ? 'bg-[#111111] text-white shadow-xs'
-              : 'text-gray-600 hover:text-black hover:bg-gray-50'
-          }`}
-        >
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Trust Badges (Min 3)</span>
-        </button>
-
-        <button
-          type="button"
           onClick={() => setActiveTab('slider')}
           className={`flex items-center gap-2 px-4 py-2 rounded-[8px] text-xs font-bold transition-all cursor-pointer shrink-0 ${
             activeTab === 'slider'
@@ -316,7 +308,7 @@ export default function Home({
           }`}
         >
           <Sliders className="w-3.5 h-3.5 text-amber-400" />
-          <span>Hero Split Slider</span>
+          <span>Hero Split Slider ({slides.length})</span>
         </button>
 
         <button
@@ -329,7 +321,7 @@ export default function Home({
           }`}
         >
           <Layers className="w-3.5 h-3.5 text-blue-400" />
-          <span>Promo Banners</span>
+          <span>Promo Dual Banners ({banners.length})</span>
         </button>
 
         <button
@@ -342,11 +334,509 @@ export default function Home({
           }`}
         >
           <SunMedium className="w-3.5 h-3.5 text-amber-500" />
-          <span>Seasonal Capsule</span>
+          <span>Seasonal Capsule {seasonal.enabled ? '🟢 (Active)' : '⚪ (Disabled)'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('instagram')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-[8px] text-xs font-bold transition-all cursor-pointer shrink-0 ${
+            activeTab === 'instagram'
+              ? 'bg-[#111111] text-white shadow-xs'
+              : 'text-gray-600 hover:text-black hover:bg-gray-50'
+          }`}
+        >
+          <Camera className="w-3.5 h-3.5 text-rose-400" />
+          <span>Shop by Gram ({instagram.posts.length} Posts)</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('features')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-[8px] text-xs font-bold transition-all cursor-pointer shrink-0 ${
+            activeTab === 'features'
+              ? 'bg-[#111111] text-white shadow-xs'
+              : 'text-gray-600 hover:text-black hover:bg-gray-50'
+          }`}
+        >
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+          <span>Trust Badges ({features.length} Cards)</span>
         </button>
       </div>
 
-      {/* TAB 1: SHOP BY GRAM (INSTAGRAM FEED & AUTO-FETCH) */}
+      {/* TAB 1: 50/50 HERO SPLIT SLIDER */}
+      {activeTab === 'slider' && (
+        <form onSubmit={handleSaveSlider} className="space-y-6">
+          <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+              <div>
+                <h2 className="text-base font-extrabold text-gray-900">50/50 Hero Split Slider</h2>
+                <p className="text-xs text-gray-500">Each slide showcases 2 side-by-side images with centered typography, badge, and button.</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAddSlide}
+                className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-xs font-bold rounded-[8px] flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add New Slide</span>
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {slides.map((slide, idx) => (
+                <div
+                  key={slide.id || idx}
+                  className={`p-6 rounded-[10px] border-2 transition-all space-y-6 ${
+                    slide.enabled ? 'border-gray-200 bg-[#fdfdfd]' : 'border-gray-200/60 bg-gray-50/70 opacity-75'
+                  }`}
+                >
+                  {/* Top Row: Slide Header & Enable Toggle */}
+                  <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <span className="w-6 h-6 rounded-full bg-[#111111] text-white text-xs font-extrabold flex items-center justify-center">
+                        {idx + 1}
+                      </span>
+                      <span className="text-sm font-bold text-gray-900">{slide.title || `Slide #${idx + 1}`}</span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={slide.enabled}
+                          onChange={(e) => handleUpdateSlide(idx, 'enabled', e.target.checked)}
+                          className="w-4 h-4 text-black focus:ring-black rounded-sm cursor-pointer"
+                        />
+                        <span className={slide.enabled ? 'text-emerald-700 font-bold' : 'text-gray-400'}>
+                          {slide.enabled ? 'Active on Storefront' : 'Disabled'}
+                        </span>
+                      </label>
+
+                      {slides.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteSlide(idx)}
+                          className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                          title="Delete Slide"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Left & Right Images Row with Live Previews & System File Uploaders */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50/70 border border-gray-200/70 rounded-[10px]">
+                    <SingleImageUploader
+                      label="Left Split Image (Lifestyle / Model)"
+                      hint="Recommended: 1200×1400 px (Portrait/Square)"
+                      value={slide.leftImage}
+                      onChange={(url) => handleUpdateSlide(idx, 'leftImage', url)}
+                    />
+
+                    <SingleImageUploader
+                      label="Right Split Image (Product Focus)"
+                      hint="Recommended: 1200×1400 px (Portrait/Square)"
+                      value={slide.rightImage}
+                      onChange={(url) => handleUpdateSlide(idx, 'rightImage', url)}
+                    />
+                  </div>
+
+                  {/* Text Content Inputs */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">Subtitle / Kicker</label>
+                      <input
+                        type="text"
+                        value={slide.subtitle}
+                        onChange={(e) => handleUpdateSlide(idx, 'subtitle', e.target.value)}
+                        placeholder="CAPTIVATING COLLECTION"
+                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">Main Heading / Title</label>
+                      <input
+                        type="text"
+                        value={slide.title || ''}
+                        onChange={(e) => handleUpdateSlide(idx, 'title', e.target.value)}
+                        placeholder="Sculpted By Light"
+                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">Badge Tag</label>
+                      <input
+                        type="text"
+                        value={slide.badge || ''}
+                        onChange={(e) => handleUpdateSlide(idx, 'badge', e.target.value)}
+                        placeholder="NEW ARRIVALS 2026"
+                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Button & Link Settings */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1 items-center bg-gray-50/60 p-4 rounded-[10px] border border-gray-100">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id={`btn_show_${idx}`}
+                        checked={slide.showButton !== false}
+                        onChange={(e) => handleUpdateSlide(idx, 'showButton', e.target.checked)}
+                        className="w-4 h-4 text-black focus:ring-black rounded-sm cursor-pointer"
+                      />
+                      <label htmlFor={`btn_show_${idx}`} className="text-xs font-bold text-gray-800 cursor-pointer">
+                        Display CTA Button
+                      </label>
+                    </div>
+
+                    {slide.showButton !== false && (
+                      <>
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-600 mb-1">Button Text</label>
+                          <input
+                            type="text"
+                            value={slide.buttonText}
+                            onChange={(e) => handleUpdateSlide(idx, 'buttonText', e.target.value)}
+                            placeholder="Shop Collection"
+                            className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-600 mb-1">Button Link URL</label>
+                          <input
+                            type="text"
+                            value={slide.buttonLink}
+                            onChange={(e) => handleUpdateSlide(idx, 'buttonLink', e.target.value)}
+                            placeholder="/shop"
+                            className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end pt-4 border-t border-gray-100">
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-8 py-3 bg-[#111111] hover:bg-[#d0473e] text-white rounded-[10px] text-xs font-bold uppercase tracking-wider transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                <span>{saving ? 'Saving...' : 'Save Hero Split Slider'}</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
+
+      {/* TAB 2: PROMOTIONAL DUAL BANNERS */}
+      {activeTab === 'banners' && (
+        <form onSubmit={handleSaveBanners} className="space-y-6">
+          <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
+            <div className="pb-3 border-b border-gray-100">
+              <h2 className="text-base font-extrabold text-gray-900">Promotional Dual Banners</h2>
+              <p className="text-xs text-gray-500">Edit the two side-by-side promotional highlight blocks displayed below categories.</p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {banners.map((card, idx) => (
+                <div key={card.id || idx} className="p-6 rounded-[10px] border-2 border-gray-200 bg-gray-50/50 space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-gray-200">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-gray-900">
+                      Promo Card #{idx + 1}
+                    </h3>
+
+                    <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={card.enabled !== false}
+                        onChange={(e) => {
+                          const updated = [...banners];
+                          updated[idx].enabled = e.target.checked;
+                          setBanners(updated);
+                        }}
+                        className="w-4 h-4 text-black focus:ring-black rounded-sm cursor-pointer"
+                      />
+                      <span className={card.enabled !== false ? 'text-emerald-700 font-bold' : 'text-gray-400'}>
+                        {card.enabled !== false ? 'Enabled' : 'Hidden'}
+                      </span>
+                    </label>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Subtitle</label>
+                    <input
+                      type="text"
+                      value={card.subtitle || ''}
+                      onChange={(e) => {
+                        const updated = [...banners];
+                        updated[idx].subtitle = e.target.value;
+                        setBanners(updated);
+                      }}
+                      placeholder="EPITOME OF REFINEMENT"
+                      className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Title</label>
+                    <input
+                      type="text"
+                      value={card.title || ''}
+                      onChange={(e) => {
+                        const updated = [...banners];
+                        updated[idx].title = e.target.value;
+                        setBanners(updated);
+                      }}
+                      placeholder="Light The Wonders"
+                      className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Description</label>
+                    <textarea
+                      rows={2}
+                      value={card.description || ''}
+                      onChange={(e) => {
+                        const updated = [...banners];
+                        updated[idx].description = e.target.value;
+                        setBanners(updated);
+                      }}
+                      className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
+                    />
+                  </div>
+
+                  <div>
+                    <SingleImageUploader
+                      label="Banner Background Image"
+                      hint="Recommended: 1200×800 px"
+                      value={card.image || ''}
+                      onChange={(url) => {
+                        const updated = [...banners];
+                        updated[idx].image = url;
+                        setBanners(updated);
+                      }}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-600 mb-1">Button Text</label>
+                      <input
+                        type="text"
+                        value={card.buttonText || ''}
+                        onChange={(e) => {
+                          const updated = [...banners];
+                          updated[idx].buttonText = e.target.value;
+                          setBanners(updated);
+                        }}
+                        placeholder="Shop Now"
+                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-600 mb-1">Button Link</label>
+                      <input
+                        type="text"
+                        value={card.buttonLink || ''}
+                        onChange={(e) => {
+                          const updated = [...banners];
+                          updated[idx].buttonLink = e.target.value;
+                          setBanners(updated);
+                        }}
+                        placeholder="/shop"
+                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end pt-4 border-t border-gray-100">
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-8 py-3 bg-[#111111] hover:bg-[#d0473e] text-white rounded-[10px] text-xs font-bold uppercase tracking-wider transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                <span>{saving ? 'Saving...' : 'Save Promo Banners'}</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
+
+      {/* TAB 3: SEASONAL CAPSULE */}
+      {activeTab === 'seasonal' && (
+        <form onSubmit={handleSaveSeasonal} className="space-y-6">
+          <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
+            <div className="p-5 rounded-[10px] bg-amber-50/70 border border-amber-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-sm font-extrabold text-gray-900">
+                  Seasonal / Feature Collection Display Section
+                </h2>
+                <p className="text-xs text-gray-600">
+                  Turn this curated showcase section ON or OFF on the storefront landing page.
+                </p>
+              </div>
+
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-gray-900">
+                <input
+                  type="checkbox"
+                  checked={seasonal.enabled}
+                  onChange={(e) => setSeasonal({ ...seasonal, enabled: e.target.checked })}
+                  className="w-4 h-4 text-black focus:ring-black rounded-sm cursor-pointer"
+                />
+                <span className={seasonal.enabled ? 'text-emerald-700 font-bold' : 'text-gray-400'}>
+                  {seasonal.enabled ? 'Section Active' : 'Section Hidden'}
+                </span>
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Title & Badge */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Collection Title (e.g. Summer Solstice / Winter Lookbook)
+                  </label>
+                  <input
+                    type="text"
+                    value={seasonal.title || ''}
+                    onChange={(e) => setSeasonal({ ...seasonal, title: e.target.value })}
+                    placeholder="Summer Solstice Edition"
+                    className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Subtitle / Subheading</label>
+                  <input
+                    type="text"
+                    value={seasonal.subtitle}
+                    onChange={(e) => setSeasonal({ ...seasonal, subtitle: e.target.value })}
+                    placeholder="SUNLIT REFLECTIONS & WATERPROOF HEIRLOOMS"
+                    className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Seasonal Capsule Badge</label>
+                  <input
+                    type="text"
+                    value={seasonal.badge}
+                    onChange={(e) => setSeasonal({ ...seasonal, badge: e.target.value })}
+                    placeholder="SUMMER 2026 CAPSULE"
+                    className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Description Paragraph</label>
+                  <textarea
+                    rows={3}
+                    value={seasonal.description}
+                    onChange={(e) => setSeasonal({ ...seasonal, description: e.target.value })}
+                    placeholder="A radiant curation designed to shine effortlessly through beach sun and ocean mist..."
+                    className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
+                  />
+                </div>
+              </div>
+
+              {/* Banner Image & Category Target */}
+              <div className="space-y-4">
+                <div className="p-4 bg-gray-50/70 border border-gray-200/70 rounded-[10px]">
+                  <SingleImageUploader
+                    label="Collection Showcase Banner Image"
+                    hint="Recommended: 1200×800 px (Landscape 3:2)"
+                    value={seasonal.banner_image}
+                    onChange={(url) => setSeasonal({ ...seasonal, banner_image: url })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Select Featured Category or Collection to Showcase
+                  </label>
+                  <select
+                    value={seasonal.category_slug}
+                    onChange={(e) => setSeasonal({ ...seasonal, category_slug: e.target.value })}
+                    className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
+                  >
+                    <option value="all">All Products</option>
+                    <optgroup label="Shop Categories">
+                      {categories.map((c) => (
+                        <option key={`cat-${c.id}`} value={c.slug}>
+                          Category: {c.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                    {collections && collections.length > 0 && (
+                      <optgroup label="Curated Collections">
+                        {collections.map((col) => (
+                          <option key={`col-${col.id}`} value={col.slug}>
+                            Collection: {col.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Button Text</label>
+                    <input
+                      type="text"
+                      value={seasonal.button_text}
+                      onChange={(e) => setSeasonal({ ...seasonal, button_text: e.target.value })}
+                      placeholder="Explore Summer Edit"
+                      className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Button Link</label>
+                    <input
+                      type="text"
+                      value={seasonal.button_link}
+                      onChange={(e) => setSeasonal({ ...seasonal, button_link: e.target.value })}
+                      placeholder="/shop?category=necklaces"
+                      className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4 border-t border-gray-100">
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-8 py-3 bg-[#111111] hover:bg-[#d0473e] text-white rounded-[10px] text-xs font-bold uppercase tracking-wider transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                <span>{saving ? 'Saving...' : 'Save Seasonal Capsule'}</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
+
+      {/* TAB 4: SHOP BY GRAM (INSTAGRAM FEED & AUTO-FETCH) */}
       {activeTab === 'instagram' && (
         <form onSubmit={handleSaveInstagram} className="space-y-6">
           <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
@@ -558,7 +1048,7 @@ export default function Home({
         </form>
       )}
 
-      {/* TAB 2: TRUST BADGES & VALUE PROPOSITIONS (MIN 3 MANDATORY) */}
+      {/* TAB 5: TRUST BADGES & VALUE PROPOSITIONS (MIN 3 MANDATORY) */}
       {activeTab === 'features' && (
         <form onSubmit={handleSaveFeatures} className="space-y-6">
           <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
@@ -695,293 +1185,6 @@ export default function Home({
               >
                 <Save className="w-4 h-4" />
                 <span>{saving ? 'Saving...' : 'Save Trust Badges'}</span>
-              </button>
-            </div>
-          </div>
-        </form>
-      )}
-
-      {/* TAB 3: HERO SPLIT SLIDER */}
-      {activeTab === 'slider' && (
-        <form onSubmit={handleSaveSlider} className="space-y-6">
-          <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-              <div>
-                <h2 className="text-base font-bold text-gray-900">Hero Split Slider</h2>
-                <p className="text-xs text-gray-400">
-                  Manage interactive slide frames, headline typography, and call-to-action buttons.
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              {slides.map((slide, index) => (
-                <div
-                  key={slide.id}
-                  className="p-5 bg-gray-50/80 border border-gray-200/80 rounded-[10px] space-y-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-gray-900">
-                      Slide #{index + 1}: {slide.title || 'Untitled Slide'}
-                    </span>
-                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-700">
-                      <input
-                        type="checkbox"
-                        checked={slide.enabled}
-                        onChange={(e) => {
-                          const updated = [...slides];
-                          updated[index] = { ...updated[index], enabled: e.target.checked };
-                          setSlides(updated);
-                        }}
-                        className="rounded-xs text-black"
-                      />
-                      <span>Active</span>
-                    </label>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        Subtitle / Kicker
-                      </label>
-                      <input
-                        type="text"
-                        value={slide.subtitle}
-                        onChange={(e) => {
-                          const updated = [...slides];
-                          updated[index] = { ...updated[index], subtitle: e.target.value };
-                          setSlides(updated);
-                        }}
-                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        Main Title
-                      </label>
-                      <input
-                        type="text"
-                        value={slide.title}
-                        onChange={(e) => {
-                          const updated = [...slides];
-                          updated[index] = { ...updated[index], title: e.target.value };
-                          setSlides(updated);
-                        }}
-                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        Left Image URL
-                      </label>
-                      <input
-                        type="text"
-                        value={slide.leftImage}
-                        onChange={(e) => {
-                          const updated = [...slides];
-                          updated[index] = { ...updated[index], leftImage: e.target.value };
-                          setSlides(updated);
-                        }}
-                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        Right Image URL
-                      </label>
-                      <input
-                        type="text"
-                        value={slide.rightImage}
-                        onChange={(e) => {
-                          const updated = [...slides];
-                          updated[index] = { ...updated[index], rightImage: e.target.value };
-                          setSlides(updated);
-                        }}
-                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-end pt-4 border-t border-gray-100">
-              <button
-                type="submit"
-                disabled={saving}
-                className="inline-flex items-center gap-2 px-8 py-3 bg-[#111111] hover:bg-[#d0473e] text-white rounded-[10px] text-xs font-bold uppercase tracking-wider transition-all shadow-xs disabled:opacity-50 cursor-pointer"
-              >
-                <Save className="w-4 h-4" />
-                <span>{saving ? 'Saving...' : 'Save Slider'}</span>
-              </button>
-            </div>
-          </div>
-        </form>
-      )}
-
-      {/* TAB 4: PROMO BANNERS */}
-      {activeTab === 'banners' && (
-        <form onSubmit={handleSaveBanners} className="space-y-6">
-          <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-              <div>
-                <h2 className="text-base font-bold text-gray-900">Promotional Banners</h2>
-                <p className="text-xs text-gray-400">
-                  Configure promotional split blocks and luxury editorial cards.
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {banners.map((banner, index) => (
-                <div
-                  key={banner.id}
-                  className="p-5 bg-gray-50/80 border border-gray-200/80 rounded-[10px] space-y-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-gray-900">
-                      Banner #{index + 1}: {banner.title}
-                    </span>
-                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-700">
-                      <input
-                        type="checkbox"
-                        checked={banner.enabled}
-                        onChange={(e) => {
-                          const updated = [...banners];
-                          updated[index] = { ...updated[index], enabled: e.target.checked };
-                          setBanners(updated);
-                        }}
-                        className="rounded-xs text-black"
-                      />
-                      <span>Active</span>
-                    </label>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        Title
-                      </label>
-                      <input
-                        type="text"
-                        value={banner.title}
-                        onChange={(e) => {
-                          const updated = [...banners];
-                          updated[index] = { ...updated[index], title: e.target.value };
-                          setBanners(updated);
-                        }}
-                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        Image URL
-                      </label>
-                      <input
-                        type="text"
-                        value={banner.image || ''}
-                        onChange={(e) => {
-                          const updated = [...banners];
-                          updated[index] = { ...updated[index], image: e.target.value };
-                          setBanners(updated);
-                        }}
-                        placeholder="https://..."
-                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-end pt-4 border-t border-gray-100">
-              <button
-                type="submit"
-                disabled={saving}
-                className="inline-flex items-center gap-2 px-8 py-3 bg-[#111111] hover:bg-[#d0473e] text-white rounded-[10px] text-xs font-bold uppercase tracking-wider transition-all shadow-xs disabled:opacity-50 cursor-pointer"
-              >
-                <Save className="w-4 h-4" />
-                <span>{saving ? 'Saving...' : 'Save Banners'}</span>
-              </button>
-            </div>
-          </div>
-        </form>
-      )}
-
-      {/* TAB 5: SEASONAL CAPSULE */}
-      {activeTab === 'seasonal' && (
-        <form onSubmit={handleSaveSeasonal} className="space-y-6">
-          <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-              <div>
-                <h2 className="text-base font-bold text-gray-900">Seasonal Capsule Collection</h2>
-                <p className="text-xs text-gray-400">
-                  Highlight exclusive summer / festive drops with custom hero photography.
-                </p>
-              </div>
-
-              <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-gray-900">
-                <input
-                  type="checkbox"
-                  checked={seasonal.enabled}
-                  onChange={(e) => setSeasonal({ ...seasonal, enabled: e.target.checked })}
-                  className="rounded-xs text-black"
-                />
-                <span>Enable Section</span>
-              </label>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                  Badge Text
-                </label>
-                <input
-                  type="text"
-                  value={seasonal.badge}
-                  onChange={(e) => setSeasonal({ ...seasonal, badge: e.target.value })}
-                  placeholder="SUMMER 2026 CAPSULE"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                  Collection Title
-                </label>
-                <input
-                  type="text"
-                  value={seasonal.title}
-                  onChange={(e) => setSeasonal({ ...seasonal, title: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black focus:bg-white"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                  Description
-                </label>
-                <textarea
-                  rows={3}
-                  value={seasonal.description}
-                  onChange={(e) => setSeasonal({ ...seasonal, description: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-4 border-t border-gray-100">
-              <button
-                type="submit"
-                disabled={saving}
-                className="inline-flex items-center gap-2 px-8 py-3 bg-[#111111] hover:bg-[#d0473e] text-white rounded-[10px] text-xs font-bold uppercase tracking-wider transition-all shadow-xs disabled:opacity-50 cursor-pointer"
-              >
-                <Save className="w-4 h-4" />
-                <span>{saving ? 'Saving...' : 'Save Seasonal Capsule'}</span>
               </button>
             </div>
           </div>
