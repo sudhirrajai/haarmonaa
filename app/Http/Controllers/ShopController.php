@@ -148,26 +148,45 @@ class ShopController extends Controller
                 ->orWhere('slug', 'summer-solstice-capsule')
                 ->orWhere('slug', 'like', '%'.$seasonalTarget.'%')
                 ->orWhere('name', 'like', '%'.$seasonalTarget.'%')
-                ->with(['products.category', 'products.categories', 'products.variants'])
+                ->with(['products' => function ($q) {
+                    $q->where('status', '!=', 'draft');
+                }, 'products.category', 'products.categories', 'products.variants'])
                 ->first();
 
-            if ($matchedCollection && $matchedCollection->products->count() > 0) {
-                // Map products and sort newest created first so newly added products appear upfront
-                $seasonalProducts = $matchedCollection->products
-                    ->sortByDesc('id')
-                    ->map(fn ($p) => $this->formatProduct($p))
-                    ->values()
-                    ->all();
+            if ($matchedCollection) {
+                // Synchronize banner image and texts from collection if updated in Collections Manager
+                if (! empty($matchedCollection->banner_image)) {
+                    $seasonal['banner_image'] = $matchedCollection->banner_image;
+                } elseif (! empty($matchedCollection->image)) {
+                    $seasonal['banner_image'] = $matchedCollection->image;
+                }
+
+                if (! empty($matchedCollection->name)) {
+                    $seasonal['title'] = $matchedCollection->name;
+                }
+                if (! empty($matchedCollection->tagline)) {
+                    $seasonal['subtitle'] = $matchedCollection->tagline;
+                }
+                if (! empty($matchedCollection->description)) {
+                    $seasonal['description'] = $matchedCollection->description;
+                }
+
+                // If collection has products assigned, display only those products
+                if ($matchedCollection->products->count() > 0) {
+                    $seasonalProducts = $matchedCollection->products
+                        ->sortByDesc('id')
+                        ->map(fn ($p) => $this->formatProduct($p))
+                        ->values()
+                        ->all();
+                } else {
+                    $seasonalProducts = [];
+                }
             } elseif ($seasonalTarget !== 'all') {
                 $seasonalProducts = array_values(array_filter($products, function ($p) use ($seasonalTarget) {
                     return strtolower(str_replace([' ', '&'], ['-', ''], $p['category'])) === strtolower($seasonalTarget)
                         || strtolower($p['category']) === strtolower($seasonalTarget)
                         || in_array(strtolower($seasonalTarget), array_map('strtolower', $p['categories'] ?? []));
                 }));
-            }
-
-            if (empty($seasonalProducts)) {
-                $seasonalProducts = array_slice($products, 0, 6);
             }
         }
 

@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { DeleteConfirmModal } from '@/components/admin/DeleteConfirmModal';
 import { SingleImageUploader } from '@/components/admin/SingleImageUploader';
+import { AdminToggle } from '@/components/admin/AdminToggle';
 import { Product } from '@/types/shop';
 import {
   Layers,
@@ -416,8 +417,8 @@ export default function CollectionsIndex({
             </div>
 
             {/* Modal Scrollable Body */}
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-              {/* Basic Fields */}
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+              {/* Basic Fields Row 1 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
@@ -447,36 +448,39 @@ export default function CollectionsIndex({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Tagline / Subheading
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.tagline}
-                    onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
-                    placeholder="e.g. LIMITED EDITION 2026"
-                    className="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                  />
-                </div>
+              {/* Tagline / Subheading */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  Tagline / Subheading
+                </label>
+                <input
+                  type="text"
+                  value={formData.tagline}
+                  onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+                  placeholder="e.g. SUNLIT REFLECTIONS & WATERPROOF HEIRLOOMS"
+                  className="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
+                />
+              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Images Row: Thumbnail and Banner each get 50% width cleanly */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50/70 border border-gray-200/80 rounded-2xl">
                 <SingleImageUploader
                   label="Thumbnail Cover Image"
+                  hint="Square / Portrait (Catalog card)"
                   value={formData.image}
                   onChange={(url) => setFormData({ ...formData, image: url })}
                   placeholder="Upload file from system or paste URL..."
                 />
                 <SingleImageUploader
                   label="Banner / Showcase Image"
+                  hint="Landscape ~1200×800 px (Homepage showcase banner)"
                   value={formData.banner_image}
                   onChange={(url) => setFormData({ ...formData, banner_image: url })}
                   placeholder="Upload file from system or paste URL..."
                 />
               </div>
-              </div>
 
+              {/* Description */}
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">Description</label>
                 <textarea
@@ -488,31 +492,27 @@ export default function CollectionsIndex({
                 />
               </div>
 
-              {/* Toggles */}
-              <div className="flex flex-wrap gap-6 pt-2 pb-2 border-y border-gray-100">
-                <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_active}
-                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                    className="w-4 h-4 text-black focus:ring-black rounded-sm cursor-pointer"
-                  />
-                  <span>Active & Published</span>
-                </label>
+              {/* Toggles using AdminToggle */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50/50 border border-gray-200/80 rounded-2xl">
+                <AdminToggle
+                  label="Active & Published"
+                  description="Make collection accessible on the boutique store."
+                  checked={formData.is_active}
+                  onChange={(val) => setFormData({ ...formData, is_active: val })}
+                  activeColor="bg-emerald-600"
+                />
 
-                <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_featured}
-                    onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
-                    className="w-4 h-4 text-black focus:ring-black rounded-sm cursor-pointer"
-                  />
-                  <span>Featured Collection (Display on Homepage)</span>
-                </label>
+                <AdminToggle
+                  label="Featured Collection"
+                  description="Highlight on homepage seasonal showcase."
+                  checked={formData.is_featured}
+                  onChange={(val) => setFormData({ ...formData, is_featured: val })}
+                  activeColor="bg-amber-500"
+                />
               </div>
 
               {/* Multi-Product Selector Section */}
-              <div className="space-y-3">
+              <div className="space-y-3 pt-2 border-t border-gray-100">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                   <div>
                     <h3 className="text-xs font-extrabold uppercase tracking-wider text-gray-900">

@@ -139,15 +139,15 @@ export default function Home({
               )}
 
               {/* Right Curated Products Grid */}
-              <div
-                className={`${
-                  seasonalCollection.banner_image ? 'lg:col-span-8' : 'lg:col-span-12'
-                } grid grid-cols-2 md:grid-cols-3 ${
-                  seasonalCollection.banner_image ? 'lg:grid-cols-3' : 'lg:grid-cols-4'
-                } gap-6 sm:gap-8`}
-              >
-                {(seasonalProducts.length > 0 ? seasonalProducts : products.slice(0, 3)).map(
-                  (product) => (
+              {seasonalProducts && seasonalProducts.length > 0 ? (
+                <div
+                  className={`${
+                    seasonalCollection.banner_image ? 'lg:col-span-8' : 'lg:col-span-12'
+                  } grid grid-cols-2 md:grid-cols-3 ${
+                    seasonalCollection.banner_image ? 'lg:grid-cols-3' : 'lg:grid-cols-4'
+                  } gap-6 sm:gap-8`}
+                >
+                  {seasonalProducts.map((product) => (
                     <ProductCard
                       key={`seasonal-${product.id}`}
                       product={product}
@@ -155,9 +155,28 @@ export default function Home({
                       onAddToCart={onAddToCart}
                       onQuickView={onQuickView}
                     />
-                  )
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div
+                  className={`${
+                    seasonalCollection.banner_image ? 'lg:col-span-8' : 'lg:col-span-12'
+                  } flex flex-col items-center justify-center p-8 bg-gray-50/80 border border-gray-100 rounded-3xl text-center min-h-[300px]`}
+                >
+                  <p className="text-sm font-bold text-gray-900">Curated Capsule Dropping Soon</p>
+                  <p className="text-xs text-gray-500 mt-1 max-w-sm">
+                    Exclusive artisanal pieces are currently being selected for this showcase.
+                  </p>
+                  {seasonalCollection.button_link && (
+                    <Link
+                      href={seasonalCollection.button_link}
+                      className="mt-4 inline-block bg-black hover:bg-[#d0473e] text-white px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-colors"
+                    >
+                      Browse Boutique
+                    </Link>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </section>
