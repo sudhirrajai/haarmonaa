@@ -49,6 +49,8 @@ class HandleInertiaRequests extends Middleware
                 'store_logo' => Setting::get('store_logo'),
                 'store_logo_dark' => Setting::get('store_logo_dark'),
                 'store_favicon' => Setting::get('store_favicon'),
+                'header_logo_height' => (int) Setting::get('header_logo_height', 44),
+                'footer_logo_height' => (int) Setting::get('footer_logo_height', 48),
                 'store_email' => Setting::get('store_email', 'support@haarmonaa.in'),
                 'store_phone' => Setting::get('store_phone', ''),
                 'store_address' => Setting::get('store_address', ''),

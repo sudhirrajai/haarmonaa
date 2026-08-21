@@ -27,7 +27,7 @@ export const Footer: React.FC = () => {
           {/* Column 1: Brand & Socials (4 Cols) */}
           <div className="lg:col-span-4 space-y-5">
             <Link href="/" className="inline-block">
-              <HaarmonaaLogo variant="dark" className="h-9 sm:h-10 w-auto" />
+              <HaarmonaaLogo variant="dark" />
             </Link>
 
             <p className="text-xs text-gray-400 leading-relaxed max-w-sm">

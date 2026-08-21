@@ -82,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             <Link href="/" className="flex items-center py-2 group">
-              <HaarmonaaLogo className="h-8 sm:h-9 w-auto" />
+              <HaarmonaaLogo />
             </Link>
           </div>
 

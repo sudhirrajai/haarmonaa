@@ -4,17 +4,21 @@ import { usePage } from '@inertiajs/react';
 interface HaarmonaaLogoProps {
   className?: string;
   variant?: 'light' | 'dark';
+  height?: number | string;
 }
 
 export const HaarmonaaLogo: React.FC<HaarmonaaLogoProps> = ({
-  className = 'h-9 w-auto',
+  className = '',
   variant = 'light',
+  height,
 }) => {
   const { props } = usePage<{
     settings?: {
       store_name?: string;
       store_logo?: string;
       store_logo_dark?: string;
+      header_logo_height?: number;
+      footer_logo_height?: number;
     };
   }>();
 
@@ -25,13 +29,29 @@ export const HaarmonaaLogo: React.FC<HaarmonaaLogoProps> = ({
       ? settings.store_logo_dark
       : settings?.store_logo || null;
 
+  // Determine dynamic height
+  const configuredHeight =
+    height ??
+    (variant === 'dark'
+      ? settings?.footer_logo_height || 48
+      : settings?.header_logo_height || 44);
+
+  const styleHeight =
+    typeof configuredHeight === 'number'
+      ? `${configuredHeight}px`
+      : configuredHeight;
+
   if (logoSrc) {
     return (
-      <div className={`flex items-center select-none ${className}`}>
+      <div
+        className={`flex items-center select-none ${className}`}
+        style={{ height: styleHeight }}
+      >
         <img
           src={logoSrc}
           alt={settings?.store_name || 'Haarmonaa'}
-          className="h-full w-auto max-h-12 object-contain"
+          style={{ height: styleHeight }}
+          className="w-auto object-contain transition-all"
         />
       </div>
     );

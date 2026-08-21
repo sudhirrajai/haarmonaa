@@ -28,6 +28,8 @@ class SettingController extends Controller
             'store_logo' => 'nullable|string',
             'store_logo_dark' => 'nullable|string',
             'store_favicon' => 'nullable|string',
+            'header_logo_height' => 'nullable|integer|min:20|max:150',
+            'footer_logo_height' => 'nullable|integer|min:20|max:150',
             'store_email' => 'required|email',
             'store_phone' => 'nullable|string',
             'store_address' => 'nullable|string',

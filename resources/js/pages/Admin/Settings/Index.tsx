@@ -28,6 +28,8 @@ export default function Index({ settings }: SettingsProps) {
     store_logo: settings.store_logo ?? '',
     store_logo_dark: settings.store_logo_dark ?? '',
     store_favicon: settings.store_favicon ?? '',
+    header_logo_height: Number(settings.header_logo_height || 44),
+    footer_logo_height: Number(settings.footer_logo_height || 48),
     store_email: settings.store_email ?? 'support@haarmonaa.in',
     store_phone: settings.store_phone ?? '',
     currency_symbol: settings.currency_symbol ?? '₹',
@@ -87,7 +89,7 @@ export default function Index({ settings }: SettingsProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Primary Logo */}
-            <div className="p-4 bg-gray-50/70 border border-gray-200/70 rounded-[10px] space-y-2">
+            <div className="p-4 bg-gray-50/70 border border-gray-200/70 rounded-[10px] space-y-4">
               <SingleImageUploader
                 label="Primary Store Logo (Header)"
                 hint="Recommended: 320×80 px (PNG/SVG transparent)"
@@ -95,10 +97,51 @@ export default function Index({ settings }: SettingsProps) {
                 value={formData.store_logo}
                 onChange={(url) => setFormData({ ...formData, store_logo: url })}
               />
+
+              {/* Header Logo Height Slider */}
+              <div className="pt-2 border-t border-gray-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-gray-700">
+                    Header Logo Size / Height (px)
+                  </label>
+                  <span className="text-xs font-extrabold text-gray-900 px-2 py-0.5 bg-white border border-gray-200 rounded-[6px]">
+                    {formData.header_logo_height}px
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="24"
+                    max="90"
+                    step="2"
+                    value={formData.header_logo_height}
+                    onChange={(e) =>
+                      setFormData({ ...formData, header_logo_height: Number(e.target.value) })
+                    }
+                    className="w-full accent-black cursor-pointer"
+                  />
+                </div>
+
+                {/* Live Preview Box */}
+                {formData.store_logo && (
+                  <div className="p-3 bg-white border border-gray-200 rounded-[8px] flex flex-col items-center justify-center gap-1.5 overflow-hidden">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      Header Preview
+                    </span>
+                    <img
+                      src={formData.store_logo}
+                      alt="Header Logo Preview"
+                      style={{ height: `${formData.header_logo_height}px` }}
+                      className="w-auto object-contain transition-all"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Dark / Inverted Logo */}
-            <div className="p-4 bg-gray-50/70 border border-gray-200/70 rounded-[10px] space-y-2">
+            <div className="p-4 bg-gray-50/70 border border-gray-200/70 rounded-[10px] space-y-4">
               <SingleImageUploader
                 label="Dark / Inverted Logo (Footer)"
                 hint="Recommended: 320×80 px (White/Gold on transparent)"
@@ -106,6 +149,47 @@ export default function Index({ settings }: SettingsProps) {
                 value={formData.store_logo_dark}
                 onChange={(url) => setFormData({ ...formData, store_logo_dark: url })}
               />
+
+              {/* Footer Logo Height Slider */}
+              <div className="pt-2 border-t border-gray-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-gray-700">
+                    Footer Logo Size / Height (px)
+                  </label>
+                  <span className="text-xs font-extrabold text-gray-900 px-2 py-0.5 bg-white border border-gray-200 rounded-[6px]">
+                    {formData.footer_logo_height}px
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="24"
+                    max="100"
+                    step="2"
+                    value={formData.footer_logo_height}
+                    onChange={(e) =>
+                      setFormData({ ...formData, footer_logo_height: Number(e.target.value) })
+                    }
+                    className="w-full accent-black cursor-pointer"
+                  />
+                </div>
+
+                {/* Dark Live Preview Box */}
+                {(formData.store_logo_dark || formData.store_logo) && (
+                  <div className="p-3 bg-[#111111] border border-gray-800 rounded-[8px] flex flex-col items-center justify-center gap-1.5 overflow-hidden">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                      Footer Preview (Dark Background)
+                    </span>
+                    <img
+                      src={formData.store_logo_dark || formData.store_logo}
+                      alt="Footer Logo Preview"
+                      style={{ height: `${formData.footer_logo_height}px` }}
+                      className="w-auto object-contain transition-all"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
