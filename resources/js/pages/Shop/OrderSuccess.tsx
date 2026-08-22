@@ -23,7 +23,9 @@ interface OrderData {
   city: string;
   postal_code: string;
   subtotal: number;
-  tax: number;
+  discount_amount?: number;
+  coupon_code?: string;
+  tax?: number;
   shipping: number;
   total_amount: number;
   currency: string;
@@ -84,19 +86,22 @@ export default function OrderSuccess({ order, products = [] }: OrderSuccessProps
                 </span>
               </div>
               <div>
-                <span className="text-gray-400 block text-[11px]">Payment Mode</span>
-                <span className="font-bold text-gray-900 uppercase">{order.payment_method}</span>
+                <span className="text-gray-400 block text-[11px]">Payment Method</span>
+                <span className="font-bold text-gray-900 uppercase">
+                  {order.payment_method === 'COD' ? 'Cash on Delivery' : 'Online / UPI (Razorpay)'}
+                </span>
               </div>
               <div>
-                <span className="text-gray-400 block text-[11px]">Order Status</span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800">
-                  {order.status}
+                <span className="text-gray-400 block text-[11px]">Payment Status</span>
+                <span className="font-bold text-emerald-600 uppercase flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  {order.payment_status}
                 </span>
               </div>
             </div>
 
-            {/* Itemized Purchased Pieces */}
-            <div className="space-y-4">
+            {/* Purchased Items List */}
+            <div className="space-y-3">
               <h2 className="text-xs font-bold uppercase tracking-wider text-gray-900 border-b border-gray-100 pb-2">
                 Purchased Jewelry Items ({order.items.length})
               </h2>
@@ -132,10 +137,12 @@ export default function OrderSuccess({ order, products = [] }: OrderSuccessProps
                 <span>Subtotal</span>
                 <span className="font-bold text-gray-900">₹{order.subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-gray-600">
-                <span>GST (3% Jewelry Tax)</span>
-                <span className="font-bold text-gray-900">₹{order.tax.toFixed(2)}</span>
-              </div>
+              {order.discount_amount && order.discount_amount > 0 ? (
+                <div className="flex justify-between text-emerald-600 font-medium">
+                  <span>Coupon Discount {order.coupon_code ? `(${order.coupon_code})` : ''}</span>
+                  <span className="font-bold">-₹{order.discount_amount.toFixed(2)}</span>
+                </div>
+              ) : null}
               <div className="flex justify-between text-gray-600">
                 <span>Insured Express Shipping</span>
                 <span className="font-bold text-gray-900">
