@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Admin\PageController;
 use App\Models\Category;
 use App\Models\Collection;
 use App\Models\Product;
@@ -294,7 +295,12 @@ class ShopController extends Controller
 
     public function about(): Response
     {
+        $rawAbout = Setting::get('page_about_content');
+        $about = $rawAbout ? json_decode($rawAbout, true) : null;
+        $content = array_replace_recursive(PageController::getDefaultAboutContent(), $about ?: []);
+
         return Inertia::render('Shop/About', [
+            'aboutContent' => $content,
             'products' => $this->getProducts(),
         ]);
     }

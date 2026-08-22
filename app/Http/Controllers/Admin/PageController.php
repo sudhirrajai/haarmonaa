@@ -553,16 +553,171 @@ class PageController extends Controller
     }
 
     /**
-     * Placeholder editors for other pages.
+     * Default structured content for About Us Page.
      */
-    public function product(): Response
+    public static function getDefaultAboutContent(): array
     {
-        return Inertia::render('Admin/Pages/ProductPage');
+        return [
+            'hero' => [
+                'enabled' => true,
+                'badge' => 'WELCOME TO HAARMONAA',
+                'title' => "Artisanal Fine Jewelry\nAvailable to Everyone",
+                'description' => 'Over a decade of master goldsmithing, crafting thick 18K solid gold vermeil and hypoallergenic heirlooms engineered to endure daily wear effortlessly.',
+            ],
+            'media_banner' => [
+                'enabled' => true,
+                'left_image' => 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=1200&auto=format&fit=crop',
+                'right_bg_image' => 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop',
+                'brand_subtitle_top' => 'HAARMONAA FINE JEWELRY',
+                'brand_title' => 'haarmonaa',
+                'brand_subtitle_bottom' => 'SOLID 18K GOLD VERMEIL',
+            ],
+            'stats' => [
+                'enabled' => true,
+                'items' => [
+                    [
+                        'value' => '50k+',
+                        'label' => 'Heirloom Jewels Delivered',
+                        'description' => "That's why we strive to offer a diverse range of products that cater to all styles.",
+                    ],
+                    [
+                        'value' => '100%',
+                        'label' => 'Waterproof & Anti-Tarnish',
+                        'description' => 'We pride ourselves on creating great products and experiences with our valued customers.',
+                    ],
+                    [
+                        'value' => '15k+',
+                        'label' => 'Cherished Customers',
+                        'description' => 'Partner with artisans that share our values, striving to protect our environment.',
+                    ],
+                ],
+            ],
+            'features' => [
+                'enabled' => true,
+                'badge' => 'WHY CHOOSE US',
+                'title' => 'Our Peculiar Things',
+                'description' => 'Our boutique selections are chosen for their impeccable quality, timeless aesthetic, and anti-tarnish protection.',
+                'cards' => [
+                    [
+                        'image' => 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop',
+                        'title' => 'Calmed Creations',
+                        'description' => 'Mindful craftsmanship prioritizing sustainable 18k gold vermeil casting, hypoallergenic silver, and nickel-free comfort.',
+                    ],
+                    [
+                        'image' => 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop',
+                        'title' => 'Designed for Love',
+                        'description' => 'From heirloom-inspired heart motifs to modern organic wave silhouettes, each design is built to evoke pure elegance.',
+                    ],
+                    [
+                        'image' => 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=800&auto=format&fit=crop',
+                        'title' => 'Premium for Everyone',
+                        'description' => 'Direct-to-consumer luxury jewelry ensuring fine quality and lasting wear are accessible without traditional retail markups.',
+                    ],
+                ],
+            ],
+            'quote' => [
+                'enabled' => true,
+                'stars' => 5,
+                'quote' => 'Haarmonaa will become an example of the responsible business model by doing business with kindness, profit and bringing practical and long—term values to customers, employees, partners, the community for the environment and for shareholders.',
+                'author_name' => 'Carie—Gosée Hera',
+                'author_role' => 'CEO and Founder Haarmonaa Boutique',
+            ],
+            'split_rows' => [
+                'enabled' => true,
+                'rows' => [
+                    [
+                        'badge' => 'OUR PROMISE',
+                        'title' => 'The Best Product',
+                        'description' => 'Meticulously crafted with hypoallergenic, water-safe materials that endure daily wear without fading, tarnishing, or losing their radiant shine. Every jewel undergoes stringent multi-point inspection.',
+                        'button_text' => 'Learn More',
+                        'button_link' => '/shop',
+                        'image' => 'https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=1000&auto=format&fit=crop',
+                        'image_position' => 'left',
+                    ],
+                    [
+                        'badge' => 'OUR PRODUCTS',
+                        'title' => 'Timeless Products',
+                        'description' => 'Designed to bridge classic luxury with effortless versatility, creating jewelry staples that effortlessly transition from morning meetings to evening celebrations.',
+                        'button_text' => 'Learn More',
+                        'button_link' => '/shop',
+                        'image' => 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=1000&auto=format&fit=crop',
+                        'image_position' => 'right',
+                    ],
+                ],
+            ],
+            'stories' => [
+                'enabled' => true,
+                'badge' => 'SEE OUR ROOTS',
+                'title' => 'Expanding Horizons',
+                'description' => 'Rooted in a passion for artisanal beauty and accessible luxury, our journey continues across the globe.',
+                'cards' => [
+                    [
+                        'image' => 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop',
+                        'title' => 'The Core of Us',
+                        'description' => 'A united collective of designers, jewelers, and curators dedicated to crafting wearable art.',
+                    ],
+                    [
+                        'image' => 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=800&auto=format&fit=crop',
+                        'title' => 'Our Promise',
+                        'description' => 'Swift, insured delivery with luxury sustainable velvet care packaging on every order.',
+                    ],
+                    [
+                        'image' => 'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=800&auto=format&fit=crop',
+                        'title' => 'Our Genesis',
+                        'description' => 'Conceived from a shared belief that fine craftsmanship should be celebrated daily, not kept in boxes.',
+                    ],
+                ],
+            ],
+        ];
     }
 
+    /**
+     * About Us Page CMS Editor.
+     */
     public function about(): Response
     {
-        return Inertia::render('Admin/Pages/About');
+        $rawAbout = Setting::get('page_about_content');
+        $about = $rawAbout ? json_decode($rawAbout, true) : null;
+        $content = array_replace_recursive(self::getDefaultAboutContent(), $about ?: []);
+
+        return Inertia::render('Admin/Pages/About', [
+            'aboutContent' => $content,
+        ]);
+    }
+
+    /**
+     * Save About Us Page Content.
+     */
+    public function updateAbout(Request $request): RedirectResponse
+    {
+        $payload = $request->input('aboutContent', []);
+        Setting::set('page_about_content', json_encode($payload));
+
+        return back()->with('success', 'About Us page content updated successfully.');
+    }
+
+    /**
+     * Async Toggle About Us Section Visibility.
+     */
+    public function toggleAboutSection(Request $request): JsonResponse
+    {
+        $section = $request->input('section');
+        $enabled = (bool) $request->input('enabled');
+
+        $rawAbout = Setting::get('page_about_content');
+        $content = $rawAbout ? json_decode($rawAbout, true) : self::getDefaultAboutContent();
+
+        if (isset($content[$section])) {
+            $content[$section]['enabled'] = $enabled;
+            Setting::set('page_about_content', json_encode($content));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Section visibility updated successfully.',
+            ]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Invalid section.'], 400);
     }
 
     public function contact(): Response

@@ -107,8 +107,9 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::post('/pages/home/slider', [AdminPageController::class, 'updateSlider'])->name('pages.home.slider');
     Route::post('/pages/home/seasonal-collection', [AdminPageController::class, 'updateSeasonalCollection'])->name('pages.home.seasonal');
     Route::post('/pages/home/promo-banners', [AdminPageController::class, 'updatePromoBanners'])->name('pages.home.banners');
-    Route::get('/pages/product', [AdminPageController::class, 'product'])->name('pages.product');
     Route::get('/pages/about', [AdminPageController::class, 'about'])->name('pages.about');
+    Route::post('/pages/about', [AdminPageController::class, 'updateAbout'])->name('pages.about.update');
+    Route::post('/pages/about/toggle-section', [AdminPageController::class, 'toggleAboutSection'])->name('pages.about.toggle');
     Route::get('/pages/contact', [AdminPageController::class, 'contact'])->name('pages.contact');
     Route::get('/pages/faq', [AdminPageController::class, 'faq'])->name('pages.faq');
 
