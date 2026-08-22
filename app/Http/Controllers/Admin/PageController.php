@@ -748,11 +748,13 @@ class PageController extends Controller
     public static function getDefaultTermsContent(): array
     {
         return [
+            'mode' => 'clauses', // 'clauses' | 'full'
             'header' => [
                 'badge' => 'LEGAL & POLICIES',
                 'title' => 'Terms Of Use',
                 'last_updated' => 'Last Updated: August 2026',
             ],
+            'full_content' => '<h2>1. Acceptance of Terms</h2><p>By accessing, browsing, or purchasing from our Website (haarmonaa.in), you acknowledge that you have read, understood, and agreed to be bound by these Terms of Use and our Privacy Policy.</p><h2>2. Products & Handcrafted Authenticity</h2><p>All Haarmonaa jewelry is handcrafted using thick 18K solid gold vermeil casting over hypoallergenic 925 sterling silver or solid gold metallurgy. Because each piece is hand-finished by master artisans, slight unique variations in texture and stone dimensions may occur, reflecting the authentic beauty of artisanal jewelry.</p><h2>3. Pricing & Secure Payments</h2><p>All product prices are listed in Indian Rupees (INR) and are inclusive of applicable GST unless stated otherwise. We reserve the right to revise pricing or rectify inadvertent typographical errors without prior notification. Transactions are processed via Level-1 PCI DSS encrypted payment gateways.</p><h2>4. Shipping, Transit & Delivery</h2><p>Orders are processed and dispatched within 1–2 business days in tamper-evident velvet care packaging. Express insured delivery typically arrives within 3–5 business days across India. Tracking details are automatically emailed upon dispatch.</p><h2>5. Returns, Exchanges & Warranty</h2><p>We offer a 7-day hassle-free concierge return or exchange window for unworn items in original packaging with intact security tags. Bespoke customized engravings or personalized jewelry pieces are non-returnable unless defective.</p><h2>6. Intellectual Property Rights</h2><p>All imagery, product photography, editorial copy, logo graphics, design trademarks, and brand assets are the exclusive intellectual property of Haarmonaa Studio. Unauthorized reproduction or commercial use is strictly prohibited.</p>',
             'sections' => [
                 [
                     'number' => '1',
@@ -794,11 +796,13 @@ class PageController extends Controller
     public static function getDefaultPrivacyContent(): array
     {
         return [
+            'mode' => 'clauses', // 'clauses' | 'full'
             'header' => [
                 'badge' => 'DATA PROTECTION',
                 'title' => 'Privacy Policy',
                 'last_updated' => 'Last Updated: August 2026',
             ],
+            'full_content' => '<h2>1. Information We Collect</h2><p>We collect information you provide directly to us when creating an account, browsing our boutique, placing an order, subscribing to our newsletters, or contacting our concierge team. This includes your name, email address, phone number, shipping address, and payment transaction references.</p><h2>2. How We Use Your Information</h2><p>Your information is used strictly to fulfill your orders, provide dispatch tracking updates, process secure payments, offer customer concierge assistance, and send tailored editorial updates if you have opted in.</p><h2>3. Payment Security & Encryption</h2><p>We do not store complete credit card or debit card numbers on our servers. All financial transactions are processed through 256-bit SSL encrypted, RBI-compliant, and Level-1 PCI DSS certified payment processors.</p><h2>4. Cookies & Browsing Experience</h2><p>Our store uses essential session cookies to remember your bag items, currency preferences, and wishlist. We do not sell your personal data to third-party data brokers under any circumstances.</p><h2>5. Your Rights & Concierge Contact</h2><p>You have the right to request access to, update, or permanently delete your personal information from our customer directory at any time by contacting our privacy officer at support@haarmonaa.in.</p>',
             'sections' => [
                 [
                     'number' => '1',

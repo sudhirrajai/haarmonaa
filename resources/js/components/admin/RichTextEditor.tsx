@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   Bold,
   Italic,
@@ -7,346 +7,230 @@ import {
   ListOrdered,
   Heading2,
   Heading3,
-  Image as ImageIcon,
-  Upload,
-  X,
-  Loader2,
-  RemoveFormatting,
+  Link2,
+  Code,
+  Undo,
+  Redo,
+  Quote,
 } from 'lucide-react';
 
 interface RichTextEditorProps {
   value: string;
-  onChange: (html: string) => void;
-  label?: string;
+  onChange: (value: string) => void;
   placeholder?: string;
+  minHeight?: string;
 }
 
-export function RichTextEditor({
+export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   value,
   onChange,
-  label = 'Description',
-  placeholder = 'Write detailed product description, highlights, care instructions...',
-}: RichTextEditorProps) {
+  placeholder = 'Write content here...',
+  minHeight = '180px',
+}) => {
   const editorRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showHtml, setShowHtml] = useState(false);
+  const [htmlValue, setHtmlValue] = useState(value || '');
 
-  const [imageModalOpen, setImageModalOpen] = useState(false);
-  const [imageUrl, setImageUrl] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-
-  // Initialize content once or when externally loaded
   useEffect(() => {
-    if (editorRef.current && editorRef.current.innerHTML !== (value || '')) {
-      if (document.activeElement !== editorRef.current) {
+    if (editorRef.current && !showHtml) {
+      if (editorRef.current.innerHTML !== value) {
         editorRef.current.innerHTML = value || '';
       }
     }
-  }, [value]);
+    setHtmlValue(value || '');
+  }, [value, showHtml]);
 
   const handleInput = () => {
     if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
+      const newHtml = editorRef.current.innerHTML;
+      onChange(newHtml);
+      setHtmlValue(newHtml);
     }
   };
 
-  const insertPlainText = (text: string) => {
-    if (!text) return;
-    const lines = text.split(/\r\n|\r|\n/);
-    const formattedHtml = lines
-      .map((line) => {
-        const trimmed = line.trim();
-        if (!trimmed) return '<p><br></p>';
-        return `<p>${trimmed}</p>`;
-      })
-      .join('');
-    document.execCommand('insertHTML', false, formattedHtml);
-  };
-
-  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const clipboard = e.clipboardData;
-    const htmlData = clipboard.getData('text/html');
-    const textData = clipboard.getData('text/plain');
-
+  const exec = (command: string, arg: string | undefined = undefined) => {
+    if (showHtml) return;
+    document.execCommand(command, false, arg);
+    handleInput();
     if (editorRef.current) {
       editorRef.current.focus();
     }
-
-    if (htmlData && htmlData.trim().length > 0) {
-      try {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlData, 'text/html');
-        const bodyContent = doc.body.innerHTML;
-        if (bodyContent && bodyContent.trim().length > 0) {
-          document.execCommand('insertHTML', false, bodyContent);
-        } else {
-          insertPlainText(textData);
-        }
-      } catch (err) {
-        insertPlainText(textData);
-      }
-    } else if (textData) {
-      insertPlainText(textData);
-    }
-    handleInput();
   };
 
-  const format = (command: string, value: string | undefined = undefined) => {
-    document.execCommand(command, false, value);
-    handleInput();
+  const handleCreateLink = () => {
+    if (showHtml) return;
+    const url = prompt('Enter link URL (e.g. https://... or /shop):');
+    if (url) {
+      exec('createLink', url);
+    }
   };
 
-  const handleInsertImage = (url: string) => {
-    if (!url) return;
-    if (editorRef.current) {
-      editorRef.current.focus();
-      const imgHtml = `<img src="${url}" alt="Product Image" class="w-full max-h-96 object-cover rounded-2xl border border-gray-200 my-4" />`;
-      document.execCommand('insertHTML', false, imgHtml);
-      handleInput();
-    }
-    setImageModalOpen(false);
-    setImageUrl('');
+  const handleFormatBlock = (tag: string) => {
+    if (showHtml) return;
+    exec('formatBlock', tag);
   };
 
-  const handleFileUpload = async (file: File) => {
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      setUploadError('Please select a valid image file.');
-      return;
-    }
-
-    setUploadError(null);
-    setIsUploading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const csrfToken =
-        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
-
-      const response = await fetch('/admin/products/upload-media', {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': csrfToken,
-          Accept: 'application/json',
-        },
-        body: formData,
-      });
-
-      const resData = await response.json();
-
-      if (response.ok && resData.url) {
-        handleInsertImage(resData.url);
-      } else {
-        setUploadError(resData.message || 'Image upload failed.');
-      }
-    } catch (err) {
-      setUploadError('Network error uploading image.');
-    } finally {
-      setIsUploading(false);
-    }
+  const handleHtmlChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setHtmlValue(val);
+    onChange(val);
   };
 
   return (
-    <div className="space-y-1.5">
-      {label && <label className="block text-xs font-bold text-gray-700">{label}</label>}
+    <div className="bg-white border border-gray-200 rounded-[10px] overflow-hidden focus-within:border-black transition-colors">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-1 p-2 bg-gray-50 border-b border-gray-200 text-gray-700">
+        <button
+          type="button"
+          onClick={() => exec('bold')}
+          title="Bold (Ctrl+B)"
+          className="p-1.5 hover:bg-white hover:text-black rounded-[6px] transition-colors cursor-pointer"
+        >
+          <Bold className="w-3.5 h-3.5" />
+        </button>
 
-      <div className="bg-white rounded-3xl border border-gray-200 shadow-2xs overflow-hidden focus-within:border-black focus-within:ring-1 focus-within:ring-black transition-all">
-        {/* Toolbar Header */}
-        <div className="flex flex-wrap items-center gap-1 p-2 bg-gray-50/80 border-b border-gray-200/80">
+        <button
+          type="button"
+          onClick={() => exec('italic')}
+          title="Italic (Ctrl+I)"
+          className="p-1.5 hover:bg-white hover:text-black rounded-[6px] transition-colors cursor-pointer"
+        >
+          <Italic className="w-3.5 h-3.5" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => exec('underline')}
+          title="Underline (Ctrl+U)"
+          className="p-1.5 hover:bg-white hover:text-black rounded-[6px] transition-colors cursor-pointer"
+        >
+          <Underline className="w-3.5 h-3.5" />
+        </button>
+
+        <span className="w-[1px] h-4 bg-gray-300 mx-1 self-center" />
+
+        <button
+          type="button"
+          onClick={() => handleFormatBlock('<h2>')}
+          title="Heading 2"
+          className="p-1.5 hover:bg-white hover:text-black rounded-[6px] transition-colors text-xs font-bold flex items-center gap-0.5 cursor-pointer"
+        >
+          <Heading2 className="w-3.5 h-3.5" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleFormatBlock('<h3>')}
+          title="Heading 3"
+          className="p-1.5 hover:bg-white hover:text-black rounded-[6px] transition-colors text-xs font-bold flex items-center gap-0.5 cursor-pointer"
+        >
+          <Heading3 className="w-3.5 h-3.5" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleFormatBlock('<p>')}
+          title="Paragraph"
+          className="p-1.5 hover:bg-white hover:text-black rounded-[6px] transition-colors text-xs font-semibold cursor-pointer"
+        >
+          P
+        </button>
+
+        <span className="w-[1px] h-4 bg-gray-300 mx-1 self-center" />
+
+        <button
+          type="button"
+          onClick={() => exec('insertUnorderedList')}
+          title="Bullet List"
+          className="p-1.5 hover:bg-white hover:text-black rounded-[6px] transition-colors cursor-pointer"
+        >
+          <List className="w-3.5 h-3.5" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => exec('insertOrderedList')}
+          title="Numbered List"
+          className="p-1.5 hover:bg-white hover:text-black rounded-[6px] transition-colors cursor-pointer"
+        >
+          <ListOrdered className="w-3.5 h-3.5" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleFormatBlock('<blockquote>')}
+          title="Blockquote"
+          className="p-1.5 hover:bg-white hover:text-black rounded-[6px] transition-colors cursor-pointer"
+        >
+          <Quote className="w-3.5 h-3.5" />
+        </button>
+
+        <button
+          type="button"
+          onClick={handleCreateLink}
+          title="Insert Link"
+          className="p-1.5 hover:bg-white hover:text-black rounded-[6px] transition-colors cursor-pointer"
+        >
+          <Link2 className="w-3.5 h-3.5" />
+        </button>
+
+        <span className="w-[1px] h-4 bg-gray-300 mx-1 self-center" />
+
+        <button
+          type="button"
+          onClick={() => exec('undo')}
+          title="Undo"
+          className="p-1.5 hover:bg-white hover:text-black rounded-[6px] transition-colors cursor-pointer"
+        >
+          <Undo className="w-3.5 h-3.5" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => exec('redo')}
+          title="Redo"
+          className="p-1.5 hover:bg-white hover:text-black rounded-[6px] transition-colors cursor-pointer"
+        >
+          <Redo className="w-3.5 h-3.5" />
+        </button>
+
+        <div className="ml-auto flex items-center gap-1">
           <button
             type="button"
-            onClick={() => format('bold')}
-            className="p-1.5 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors cursor-pointer"
-            title="Bold"
+            onClick={() => setShowHtml(!showHtml)}
+            className={`px-2 py-1 rounded-[6px] text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
+              showHtml
+                ? 'bg-[#111111] text-white'
+                : 'bg-gray-200/70 hover:bg-gray-200 text-gray-700'
+            }`}
+            title="Toggle HTML Source Code View"
           >
-            <Bold className="w-3.5 h-3.5" />
+            <Code className="w-3 h-3" />
+            <span>{showHtml ? 'Visual' : 'HTML Source'}</span>
           </button>
-          <button
-            type="button"
-            onClick={() => format('italic')}
-            className="p-1.5 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors cursor-pointer"
-            title="Italic"
-          >
-            <Italic className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => format('underline')}
-            className="p-1.5 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors cursor-pointer"
-            title="Underline"
-          >
-            <Underline className="w-3.5 h-3.5" />
-          </button>
-
-          <div className="h-4 w-px bg-gray-300 mx-1" />
-
-          <button
-            type="button"
-            onClick={() => format('formatBlock', '<h2>')}
-            className="p-1.5 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors cursor-pointer font-bold text-xs"
-            title="Heading 2"
-          >
-            <Heading2 className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => format('formatBlock', '<h3>')}
-            className="p-1.5 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors cursor-pointer font-bold text-xs"
-            title="Heading 3"
-          >
-            <Heading3 className="w-3.5 h-3.5" />
-          </button>
-
-          <div className="h-4 w-px bg-gray-300 mx-1" />
-
-          <button
-            type="button"
-            onClick={() => format('insertUnorderedList')}
-            className="p-1.5 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors cursor-pointer"
-            title="Bullet List"
-          >
-            <List className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => format('insertOrderedList')}
-            className="p-1.5 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors cursor-pointer"
-            title="Numbered List"
-          >
-            <ListOrdered className="w-3.5 h-3.5" />
-          </button>
-
-          <div className="h-4 w-px bg-gray-300 mx-1" />
-
-          <button
-            type="button"
-            onClick={() => setImageModalOpen(true)}
-            className="px-2 py-1 bg-black hover:bg-[#d0473e] text-white rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
-            title="Insert Image"
-          >
-            <ImageIcon className="w-3.5 h-3.5" />
-            <span>Add Image</span>
-          </button>
-
-          <div className="ml-auto">
-            <button
-              type="button"
-              onClick={() => format('removeFormat')}
-              className="p-1.5 hover:bg-gray-200 text-gray-500 hover:text-gray-900 rounded-lg transition-colors cursor-pointer"
-              title="Clear Formatting"
-            >
-              <RemoveFormatting className="w-3.5 h-3.5" />
-            </button>
-          </div>
         </div>
+      </div>
 
-        {/* ContentEditable Editor Body */}
+      {/* Editor Body */}
+      {showHtml ? (
+        <textarea
+          value={htmlValue}
+          onChange={handleHtmlChange}
+          placeholder="Paste or write raw HTML..."
+          style={{ minHeight }}
+          className="w-full p-4 font-mono text-xs text-gray-800 focus:outline-hidden resize-y bg-gray-50/50 leading-relaxed"
+        />
+      ) : (
         <div
           ref={editorRef}
           contentEditable
           onInput={handleInput}
           onBlur={handleInput}
-          onKeyUp={handleInput}
-          onPaste={handlePaste}
-          placeholder={placeholder}
-          className="min-h-[220px] max-h-[450px] overflow-y-auto p-4 bg-white text-xs sm:text-sm text-gray-900 leading-relaxed focus:outline-hidden font-normal prose prose-sm max-w-none [&_img]:rounded-2xl [&_img]:my-3 [&_img]:border [&_img]:border-gray-200 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-semibold"
+          data-placeholder={placeholder}
+          style={{ minHeight }}
+          className="p-4 text-xs sm:text-[13px] text-gray-800 leading-relaxed focus:outline-hidden prose prose-sm max-w-none"
         />
-      </div>
-
-      {/* Insert Image Modal */}
-      {imageModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-xs"
-            onClick={() => setImageModalOpen(false)}
-          />
-          <div className="relative bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 z-10 space-y-4 animate-fade-in">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-              <h3 className="text-base font-bold text-gray-900">Insert Image in Description</h3>
-              <button
-                type="button"
-                onClick={() => setImageModalOpen(false)}
-                className="p-1 text-gray-400 hover:text-black cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {/* Option 1: Upload from System */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                  Option 1: Upload File From System
-                </label>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleFileUpload(file);
-                  }}
-                />
-                <button
-                  type="button"
-                  disabled={isUploading}
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full py-2.5 bg-gray-900 hover:bg-[#d0473e] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {isUploading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Uploading...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4" />
-                      <span>Select Image File</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="h-px bg-gray-200 flex-1" />
-                <span className="text-[11px] text-gray-400 font-bold uppercase">OR</span>
-                <div className="h-px bg-gray-200 flex-1" />
-              </div>
-
-              {/* Option 2: Image URL */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                  Option 2: Image Web URL
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="https://images.unsplash.com/..."
-                    className="flex-1 bg-gray-50 border border-gray-200 rounded-xl py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleInsertImage(imageUrl)}
-                    disabled={!imageUrl}
-                    className="px-4 py-2 bg-black hover:bg-[#d0473e] text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-40 cursor-pointer"
-                  >
-                    Insert
-                  </button>
-                </div>
-              </div>
-
-              {uploadError && <p className="text-rose-500 text-xs font-semibold">{uploadError}</p>}
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
-}
+};

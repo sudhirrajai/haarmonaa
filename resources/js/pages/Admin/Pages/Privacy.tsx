@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import {
   ShieldCheck,
   ArrowLeft,
@@ -9,6 +10,9 @@ import {
   Trash2,
   ExternalLink,
   Lock,
+  Layers,
+  FileCode,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface PrivacySection {
@@ -18,11 +22,13 @@ interface PrivacySection {
 }
 
 interface PrivacyContentCMS {
+  mode?: 'clauses' | 'full';
   header: {
     badge: string;
     title: string;
     last_updated: string;
   };
+  full_content?: string;
   sections: PrivacySection[];
 }
 
@@ -31,7 +37,20 @@ interface PrivacyProps {
 }
 
 export default function Privacy({ privacyContent: initialContent }: PrivacyProps) {
-  const [content, setContent] = useState<PrivacyContentCMS>(initialContent);
+  const [content, setContent] = useState<PrivacyContentCMS>({
+    mode: initialContent.mode || 'clauses',
+    header: initialContent.header || {
+      badge: 'DATA PROTECTION',
+      title: 'Privacy Policy',
+      last_updated: 'Last Updated: August 2026',
+    },
+    full_content: initialContent.full_content || '',
+    sections: initialContent.sections || [],
+  });
+
+  const [activeTab, setActiveTab] = useState<'clauses' | 'full'>(
+    content.mode || 'clauses'
+  );
   const [saving, setSaving] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {
@@ -39,7 +58,7 @@ export default function Privacy({ privacyContent: initialContent }: PrivacyProps
     setSaving(true);
     router.post(
       '/admin/pages/privacy',
-      { privacyContent: content },
+      { privacyContent: { ...content, mode: activeTab } },
       {
         onFinish: () => setSaving(false),
       }
@@ -55,7 +74,7 @@ export default function Privacy({ privacyContent: initialContent }: PrivacyProps
         {
           number: nextNum,
           title: 'New Privacy Clause',
-          content: 'Details and explanations for this data protection policy...',
+          content: '<p>Details and explanations for this data protection policy...</p>',
         },
       ],
     });
@@ -172,98 +191,182 @@ export default function Privacy({ privacyContent: initialContent }: PrivacyProps
           </div>
         </div>
 
-        {/* Dynamic Sections List */}
+        {/* Content Mode Selection Tabs */}
         <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
             <div>
               <h2 className="text-base font-extrabold text-gray-900">
-                Privacy Policy Clauses ({content.sections.length})
+                Choose Content Display Mode
               </h2>
-              <p className="text-xs text-gray-500">
-                Add, edit, or remove customer data handling and confidentiality terms.
+              <p className="text-xs text-gray-500 mt-0.5">
+                Select whether you want structured modular clauses or a single full-document rich text editor.
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={addSection}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-gray-800 text-white rounded-[8px] text-xs font-bold cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Clause</span>
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            {content.sections.map((section, idx) => (
-              <div
-                key={idx}
-                className="p-5 bg-gray-50 rounded-[10px] border border-gray-200/80 space-y-3 relative group"
+            {/* Mode Switcher Tabs */}
+            <div className="flex items-center gap-1.5 p-1 bg-gray-100 rounded-xl">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('clauses');
+                  setContent({ ...content, mode: 'clauses' });
+                }}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === 'clauses'
+                    ? 'bg-white text-black shadow-xs'
+                    : 'text-gray-600 hover:text-black'
+                }`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-500">
-                    Clause #{idx + 1}
-                  </span>
+                <Layers className="w-4 h-4" />
+                <span>Clause-Wise Builder</span>
+              </button>
 
-                  <button
-                    type="button"
-                    onClick={() => removeSection(idx)}
-                    className="p-1 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-[6px] transition-colors"
-                    title="Delete Clause"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                  <div className="sm:col-span-2">
-                    <label className="block text-[11px] font-bold text-gray-700 mb-1">Number / Index</label>
-                    <input
-                      type="text"
-                      value={section.number}
-                      onChange={(e) => {
-                        const updated = [...content.sections];
-                        updated[idx].number = e.target.value;
-                        setContent({ ...content, sections: updated });
-                      }}
-                      placeholder="1"
-                      className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-10">
-                    <label className="block text-[11px] font-bold text-gray-700 mb-1">Clause Title</label>
-                    <input
-                      type="text"
-                      value={section.title}
-                      onChange={(e) => {
-                        const updated = [...content.sections];
-                        updated[idx].title = e.target.value;
-                        setContent({ ...content, sections: updated });
-                      }}
-                      placeholder="Information We Collect"
-                      className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-700 mb-1">Clause Content</label>
-                  <textarea
-                    rows={4}
-                    value={section.content}
-                    onChange={(e) => {
-                      const updated = [...content.sections];
-                      updated[idx].content = e.target.value;
-                      setContent({ ...content, sections: updated });
-                    }}
-                    placeholder="Full policy clause text..."
-                    className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3 text-xs text-gray-800 leading-relaxed focus:outline-hidden focus:border-black"
-                  />
-                </div>
-              </div>
-            ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('full');
+                  setContent({ ...content, mode: 'full' });
+                }}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === 'full'
+                    ? 'bg-white text-black shadow-xs'
+                    : 'text-gray-600 hover:text-black'
+                }`}
+              >
+                <FileCode className="w-4 h-4" />
+                <span>Full Document Editor</span>
+              </button>
+            </div>
           </div>
+
+          {/* Active Mode Notice */}
+          <div className="p-3 bg-emerald-50/70 border border-emerald-200/60 rounded-xl flex items-center gap-2 text-xs text-emerald-900 font-medium">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>
+              Active Storefront Display:{' '}
+              <strong className="font-bold">
+                {activeTab === 'clauses'
+                  ? 'Clause-Wise Sections'
+                  : 'Full Document View'}
+              </strong>
+            </span>
+          </div>
+
+          {/* Tab 1: Clause-Wise Builder */}
+          {activeTab === 'clauses' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-gray-700">
+                  Total Clauses: {content.sections.length}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={addSection}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-gray-800 text-white rounded-[8px] text-xs font-bold cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Clause</span>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {content.sections.map((section, idx) => (
+                  <div
+                    key={idx}
+                    className="p-5 bg-gray-50 rounded-[10px] border border-gray-200/80 space-y-3 relative group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-500">
+                        Clause #{idx + 1}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => removeSection(idx)}
+                        className="p-1 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-[6px] transition-colors cursor-pointer"
+                        title="Delete Clause"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                      <div className="sm:col-span-2">
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          Number / Tag
+                        </label>
+                        <input
+                          type="text"
+                          value={section.number}
+                          onChange={(e) => {
+                            const updated = [...content.sections];
+                            updated[idx].number = e.target.value;
+                            setContent({ ...content, sections: updated });
+                          }}
+                          placeholder="1"
+                          className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-10">
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          Clause Title
+                        </label>
+                        <input
+                          type="text"
+                          value={section.title}
+                          onChange={(e) => {
+                            const updated = [...content.sections];
+                            updated[idx].title = e.target.value;
+                            setContent({ ...content, sections: updated });
+                          }}
+                          placeholder="Information We Collect"
+                          className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        Clause Rich Content
+                      </label>
+                      <RichTextEditor
+                        value={section.content}
+                        onChange={(val) => {
+                          const updated = [...content.sections];
+                          updated[idx].content = val;
+                          setContent({ ...content, sections: updated });
+                        }}
+                        placeholder="Write or format clause content..."
+                        minHeight="140px"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Tab 2: Full Document Single Rich Text Editor */}
+          {activeTab === 'full' && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  Full Privacy Policy Document (Rich Text / HTML)
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  You can paste your complete policy document here with headings, lists, bold text, and links.
+                </p>
+                <RichTextEditor
+                  value={content.full_content || ''}
+                  onChange={(val) => setContent({ ...content, full_content: val })}
+                  placeholder="Paste or write your full privacy policy document..."
+                  minHeight="420px"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-end pt-4 border-t border-gray-100">
             <button
