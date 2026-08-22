@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\MediaController as AdminMediaController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PageController as AdminPageController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\ProductImportExportController as AdminProductImportExportController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CategoryController;
@@ -61,6 +62,12 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 // Admin Panel Routes (Protected by Auth)
 Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+    // Products CSV Import & Export
+    Route::get('products/import/template', [AdminProductImportExportController::class, 'downloadTemplate'])->name('products.import.template');
+    Route::post('products/import/preview', [AdminProductImportExportController::class, 'preview'])->name('products.import.preview');
+    Route::post('products/import/execute', [AdminProductImportExportController::class, 'execute'])->name('products.import.execute');
+    Route::get('products/export', [AdminProductImportExportController::class, 'export'])->name('products.export');
 
     // Products CRUD
     Route::post('products/upload-media', [AdminProductController::class, 'uploadMedia'])->name('products.upload-media');

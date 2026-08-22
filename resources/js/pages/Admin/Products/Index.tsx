@@ -23,7 +23,10 @@ import {
   Globe,
   FileText,
   Loader2,
+  FileSpreadsheet,
+  Download,
 } from 'lucide-react';
+import { ProductImportModal } from '@/components/admin/ProductImportModal';
 
 interface ProductItem {
   id: number;
@@ -267,6 +270,7 @@ export default function Index({
   // Single Delete
   const [productToDelete, setProductToDelete] = useState<{ id: number; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   const confirmSingleDelete = () => {
     if (!productToDelete) return;
@@ -284,7 +288,7 @@ export default function Index({
       <Head title="Products Catalog — Admin Haarmonaa" />
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
             Products Catalog
@@ -294,13 +298,38 @@ export default function Index({
           </p>
         </div>
 
-        <Link
-          href="/admin/products/create"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#111111] hover:bg-[#d0473e] text-white rounded-full text-xs font-bold transition-all shadow-xs"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add New Jewelry</span>
-        </Link>
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Export CSV Button */}
+          <a
+            href="/admin/products/export"
+            download="haarmonaa-products-export.csv"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-full text-xs font-bold transition-all shadow-2xs cursor-pointer"
+            title="Export all products to CSV"
+          >
+            <Download className="w-3.5 h-3.5 text-gray-500" />
+            <span>Export CSV</span>
+          </a>
+
+          {/* Import CSV Button */}
+          <button
+            type="button"
+            onClick={() => setImportModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-full text-xs font-bold transition-all shadow-2xs cursor-pointer"
+            title="Import products from CSV spreadsheet"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Import CSV</span>
+          </button>
+
+          {/* Add New Product Button */}
+          <Link
+            href="/admin/products/create"
+            className="inline-flex items-center gap-2 px-5 py-2 bg-[#111111] hover:bg-[#d0473e] text-white rounded-full text-xs font-bold transition-all shadow-xs"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add New Jewelry</span>
+          </Link>
+        </div>
       </div>
 
       {/* Status Filter Tabs */}
@@ -671,6 +700,12 @@ export default function Index({
         message={`Are you sure you want to permanently delete all ${selectedIds.length} selected products? This action cannot be undone.`}
         confirmLabel={`Delete ${selectedIds.length} Products`}
         processing={bulkProcessing}
+      />
+
+      {/* CSV Product Import Modal */}
+      <ProductImportModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
       />
     </AdminLayout>
   );
