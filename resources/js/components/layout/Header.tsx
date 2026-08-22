@@ -17,9 +17,10 @@ import {
   Package,
   ShieldCheck,
   ChevronRight,
-  Phone,
-  Mail,
-  Store,
+  Truck,
+  Gift,
+  Tag,
+  ExternalLink,
 } from 'lucide-react';
 import { HaarmonaaLogo } from './HaarmonaaLogo';
 
@@ -87,15 +88,66 @@ export const Header: React.FC<HeaderProps> = ({
     router.post('/logout');
   };
 
+  // Helper to render top promo bar icon
+  const renderTopbarIcon = (iconName?: string) => {
+    switch (iconName) {
+      case 'truck':
+        return <Truck className="w-3.5 h-3.5 shrink-0" />;
+      case 'gift':
+        return <Gift className="w-3.5 h-3.5 shrink-0" />;
+      case 'tag':
+        return <Tag className="w-3.5 h-3.5 shrink-0" />;
+      case 'shield':
+        return <ShieldCheck className="w-3.5 h-3.5 shrink-0" />;
+      case 'gem':
+        return <Gem className="w-3.5 h-3.5 shrink-0" />;
+      case 'none':
+        return null;
+      case 'sparkles':
+      default:
+        return <Sparkles className="w-3.5 h-3.5 shrink-0" />;
+    }
+  };
+
+  // Resolve dynamic navigation items
+  const defaultNavItems = [
+    { id: '1', label: 'Home', url: '/', is_external: false, is_enabled: true },
+    { id: '2', label: 'Jewelry Catalog', url: '/shop', is_external: false, is_enabled: true },
+    { id: '3', label: 'About Us', url: '/about-us', is_external: false, is_enabled: true },
+    { id: '4', label: 'Contact Us', url: '/contact-us', is_external: false, is_enabled: true },
+  ];
+
+  const rawNavItems = storeSettings.header_nav_items;
+  const navItems = (Array.isArray(rawNavItems) && rawNavItems.length > 0 ? rawNavItems : defaultNavItems).filter(
+    (item: any) => item.is_enabled !== false
+  );
+
   return (
     <>
-      {/* Sticky Header */}
+      {/* Sticky Header Container */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100/90 shadow-2xs transition-all w-full">
-        {/* Top promotional bar */}
-        <div className="bg-[#111111] text-white text-[10.5px] sm:text-[11px] font-semibold py-2 px-4 text-center tracking-wider flex items-center justify-center gap-2">
-          <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-          <span>COMPLIMENTARY LUXURY GIFT BOX & EXPRESS SHIPPING ON ALL ORDERS</span>
-        </div>
+        {/* Dynamic Top Promotional Bar (Customizable from Admin) */}
+        {storeSettings.enable_topbar !== false && (
+          <div
+            style={{
+              backgroundColor: storeSettings.topbar_bg_color || '#111111',
+              color: storeSettings.topbar_text_color || '#ffffff',
+            }}
+            className="text-[10.5px] sm:text-[11px] font-semibold py-2 px-4 text-center tracking-wider flex items-center justify-center gap-2 transition-colors"
+          >
+            {renderTopbarIcon(storeSettings.topbar_icon)}
+            {storeSettings.topbar_link ? (
+              <Link
+                href={storeSettings.topbar_link}
+                className="hover:underline flex items-center gap-1.5"
+              >
+                <span>{storeSettings.topbar_text || 'COMPLIMENTARY LUXURY GIFT BOX & EXPRESS SHIPPING ON ALL ORDERS'}</span>
+              </Link>
+            ) : (
+              <span>{storeSettings.topbar_text || 'COMPLIMENTARY LUXURY GIFT BOX & EXPRESS SHIPPING ON ALL ORDERS'}</span>
+            )}
+          </div>
+        )}
 
         <div className="w-full px-4 sm:px-8 lg:px-12">
           <div className="flex items-center justify-between h-18 sm:h-20 relative">
@@ -158,48 +210,37 @@ export const Header: React.FC<HeaderProps> = ({
               </Link>
             </div>
 
-            {/* Absolute Center: Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center justify-center space-x-10 text-[14px] font-semibold tracking-tight text-gray-900">
-              <Link
-                href="/"
-                className={`py-1 transition-colors ${
-                  url === '/'
-                    ? 'text-black font-extrabold border-b-2 border-black'
-                    : 'text-gray-700 hover:text-[#d0473e]'
-                }`}
-              >
-                Home
-              </Link>
-              <Link
-                href="/shop"
-                className={`py-1 transition-colors ${
-                  url.startsWith('/shop') || url.startsWith('/category')
-                    ? 'text-black font-extrabold border-b-2 border-black'
-                    : 'text-gray-700 hover:text-[#d0473e]'
-                }`}
-              >
-                Jewelry Catalog
-              </Link>
-              <Link
-                href="/about-us"
-                className={`py-1 transition-colors ${
-                  url === '/about-us'
-                    ? 'text-black font-extrabold border-b-2 border-black'
-                    : 'text-gray-700 hover:text-[#d0473e]'
-                }`}
-              >
-                About Us
-              </Link>
-              <Link
-                href="/contact-us"
-                className={`py-1 transition-colors ${
-                  url === '/contact-us'
-                    ? 'text-black font-extrabold border-b-2 border-black'
-                    : 'text-gray-700 hover:text-[#d0473e]'
-                }`}
-              >
-                Contact Us
-              </Link>
+            {/* Absolute Center: Desktop Dynamic Navigation Links */}
+            <nav className="hidden lg:flex items-center justify-center space-x-8 xl:space-x-10 text-[14px] font-semibold tracking-tight text-gray-900">
+              {navItems.map((item: any) => {
+                const isActive = item.url === '/' ? url === '/' : url.startsWith(item.url);
+                if (item.is_external) {
+                  return (
+                    <a
+                      key={item.id || item.label}
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="py-1 text-gray-700 hover:text-[#d0473e] transition-colors flex items-center gap-1"
+                    >
+                      <span>{item.label}</span>
+                    </a>
+                  );
+                }
+                return (
+                  <Link
+                    key={item.id || item.label}
+                    href={item.url}
+                    className={`py-1 transition-colors ${
+                      isActive
+                        ? 'text-black font-extrabold border-b-2 border-black'
+                        : 'text-gray-700 hover:text-[#d0473e]'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
             </nav>
 
             {/* Right Corner: Search Input + Account + Wishlist + Cart */}
@@ -386,7 +427,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </header>
 
-      {/* MOBILE LEFT SLIDING NAVIGATION DRAWER (Slide from Left like Cart from Right) */}
+      {/* MOBILE LEFT SLIDING NAVIGATION DRAWER */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 flex lg:hidden">
           {/* Backdrop Overlay */}
@@ -426,37 +467,44 @@ export const Header: React.FC<HeaderProps> = ({
                 <span>Search fine jewelry...</span>
               </div>
 
-              {/* Main Navigation Links */}
+              {/* Dynamic Navigation Links in Mobile Drawer */}
               <nav className="space-y-1">
                 <span className="text-[10.5px] font-bold uppercase tracking-widest text-gray-400 block px-3 pb-2">
                   Navigation
                 </span>
 
-                <Link
-                  href="/"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                    url === '/'
-                      ? 'bg-black text-white shadow-xs'
-                      : 'text-gray-800 hover:bg-gray-50 hover:text-black'
-                  }`}
-                >
-                  <span>Home</span>
-                  <ChevronRight className="w-4 h-4 opacity-50" />
-                </Link>
-
-                <Link
-                  href="/shop"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                    url.startsWith('/shop') || url.startsWith('/category')
-                      ? 'bg-black text-white shadow-xs'
-                      : 'text-gray-800 hover:bg-gray-50 hover:text-black'
-                  }`}
-                >
-                  <span>Jewelry Catalog</span>
-                  <ChevronRight className="w-4 h-4 opacity-50" />
-                </Link>
+                {navItems.map((item: any) => {
+                  const isActive = item.url === '/' ? url === '/' : url.startsWith(item.url);
+                  if (item.is_external) {
+                    return (
+                      <a
+                        key={item.id || item.label}
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-all"
+                      >
+                        <span>{item.label}</span>
+                        <ExternalLink className="w-4 h-4 opacity-50" />
+                      </a>
+                    );
+                  }
+                  return (
+                    <Link
+                      key={item.id || item.label}
+                      href={item.url}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                        isActive
+                          ? 'bg-black text-white shadow-xs'
+                          : 'text-gray-800 hover:bg-gray-50 hover:text-black'
+                      }`}
+                    >
+                      <span>{item.label}</span>
+                      <ChevronRight className="w-4 h-4 opacity-50" />
+                    </Link>
+                  );
+                })}
 
                 <Link
                   href="/wishlist"
@@ -471,24 +519,6 @@ export const Header: React.FC<HeaderProps> = ({
                       </span>
                     )}
                   </div>
-                  <ChevronRight className="w-4 h-4 opacity-50" />
-                </Link>
-
-                <Link
-                  href="/about-us"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-all"
-                >
-                  <span>About Our Brand</span>
-                  <ChevronRight className="w-4 h-4 opacity-50" />
-                </Link>
-
-                <Link
-                  href="/contact-us"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-all"
-                >
-                  <span>Contact & Support</span>
                   <ChevronRight className="w-4 h-4 opacity-50" />
                 </Link>
               </nav>

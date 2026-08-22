@@ -22,6 +22,14 @@ import {
   CreditCard,
   Copy,
   Check,
+  Plus,
+  Trash2,
+  ArrowUp,
+  ArrowDown,
+  Gift,
+  Tag,
+  Gem,
+  Menu,
 } from 'lucide-react';
 
 interface SettingsProps {
@@ -50,6 +58,24 @@ export default function Index({ settings }: SettingsProps) {
     google_site_verification: settings.google_site_verification ?? '',
     bing_site_verification: settings.bing_site_verification ?? '',
     og_default_image: settings.og_default_image ?? '',
+    enable_topbar: settings.enable_topbar !== undefined ? (settings.enable_topbar === '1' || settings.enable_topbar === true || settings.enable_topbar === 'true') : true,
+    topbar_text: settings.topbar_text ?? 'COMPLIMENTARY LUXURY GIFT BOX & EXPRESS SHIPPING ON ALL ORDERS',
+    topbar_link: settings.topbar_link ?? '',
+    topbar_bg_color: settings.topbar_bg_color ?? '#111111',
+    topbar_text_color: settings.topbar_text_color ?? '#ffffff',
+    topbar_icon: settings.topbar_icon ?? 'sparkles',
+    header_nav_items: (() => {
+      try {
+        const parsed = typeof settings.header_nav_items === 'string' ? JSON.parse(settings.header_nav_items) : settings.header_nav_items;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {}
+      return [
+        { id: '1', label: 'Home', url: '/', is_external: false, is_enabled: true },
+        { id: '2', label: 'Jewelry Catalog', url: '/shop', is_external: false, is_enabled: true },
+        { id: '3', label: 'About Us', url: '/about-us', is_external: false, is_enabled: true },
+        { id: '4', label: 'Contact Us', url: '/contact-us', is_external: false, is_enabled: true },
+      ];
+    })(),
     instagram_url: settings.instagram_url ?? 'https://instagram.com/haarmonaa',
     facebook_url: settings.facebook_url ?? '',
     tiktok_url: settings.tiktok_url ?? '',
@@ -62,6 +88,60 @@ export default function Index({ settings }: SettingsProps) {
   });
 
   const [saving, setSaving] = useState(false);
+
+  const handleAddNavItem = () => {
+    const newItem = {
+      id: Date.now().toString(),
+      label: 'New Link',
+      url: '/shop',
+      is_external: false,
+      is_enabled: true,
+    };
+    setFormData((prev) => ({
+      ...prev,
+      header_nav_items: [...prev.header_nav_items, newItem],
+    }));
+  };
+
+  const handleQuickAddCategory = (label: string, url: string) => {
+    const newItem = {
+      id: Date.now().toString(),
+      label,
+      url,
+      is_external: false,
+      is_enabled: true,
+    };
+    setFormData((prev) => ({
+      ...prev,
+      header_nav_items: [...prev.header_nav_items, newItem],
+    }));
+  };
+
+  const handleUpdateNavItem = (id: string, field: string, value: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      header_nav_items: prev.header_nav_items.map((item: any) =>
+        item.id === id ? { ...item, [field]: value } : item
+      ),
+    }));
+  };
+
+  const handleRemoveNavItem = (id: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      header_nav_items: prev.header_nav_items.filter((item: any) => item.id !== id),
+    }));
+  };
+
+  const handleMoveNavItem = (index: number, direction: 'up' | 'down') => {
+    const items = [...formData.header_nav_items];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= items.length) return;
+    const temp = items[index];
+    items[index] = items[targetIndex];
+    items[targetIndex] = temp;
+    setFormData((prev) => ({ ...prev, header_nav_items: items }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -260,6 +340,314 @@ export default function Index({ settings }: SettingsProps) {
               value={formData.store_favicon}
               onChange={(url) => setFormData({ ...formData, store_favicon: url })}
             />
+          </div>
+        </div>
+
+        {/* Card: Top Announcement / Promotional Bar */}
+        <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-600" />
+              <div>
+                <h2 className="text-sm font-bold text-gray-900">Top Announcement / Promotional Bar</h2>
+                <p className="text-[11px] text-gray-400">
+                  Customize the sticky header top announcement banner, colors, icon, link, or disable it entirely.
+                </p>
+              </div>
+            </div>
+
+            {/* Enable / Disable Toggle Switch */}
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <span className="text-xs font-bold text-gray-700">
+                {formData.enable_topbar ? 'Enabled' : 'Disabled'}
+              </span>
+              <input
+                type="checkbox"
+                checked={formData.enable_topbar}
+                onChange={(e) => setFormData({ ...formData, enable_topbar: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 relative" />
+            </label>
+          </div>
+
+          {formData.enable_topbar && (
+            <div className="space-y-4 animate-fade-in">
+              {/* Live Preview Banner */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+                  Live Preview on Storefront
+                </span>
+                <div
+                  style={{
+                    backgroundColor: formData.topbar_bg_color,
+                    color: formData.topbar_text_color,
+                  }}
+                  className="p-2.5 rounded-[8px] text-[11px] font-semibold text-center flex items-center justify-center gap-2 tracking-wider shadow-2xs transition-all"
+                >
+                  {formData.topbar_icon === 'truck' && <Truck className="w-3.5 h-3.5 shrink-0" />}
+                  {formData.topbar_icon === 'gift' && <Gift className="w-3.5 h-3.5 shrink-0" />}
+                  {formData.topbar_icon === 'tag' && <Tag className="w-3.5 h-3.5 shrink-0" />}
+                  {formData.topbar_icon === 'shield' && <ShieldCheck className="w-3.5 h-3.5 shrink-0" />}
+                  {formData.topbar_icon === 'gem' && <Gem className="w-3.5 h-3.5 shrink-0" />}
+                  {formData.topbar_icon === 'sparkles' && <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />}
+                  <span>{formData.topbar_text || 'Announcement text preview...'}</span>
+                </div>
+              </div>
+
+              {/* Text & Link Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                <div className="sm:col-span-8">
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5">Announcement Message</label>
+                  <input
+                    type="text"
+                    value={formData.topbar_text}
+                    onChange={(e) => setFormData({ ...formData, topbar_text: e.target.value })}
+                    placeholder="e.g. COMPLIMENTARY LUXURY GIFT BOX & EXPRESS SHIPPING"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
+                  />
+                </div>
+
+                <div className="sm:col-span-4">
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                    Click Link URL <span className="text-gray-400 font-normal">(Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.topbar_link}
+                    onChange={(e) => setFormData({ ...formData, topbar_link: e.target.value })}
+                    placeholder="e.g. /shop or /collections"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Colors and Icon selector */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                {/* Background Color */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5">Background Color</label>
+                  <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-[8px] p-1.5">
+                    <input
+                      type="color"
+                      value={formData.topbar_bg_color}
+                      onChange={(e) => setFormData({ ...formData, topbar_bg_color: e.target.value })}
+                      className="w-8 h-8 rounded border-none cursor-pointer bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={formData.topbar_bg_color}
+                      onChange={(e) => setFormData({ ...formData, topbar_bg_color: e.target.value })}
+                      className="w-full bg-transparent border-none text-xs font-mono text-gray-800 focus:outline-hidden"
+                    />
+                  </div>
+                </div>
+
+                {/* Text Color */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5">Text Color</label>
+                  <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-[8px] p-1.5">
+                    <input
+                      type="color"
+                      value={formData.topbar_text_color}
+                      onChange={(e) => setFormData({ ...formData, topbar_text_color: e.target.value })}
+                      className="w-8 h-8 rounded border-none cursor-pointer bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={formData.topbar_text_color}
+                      onChange={(e) => setFormData({ ...formData, topbar_text_color: e.target.value })}
+                      className="w-full bg-transparent border-none text-xs font-mono text-gray-800 focus:outline-hidden"
+                    />
+                  </div>
+                </div>
+
+                {/* Icon Selector */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5">Leading Icon</label>
+                  <select
+                    value={formData.topbar_icon}
+                    onChange={(e) => setFormData({ ...formData, topbar_icon: e.target.value })}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white cursor-pointer"
+                  >
+                    <option value="sparkles">✨ Sparkles (Luxury)</option>
+                    <option value="truck">🚚 Truck (Express Delivery)</option>
+                    <option value="gift">🎁 Gift Box (Complimentary Gift)</option>
+                    <option value="tag">🏷️ Sale Tag (Promo / Discount)</option>
+                    <option value="shield">🛡️ Shield (Insured / Guarantee)</option>
+                    <option value="gem">💎 Gem / Diamond (Fine Jewelry)</option>
+                    <option value="none">🚫 None (No Icon)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Card: Header & Mobile Navbar Menu Items Manager */}
+        <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <Menu className="w-4 h-4 text-gray-700" />
+              <div>
+                <h2 className="text-sm font-bold text-gray-900">Header & Mobile Navigation Menu</h2>
+                <p className="text-[11px] text-gray-400">
+                  Manage the navigation links displayed across desktop header and mobile sliding drawer.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleAddNavItem}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-black hover:bg-[#d0473e] text-white rounded-[8px] text-xs font-bold transition-all shadow-xs cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Nav Link</span>
+            </button>
+          </div>
+
+          {/* Quick Category Adders */}
+          <div className="p-3 bg-gray-50 border border-gray-200/70 rounded-xl space-y-2">
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">
+              Quick Add Category Presets:
+            </span>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => handleQuickAddCategory('Earrings', '/category/earrings')}
+                className="px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-200 rounded-lg text-[11px] font-semibold text-gray-800 transition-all cursor-pointer shadow-2xs"
+              >
+                + Earrings
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickAddCategory('Necklaces', '/category/necklaces')}
+                className="px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-200 rounded-lg text-[11px] font-semibold text-gray-800 transition-all cursor-pointer shadow-2xs"
+              >
+                + Necklaces
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickAddCategory('Rings', '/category/rings')}
+                className="px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-200 rounded-lg text-[11px] font-semibold text-gray-800 transition-all cursor-pointer shadow-2xs"
+              >
+                + Rings
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickAddCategory('Bracelets', '/category/bracelets')}
+                className="px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-200 rounded-lg text-[11px] font-semibold text-gray-800 transition-all cursor-pointer shadow-2xs"
+              >
+                + Bracelets
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickAddCategory('Best Sellers', '/shop?filter=best_sellers')}
+                className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 rounded-lg text-[11px] font-semibold transition-all cursor-pointer"
+              >
+                + Best Sellers
+              </button>
+            </div>
+          </div>
+
+          {/* Navigation Items List */}
+          <div className="space-y-3">
+            {formData.header_nav_items.map((item: any, index: number) => (
+              <div
+                key={item.id || index}
+                className={`p-3.5 rounded-xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                  item.is_enabled !== false ? 'bg-white border-gray-200 shadow-2xs' : 'bg-gray-50 border-gray-200 opacity-60'
+                }`}
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 w-full sm:w-auto sm:flex-1">
+                  {/* Label */}
+                  <div className="sm:col-span-5">
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                      Menu Label
+                    </label>
+                    <input
+                      type="text"
+                      value={item.label}
+                      onChange={(e) => handleUpdateNavItem(item.id, 'label', e.target.value)}
+                      placeholder="e.g. Catalog"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-1.5 px-2.5 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black focus:bg-white"
+                    />
+                  </div>
+
+                  {/* URL */}
+                  <div className="sm:col-span-5">
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                      Target URL / Route
+                    </label>
+                    <input
+                      type="text"
+                      value={item.url}
+                      onChange={(e) => handleUpdateNavItem(item.id, 'url', e.target.value)}
+                      placeholder="e.g. /shop or https://..."
+                      className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-1.5 px-2.5 text-xs text-gray-900 font-mono focus:outline-hidden focus:border-black focus:bg-white"
+                    />
+                  </div>
+
+                  {/* External Toggle */}
+                  <div className="sm:col-span-2 flex items-center pt-4 sm:pt-5">
+                    <label className="flex items-center gap-1.5 text-[11px] text-gray-600 font-semibold cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={item.is_external || false}
+                        onChange={(e) => handleUpdateNavItem(item.id, 'is_external', e.target.checked)}
+                        className="rounded border-gray-300 text-black focus:ring-black"
+                      />
+                      <span>External</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Actions: Enable Toggle, Move Up/Down, Delete */}
+                <div className="flex items-center gap-1 shrink-0 self-end sm:self-center pt-2 sm:pt-0">
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateNavItem(item.id, 'is_enabled', item.is_enabled === false ? true : false)}
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold cursor-pointer transition-all ${
+                      item.is_enabled !== false
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-gray-200 text-gray-600'
+                    }`}
+                  >
+                    {item.is_enabled !== false ? 'Active' : 'Hidden'}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={index === 0}
+                    onClick={() => handleMoveNavItem(index, 'up')}
+                    className="p-1.5 text-gray-500 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    title="Move Up"
+                  >
+                    <ArrowUp className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={index === formData.header_nav_items.length - 1}
+                    onClick={() => handleMoveNavItem(index, 'down')}
+                    className="p-1.5 text-gray-500 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    title="Move Down"
+                  >
+                    <ArrowDown className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveNavItem(item.id)}
+                    className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-md cursor-pointer"
+                    title="Delete Menu Link"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
