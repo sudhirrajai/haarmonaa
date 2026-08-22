@@ -21,6 +21,7 @@ import {
   Layers,
   Tag,
   Layout,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 
@@ -227,6 +228,24 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Das
               )}
             </div>
 
+            {/* Media Library Link (WordPress-style) */}
+            <Link
+              href="/admin/media"
+              className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+                url.startsWith('/admin/media')
+                  ? 'bg-[#111111] text-white shadow-xs'
+                  : 'text-gray-600 hover:text-black hover:bg-gray-100/70'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <ImageIcon
+                  className={`w-4 h-4 ${url.startsWith('/admin/media') ? 'text-amber-300' : 'text-gray-500'}`}
+                />
+                <span>Media Library</span>
+              </div>
+              {url.startsWith('/admin/media') && <ChevronRight className="w-3.5 h-3.5 text-gray-400" />}
+            </Link>
+
             {/* Orders Link */}
             <Link
               href="/admin/orders"
@@ -388,6 +407,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Das
                   >
                     <Sliders className="w-4 h-4" />
                     <span>Attributes</span>
+                  </Link>
+                  <Link
+                    href="/admin/media"
+                    onClick={() => setMobileSidebarOpen(false)}
+                    className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-gray-700 hover:bg-gray-100"
+                  >
+                    <ImageIcon className="w-4 h-4 text-purple-600" />
+                    <span>Media Library</span>
                   </Link>
                   <Link
                     href="/admin/orders"

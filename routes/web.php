@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\CollectionController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\MediaController as AdminMediaController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PageController as AdminPageController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
@@ -82,6 +83,13 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::resource('attributes', AdminAttributeController::class)->except(['create', 'edit', 'show']);
     Route::post('attributes/{attribute}/values', [AdminAttributeController::class, 'storeValue'])->name('attributes.values.store');
     Route::delete('attribute-values/{value}', [AdminAttributeController::class, 'destroyValue'])->name('attributes.values.destroy');
+
+    // Media Library (WordPress-Style Media Management)
+    Route::get('media', [AdminMediaController::class, 'index'])->name('media.index');
+    Route::post('media/upload', [AdminMediaController::class, 'store'])->name('media.store');
+    Route::post('media/bulk-delete', [AdminMediaController::class, 'bulkDestroy'])->name('media.bulk-destroy');
+    Route::put('media/{media}', [AdminMediaController::class, 'update'])->name('media.update');
+    Route::delete('media/{media}', [AdminMediaController::class, 'destroy'])->name('media.destroy');
 
     // Orders
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
