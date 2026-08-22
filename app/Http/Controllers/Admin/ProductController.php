@@ -68,7 +68,7 @@ class ProductController extends Controller
     {
         return Inertia::render('Admin/Products/Form', [
             'product' => null,
-            'categories' => Category::all(),
+            'categories' => Category::with('parent')->orderBy('name')->get(['id', 'name', 'slug', 'image', 'parent_id']),
             'collections' => Collection::all(['id', 'name']),
             'availableAttributes' => Attribute::with('values')->get(),
             'allProducts' => Product::select('id', 'name', 'price', 'image')->get(),
@@ -184,7 +184,7 @@ class ProductController extends Controller
 
         return Inertia::render('Admin/Products/Form', [
             'product' => $productData,
-            'categories' => Category::all(),
+            'categories' => Category::with('parent')->orderBy('name')->get(['id', 'name', 'slug', 'image', 'parent_id']),
             'collections' => Collection::all(['id', 'name']),
             'availableAttributes' => Attribute::with('values')->get(),
             'allProducts' => Product::where('id', '!=', $product->id)->select('id', 'name', 'price', 'image')->get(),

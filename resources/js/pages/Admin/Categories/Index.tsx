@@ -16,6 +16,8 @@ import {
   ChevronDown,
   Check,
   Filter,
+  List,
+  LayoutGrid,
 } from 'lucide-react';
 import { AdminPagination, PaginationData } from '@/components/admin/AdminPagination';
 
@@ -57,6 +59,15 @@ export default function Index({ categories, allCategories = [], filters = {} }: 
 
   const [search, setSearch] = useState(filters.search || '');
   const [parentFilter, setParentFilter] = useState(filters.parent_id || '');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({});
+
+  const toggleExpandCategory = (id: number) => {
+    setExpandedCategories((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryItem | null>(null);
@@ -208,8 +219,9 @@ export default function Index({ categories, allCategories = [], filters = {} }: 
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto">
-          <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl">
+        <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto justify-between md:justify-end">
+          {/* Hierarchy Filter Tabs */}
+          <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
             <button
               onClick={() => {
                 setParentFilter('');
@@ -250,10 +262,38 @@ export default function Index({ categories, allCategories = [], filters = {} }: 
               Subcategories Only
             </button>
           </div>
+
+          {/* View Mode Switcher */}
+          <div className="flex items-center bg-gray-100 p-1 rounded-xl shrink-0">
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                viewMode === 'list'
+                  ? 'bg-white text-black shadow-xs'
+                  : 'text-gray-500 hover:text-black'
+              }`}
+              title="Accordion Tree / List View"
+            >
+              <List className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                viewMode === 'grid'
+                  ? 'bg-white text-black shadow-xs'
+                  : 'text-gray-500 hover:text-black'
+              }`}
+              title="Card Grid View"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Categories Grid */}
+      {/* Categories Display */}
       {categoryList.length === 0 ? (
         <div className="bg-white rounded-3xl border border-gray-200/80 p-12 text-center space-y-3">
           <FolderTree className="w-12 h-12 text-gray-300 mx-auto" />
@@ -262,7 +302,202 @@ export default function Index({ categories, allCategories = [], filters = {} }: 
             Try adjusting your search filters or click the button above to create a new category.
           </p>
         </div>
+      ) : viewMode === 'list' ? (
+        /* Accordion List View */
+        <div className="space-y-3">
+          {categoryList.map((cat) => {
+            const hasChildren = Boolean(cat.children && cat.children.length > 0);
+            const isExpanded = expandedCategories[cat.id] || false;
+
+            return (
+              <div
+                key={cat.id}
+                className="bg-white rounded-2xl border border-gray-200/80 shadow-2xs overflow-hidden transition-all hover:border-gray-300"
+              >
+                {/* Main Category Row */}
+                <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    {/* Thumbnail Image */}
+                    <div className="w-12 h-12 rounded-xl bg-gray-100 overflow-hidden border border-gray-200 shrink-0 relative flex items-center justify-center">
+                      {cat.image ? (
+                        <img
+                          src={cat.image}
+                          alt={cat.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <FolderTree className="w-6 h-6 text-gray-300" />
+                      )}
+                    </div>
+
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="text-sm font-bold text-gray-900 truncate">
+                          {cat.name}
+                        </h2>
+
+                        <span className="text-[10.5px] font-mono text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md">
+                          /{cat.slug}
+                        </span>
+
+                        {cat.parent ? (
+                          <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 text-[10px] font-extrabold px-2 py-0.5 rounded-md border border-amber-200/60">
+                            <CornerDownRight className="w-3 h-3" />
+                            <span>Sub of {cat.parent.name}</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-[10px] font-extrabold px-2 py-0.5 rounded-md">
+                            <Layers className="w-3 h-3" />
+                            <span>Main Category</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {cat.description && (
+                        <p className="text-xs text-gray-500 line-clamp-1">
+                          {cat.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions and Accordion Expander */}
+                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+                    {/* Accordion Subcategories Toggle (Only if has children) */}
+                    {hasChildren ? (
+                      <button
+                        type="button"
+                        onClick={() => toggleExpandCategory(cat.id)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          isExpanded
+                            ? 'bg-black text-white shadow-xs'
+                            : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200'
+                        }`}
+                      >
+                        <span>
+                          {cat.children!.length}{' '}
+                          {cat.children!.length === 1 ? 'Subcategory' : 'Subcategories'}
+                        </span>
+                        <ChevronDown
+                          className={`w-4 h-4 transition-transform duration-200 ${
+                            isExpanded ? 'rotate-180 text-white' : 'text-amber-800'
+                          }`}
+                        />
+                      </button>
+                    ) : !cat.parent_id ? (
+                      <span className="text-[11px] text-gray-400 font-medium px-2">
+                        0 Subcategories
+                      </span>
+                    ) : null}
+
+                    {/* Product count */}
+                    <span className="text-xs font-bold text-gray-600 bg-gray-100 px-3 py-1.5 rounded-xl">
+                      {cat.products_count || 0} products
+                    </span>
+
+                    {/* Quick Add Subcategory */}
+                    {!cat.parent_id && (
+                      <button
+                        type="button"
+                        onClick={() => openCreateModal(cat.id)}
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 hover:text-black bg-amber-50 hover:bg-amber-100 border border-amber-200/80 px-2.5 py-1.5 rounded-xl transition-all cursor-pointer"
+                        title="Add child subcategory"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Sub</span>
+                      </button>
+                    )}
+
+                    {/* Edit & Delete Actions */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(cat)}
+                        className="p-2 text-gray-500 hover:text-black rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                        title="Edit Category"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(cat.id, cat.name)}
+                        className="p-2 text-gray-500 hover:text-[#d0473e] rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
+                        title="Delete Category"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expandable Subcategories Accordion Panel */}
+                {hasChildren && isExpanded && (
+                  <div className="border-t border-amber-100 bg-amber-50/25 p-3 sm:p-4 space-y-2 animate-fade-in">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-amber-900 px-2 flex items-center gap-1.5">
+                      <CornerDownRight className="w-3.5 h-3.5 text-amber-700" />
+                      <span>Subcategories under {cat.name} ({cat.children!.length})</span>
+                    </div>
+
+                    <div className="space-y-1.5 pl-2 sm:pl-4">
+                      {cat.children!.map((child) => {
+                        // Find matching full category from list if available
+                        const fullChild = allCategories.find((c) => c.id === child.id) || child;
+
+                        return (
+                          <div
+                            key={child.id}
+                            className="bg-white border border-gray-200/80 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs hover:border-black transition-all"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-800 flex items-center justify-center shrink-0 border border-amber-200">
+                                <CornerDownRight className="w-4 h-4" />
+                              </div>
+
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-gray-900">
+                                    {child.name}
+                                  </span>
+                                  <span className="text-[10px] font-mono text-gray-400">
+                                    /{child.slug}
+                                  </span>
+                                </div>
+                                <span className="text-[10.5px] text-gray-500">
+                                  Child Subcategory of {cat.name}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openEditModal(fullChild as CategoryItem)}
+                                className="p-1.5 text-gray-500 hover:text-black rounded-lg hover:bg-gray-100 transition-colors cursor-pointer text-xs flex items-center gap-1"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                                <span>Edit</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(child.id, child.name)}
+                                className="p-1.5 text-gray-500 hover:text-[#d0473e] rounded-lg hover:bg-rose-50 transition-colors cursor-pointer text-xs flex items-center gap-1"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       ) : (
+        /* Card Grid View */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {categoryList.map((cat) => (
             <div

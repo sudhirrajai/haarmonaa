@@ -1,11 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check, X, Search, FolderTree } from 'lucide-react';
+import { ChevronDown, Check, X, Search, FolderTree, CornerDownRight, Layers } from 'lucide-react';
 
 interface CategoryItem {
   id: number;
   name: string;
   slug?: string;
   image?: string;
+  parent_id?: number | null;
+  parent?: {
+    id: number;
+    name: string;
+  } | null;
 }
 
 interface MultiCategorySelectProps {
@@ -52,9 +57,38 @@ export const MultiCategorySelect: React.FC<MultiCategorySelectProps> = ({
     }
   };
 
-  const filteredCategories = categories.filter((cat) =>
-    cat.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Group top-level categories and their children
+  const topLevelCategories = categories.filter((c) => !c.parent_id);
+  const childCategories = categories.filter((c) => Boolean(c.parent_id));
+
+  // Build hierarchical list
+  const structuredList: { item: CategoryItem; isChild: boolean; parentName?: string }[] = [];
+  topLevelCategories.forEach((parent) => {
+    structuredList.push({ item: parent, isChild: false });
+    const children = childCategories.filter((c) => c.parent_id === parent.id);
+    children.forEach((child) => {
+      structuredList.push({ item: child, isChild: true, parentName: parent.name });
+    });
+  });
+
+  // Include any orphan children whose parents aren't in topLevelCategories
+  childCategories.forEach((child) => {
+    const alreadyIncluded = structuredList.some((s) => s.item.id === child.id);
+    if (!alreadyIncluded) {
+      const parent = categories.find((c) => c.id === child.parent_id);
+      structuredList.push({ item: child, isChild: true, parentName: parent?.name });
+    }
+  });
+
+  // Filter based on search query
+  const filteredList = structuredList.filter(({ item, parentName }) => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      item.name.toLowerCase().includes(term) ||
+      (parentName && parentName.toLowerCase().includes(term))
+    );
+  });
 
   return (
     <div className="relative w-full" ref={containerRef}>
@@ -79,17 +113,23 @@ export const MultiCategorySelect: React.FC<MultiCategorySelectProps> = ({
             selectedCategoryIds.map((catId) => {
               const cat = categories.find((c) => c.id === catId);
               if (!cat) return null;
+              const parent = cat.parent_id ? categories.find((p) => p.id === cat.parent_id) : null;
               return (
                 <span
                   key={cat.id}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#111111] text-white text-[11px] font-bold rounded-xl shadow-2xs animate-fade-in"
                 >
+                  {parent && (
+                    <span className="text-gray-400 font-normal">
+                      {parent.name} →
+                    </span>
+                  )}
                   <span>{cat.name}</span>
                   {selectedCategoryIds.length > 1 && (
                     <button
                       type="button"
                       onClick={(e) => removeCategory(cat.id, e)}
-                      className="hover:text-amber-300 text-gray-400 p-0.5 rounded-full"
+                      className="hover:text-amber-300 text-gray-400 p-0.5 rounded-full cursor-pointer"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -122,42 +162,73 @@ export const MultiCategorySelect: React.FC<MultiCategorySelectProps> = ({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search category..."
+              placeholder="Search category (e.g. Rings, Hoops)..."
               className="w-full bg-gray-50 border border-gray-200 rounded-xl py-1.5 pl-8 pr-3 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black"
               onClick={(e) => e.stopPropagation()}
             />
           </div>
 
           {/* Category List */}
-          <div className="max-h-52 overflow-y-auto space-y-1 pr-1 divide-y divide-gray-50">
-            {filteredCategories.length > 0 ? (
-              filteredCategories.map((cat) => {
+          <div className="max-h-64 overflow-y-auto space-y-1 pr-1">
+            {filteredList.length > 0 ? (
+              filteredList.map(({ item: cat, isChild, parentName }) => {
                 const isSelected = selectedCategoryIds.includes(cat.id);
                 return (
                   <div
                     key={cat.id}
                     onClick={() => toggleCategory(cat.id)}
-                    className={`flex items-center justify-between p-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                    className={`flex items-center justify-between p-2 rounded-xl text-xs cursor-pointer transition-all ${
+                      isChild ? 'ml-4 pl-3 border-l-2 border-amber-200 bg-gray-50/50' : ''
+                    } ${
                       isSelected
-                        ? 'bg-gray-100 text-gray-900 font-bold'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-black'
+                        ? 'bg-amber-50 text-gray-900 font-bold border border-amber-300'
+                        : 'text-gray-700 hover:bg-gray-100/80 hover:text-black'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {isChild ? (
+                        <div className="w-5 h-5 rounded-md bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                          <CornerDownRight className="w-3 h-3" />
+                        </div>
+                      ) : (
+                        <div className="w-5 h-5 rounded-md bg-gray-200 text-gray-700 flex items-center justify-center shrink-0">
+                          <Layers className="w-3 h-3" />
+                        </div>
+                      )}
+
                       {cat.image ? (
                         <img
                           src={cat.image}
                           alt={cat.name}
-                          className="w-6 h-6 rounded-lg object-cover bg-gray-100"
+                          className="w-6 h-6 rounded-lg object-cover bg-gray-100 shrink-0"
                         />
-                      ) : (
-                        <FolderTree className="w-4 h-4 text-gray-400" />
-                      )}
-                      <span>{cat.name}</span>
+                      ) : null}
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`${isChild ? 'font-medium' : 'font-bold'} truncate`}>
+                            {cat.name}
+                          </span>
+                          <span
+                            className={`text-[9.5px] px-1.5 py-0.2 rounded-md font-semibold ${
+                              isChild
+                                ? 'bg-amber-100/80 text-amber-900'
+                                : 'bg-gray-200 text-gray-700'
+                            }`}
+                          >
+                            {isChild ? 'Subcategory' : 'Main'}
+                          </span>
+                        </div>
+                        {isChild && parentName && (
+                          <span className="text-[10px] text-gray-400 block truncate">
+                            Parent: {parentName}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div
-                      className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${
+                      className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all shrink-0 ${
                         isSelected
                           ? 'bg-[#111111] border-[#111111] text-amber-300'
                           : 'border-gray-300 bg-white'
