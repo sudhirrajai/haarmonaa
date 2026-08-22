@@ -54,10 +54,10 @@ export const CategorySlider: React.FC<CategorySliderProps> = ({
   if (!categories || categories.length === 0) return null;
 
   return (
-    <section className="w-full py-12 sm:py-16 lg:py-20 bg-gray-50/80 border-y border-gray-100 select-none overflow-hidden">
-      {/* Full-width Header Container */}
-      <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16 mb-8 sm:mb-10 lg:mb-12">
-        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
+    <section className="py-12 sm:py-16 lg:py-20 bg-gray-50/80 border-y border-gray-100 select-none">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 sm:mb-10 lg:mb-12 gap-4">
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100/80 text-amber-900 rounded-full text-[11px] font-extrabold uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5 text-amber-600" />
@@ -112,42 +112,42 @@ export const CategorySlider: React.FC<CategorySliderProps> = ({
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Full-width Horizontal Scroll Slider Container */}
-      <div
-        ref={scrollRef}
-        className="flex gap-4 sm:gap-6 overflow-x-auto no-scrollbar scroll-smooth px-4 sm:px-8 lg:px-12 xl:px-16 pb-4"
-        style={{ scrollSnapType: 'x mandatory' }}
-      >
-        {categories.map((cat) => (
-          <div
-            key={cat.id}
-            className="w-[240px] sm:w-[280px] md:w-[320px] lg:w-[340px] shrink-0"
-            style={{ scrollSnapAlign: 'start' }}
-          >
-            <Link
-              href={`/category/${cat.slug}`}
-              className="group relative block aspect-4/5 rounded-3xl overflow-hidden bg-white shadow-xs hover:shadow-xl transition-all duration-500 border border-gray-100"
+        {/* Horizontal Scroll Slider Container */}
+        <div
+          ref={scrollRef}
+          className="flex gap-4 sm:gap-6 overflow-x-auto no-scrollbar scroll-smooth pb-4 -mx-4 px-4 sm:mx-0 sm:px-0"
+          style={{ scrollSnapType: 'x mandatory' }}
+        >
+          {categories.map((cat) => (
+            <div
+              key={cat.id}
+              className="w-[220px] sm:w-[260px] md:w-[280px] lg:w-[300px] shrink-0"
+              style={{ scrollSnapAlign: 'start' }}
             >
-              <img
-                src={cat.image}
-                alt={cat.name}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-108"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent transition-opacity" />
+              <Link
+                href={`/category/${cat.slug}`}
+                className="group relative block aspect-4/5 rounded-3xl overflow-hidden bg-white shadow-xs hover:shadow-xl transition-all duration-500 border border-gray-100"
+              >
+                <img
+                  src={cat.image}
+                  alt={cat.name}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-108"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent transition-opacity" />
 
-              <div className="absolute bottom-6 inset-x-6 text-white text-center space-y-1">
-                <h3 className="text-lg sm:text-xl font-extrabold tracking-tight drop-shadow-xs">
-                  {cat.name}
-                </h3>
-                <span className="inline-block text-xs font-semibold text-gray-300 group-hover:text-amber-300 transition-colors">
-                  {cat.itemCount ? `${cat.itemCount} Designs` : 'Explore Collection →'}
-                </span>
-              </div>
-            </Link>
-          </div>
-        ))}
+                <div className="absolute bottom-6 inset-x-6 text-white text-center space-y-1">
+                  <h3 className="text-lg sm:text-xl font-extrabold tracking-tight drop-shadow-xs">
+                    {cat.name}
+                  </h3>
+                  <span className="inline-block text-xs font-semibold text-gray-300 group-hover:text-amber-300 transition-colors">
+                    {cat.itemCount ? `${cat.itemCount} Designs` : 'Explore Collection →'}
+                  </span>
+                </div>
+              </Link>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
