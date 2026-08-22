@@ -125,31 +125,15 @@ export const ProductMediaManager: React.FC<ProductMediaManagerProps> = ({
   return (
     <div className="space-y-4">
       {/* Header Info */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-gray-100">
-        <div>
+      <div className="space-y-1.5 pb-3 border-b border-gray-100">
+        <div className="flex items-center justify-between gap-2">
           <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-            <ImageIcon className="w-4 h-4 text-amber-600" />
-            <span>Product Media Gallery</span>
+            <ImageIcon className="w-4 h-4 text-amber-600 shrink-0" />
+            <span className="truncate">Product Media Gallery</span>
           </h2>
-          <p className="text-[11.5px] text-gray-500 mt-0.5">
-            The 1st image is <strong className="text-black">Primary Cover</strong>, 2nd is <strong className="text-black">Hover</strong>, rest are <strong className="text-black">Gallery</strong>.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          {/* WordPress-style Choose from Media Library Button */}
-          <button
-            type="button"
-            disabled={isMaxReached}
-            onClick={() => setMediaPickerOpen(true)}
-            className="whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#111111] hover:bg-[#d0473e] text-white rounded-[8px] text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50"
-          >
-            <Layers className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-            <span>Choose from Media Library</span>
-          </button>
 
           <span
-            className={`px-2.5 py-1 font-extrabold text-[11px] rounded-full border shrink-0 ${
+            className={`px-2.5 py-0.5 font-extrabold text-[11px] rounded-full border shrink-0 ${
               isMaxReached
                 ? 'bg-rose-50 text-rose-800 border-rose-200'
                 : 'bg-amber-50 text-amber-900 border-amber-200'
@@ -158,6 +142,10 @@ export const ProductMediaManager: React.FC<ProductMediaManagerProps> = ({
             {images.length} / {maxImages} Max
           </span>
         </div>
+
+        <p className="text-[11.5px] text-gray-500 leading-normal">
+          The 1st image is <strong className="text-black">Primary Cover</strong>, 2nd is <strong className="text-black">Hover</strong>, rest are <strong className="text-black">Gallery</strong>.
+        </p>
       </div>
 
       {/* Upload & Drag Drop Zone */}
@@ -172,7 +160,7 @@ export const ProductMediaManager: React.FC<ProductMediaManagerProps> = ({
           setDragOver(false);
           if (!isMaxReached) handleFileUpload(e.dataTransfer.files);
         }}
-        className={`border-2 border-dashed rounded-3xl p-6 text-center transition-all ${
+        className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
           isMaxReached
             ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
             : dragOver
@@ -214,22 +202,22 @@ export const ProductMediaManager: React.FC<ProductMediaManagerProps> = ({
           </div>
 
           {!isMaxReached && (
-            <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+            <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#111111] hover:bg-black text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
               >
-                <Upload className="w-3.5 h-3.5" />
+                <Upload className="w-3.5 h-3.5 text-amber-300" />
                 <span>Upload From Computer</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setMediaPickerOpen(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-gray-100 text-gray-800 border border-gray-200 text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
               >
-                <Layers className="w-3.5 h-3.5 text-amber-600" />
+                <Layers className="w-3.5 h-3.5 text-purple-600" />
                 <span>Select From Media Library</span>
               </button>
             </div>

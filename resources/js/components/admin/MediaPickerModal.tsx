@@ -205,9 +205,9 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
           onClose();
         }
       }}
-      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in"
+      className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 md:p-6 animate-in fade-in"
     >
-      <div className="bg-white rounded-[16px] max-w-5xl w-full h-[90vh] max-h-[780px] shadow-2xl border border-gray-200/90 flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+      <div className="bg-white rounded-[16px] w-[96vw] max-w-6xl h-[90vh] max-h-[860px] shadow-2xl border border-gray-200/90 flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white">
           <div className="flex items-center gap-3">
@@ -217,7 +217,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
             <div>
               <h3 className="text-base font-extrabold text-gray-900 tracking-tight">{title}</h3>
               <p className="text-[11px] text-gray-400">
-                {multiple ? `Select up to ${maxSelect} images` : 'Choose 1 image'} for this product field.{' '}
+                {multiple ? `Select up to ${maxSelect} images` : 'Choose 1 image'} for this product.{' '}
                 <span className="text-gray-400 font-mono">(Press Esc to close)</span>
               </p>
             </div>
@@ -273,7 +273,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                 setDragOver(false);
                 handleUploadFiles(e.dataTransfer.files);
               }}
-              className={`max-w-lg w-full bg-white rounded-2xl border-2 border-dashed p-10 text-center transition-all ${
+              className={`max-w-xl w-full bg-white rounded-2xl border-2 border-dashed p-10 sm:p-12 text-center transition-all shadow-xs ${
                 dragOver ? 'border-[#d0473e] bg-rose-50/50 scale-[0.99]' : 'border-gray-300 hover:border-black'
               }`}
             >
@@ -315,9 +315,9 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
 
         {/* Tab Content: Media Library Browser */}
         {activeTab === 'library' && (
-          <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-            {/* Left Main Gallery */}
-            <div className="flex-1 flex flex-col p-4 sm:p-5 overflow-hidden border-b md:border-b-0 md:border-r border-gray-100">
+          <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-white">
+            {/* Main Image Gallery */}
+            <div className="flex-1 flex flex-col p-4 sm:p-6 overflow-hidden border-b md:border-b-0 md:border-r border-gray-100">
               {/* Search Toolbar */}
               <div className="flex items-center justify-between gap-3 mb-4">
                 <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-sm">
@@ -344,7 +344,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                 </form>
 
                 <div className="text-[11px] font-bold text-gray-400">
-                  {mediaItems.length} items available
+                  {mediaItems.length} images available
                 </div>
               </div>
 
@@ -370,7 +370,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                     </button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5">
                     {mediaItems.map((item) => {
                       const isSelected = selectedUrls.includes(item.url);
                       const isFocused = focusedItem?.id === item.id;
@@ -379,12 +379,12 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                         <div
                           key={item.id}
                           onClick={() => toggleSelect(item)}
-                          className={`aspect-square rounded-[10px] border overflow-hidden cursor-pointer relative group transition-all ${
+                          className={`aspect-square rounded-[12px] border overflow-hidden cursor-pointer relative group transition-all duration-150 ${
                             isSelected
-                              ? 'border-black ring-3 ring-black/20 scale-[0.98]'
+                              ? 'border-black ring-3 ring-black/25 scale-[0.97] shadow-md'
                               : isFocused
                               ? 'border-black/60 shadow-xs'
-                              : 'border-gray-200/90 hover:border-gray-400'
+                              : 'border-gray-200 hover:border-gray-400 hover:shadow-xs'
                           }`}
                         >
                           <img
@@ -396,14 +396,15 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
 
                           {/* Selected badge checkmark */}
                           {isSelected && (
-                            <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-xs">
+                            <div className="absolute top-2 right-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-md">
                               <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                             </div>
                           )}
 
                           {/* Hover tooltip bar */}
-                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1.5 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                            <p className="text-[9.5px] font-bold truncate leading-tight">{item.name}</p>
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                            <p className="text-[10px] font-bold truncate leading-tight">{item.name}</p>
+                            <p className="text-[9px] text-gray-300 font-mono">{item.human_readable_size}</p>
                           </div>
                         </div>
                       );
@@ -414,12 +415,22 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
             </div>
 
             {/* Right Sidebar: Selected Attachment Details */}
-            <div className="w-full md:w-64 bg-gray-50/70 p-4 flex flex-col justify-between overflow-y-auto shrink-0 border-t md:border-t-0">
-              {focusedItem ? (
+            {focusedItem && (
+              <div className="w-full md:w-72 bg-gray-50/80 p-5 flex flex-col justify-between overflow-y-auto shrink-0 border-t md:border-t-0 animate-in slide-in-from-right-4 duration-200">
                 <div className="space-y-4">
-                  <h5 className="text-xs font-extrabold text-gray-900 uppercase tracking-wider">
-                    Attachment Details
-                  </h5>
+                  <div className="flex items-center justify-between">
+                    <h5 className="text-xs font-extrabold text-gray-900 uppercase tracking-wider">
+                      Attachment Details
+                    </h5>
+                    <button
+                      type="button"
+                      onClick={() => setFocusedItem(null)}
+                      className="p-1 text-gray-400 hover:text-black rounded-md"
+                      title="Hide Details"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
 
                   <div className="aspect-square bg-white rounded-xl border border-gray-200 overflow-hidden flex items-center justify-center p-2 shadow-2xs">
                     <img
@@ -429,21 +440,19 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                     />
                   </div>
 
-                  <div className="space-y-1.5 text-[11px] text-gray-600">
+                  <div className="space-y-1.5 text-[11.5px] text-gray-600 bg-white p-3 rounded-xl border border-gray-200/80">
                     <p className="font-bold text-gray-900 truncate" title={focusedItem.name}>
                       {focusedItem.name}
                     </p>
                     <p className="text-gray-400 font-mono text-[10px] break-all">{focusedItem.file_name}</p>
-                    <p>{focusedItem.human_readable_size}</p>
+                    <div className="pt-1 flex justify-between border-t border-gray-100 text-[11px]">
+                      <span className="text-gray-400">File size:</span>
+                      <span className="font-bold text-gray-800">{focusedItem.human_readable_size}</span>
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-center p-4 text-gray-400 space-y-2">
-                  <ImageIcon className="w-8 h-8 stroke-[1.5]" />
-                  <p className="text-xs">Click any image to inspect details and select.</p>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
