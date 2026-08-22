@@ -43,6 +43,11 @@ export default function Index({ settings }: SettingsProps) {
     google_site_verification: settings.google_site_verification ?? '',
     bing_site_verification: settings.bing_site_verification ?? '',
     og_default_image: settings.og_default_image ?? '',
+    instagram_url: settings.instagram_url ?? 'https://instagram.com/haarmonaa',
+    facebook_url: settings.facebook_url ?? '',
+    tiktok_url: settings.tiktok_url ?? '',
+    youtube_url: settings.youtube_url ?? '',
+    pinterest_url: settings.pinterest_url ?? '',
   });
 
   const [saving, setSaving] = useState(false);
@@ -478,6 +483,76 @@ export default function Index({ settings }: SettingsProps) {
                 value={formData.meta_description}
                 onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
                 placeholder="Default description displayed on Google search results and AI search engine summaries..."
+                className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Card 5: Social Media Profiles */}
+        <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+            <Share2 className="w-4 h-4 text-gray-700" />
+            <div>
+              <h2 className="text-sm font-bold text-gray-900">Social Media Channels</h2>
+              <p className="text-[11px] text-gray-400">
+                Connected accounts will be linked directly to your footer icons and community channels.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">Instagram Profile URL</label>
+              <input
+                type="text"
+                value={formData.instagram_url}
+                onChange={(e) => setFormData({ ...formData, instagram_url: e.target.value })}
+                placeholder="https://instagram.com/haarmonaa"
+                className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">Facebook Page URL</label>
+              <input
+                type="text"
+                value={formData.facebook_url}
+                onChange={(e) => setFormData({ ...formData, facebook_url: e.target.value })}
+                placeholder="https://facebook.com/..."
+                className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">TikTok Channel URL</label>
+              <input
+                type="text"
+                value={formData.tiktok_url}
+                onChange={(e) => setFormData({ ...formData, tiktok_url: e.target.value })}
+                placeholder="https://tiktok.com/@..."
+                className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">YouTube Channel URL</label>
+              <input
+                type="text"
+                value={formData.youtube_url}
+                onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
+                placeholder="https://youtube.com/@..."
+                className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">Pinterest Profile URL</label>
+              <input
+                type="text"
+                value={formData.pinterest_url}
+                onChange={(e) => setFormData({ ...formData, pinterest_url: e.target.value })}
+                placeholder="https://pinterest.com/..."
                 className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
               />
             </div>

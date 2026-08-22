@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Category;
 use App\Models\SearchKeyword;
 use App\Models\Setting;
 use Illuminate\Http\Request;
@@ -61,9 +62,14 @@ class HandleInertiaRequests extends Middleware
                 'enable_free_shipping' => (bool) Setting::get('enable_free_shipping', true),
                 'instagram_url' => Setting::get('instagram_url', 'https://instagram.com/haarmonaa'),
                 'instagram_handle' => Setting::get('instagram_handle', '@haarmonaa'),
+                'facebook_url' => Setting::get('facebook_url', ''),
+                'tiktok_url' => Setting::get('tiktok_url', ''),
+                'youtube_url' => Setting::get('youtube_url', ''),
+                'pinterest_url' => Setting::get('pinterest_url', ''),
                 'instagram_posts' => json_decode(Setting::get('instagram_posts', '[]'), true) ?: null,
                 'store_features' => json_decode(Setting::get('store_features', '[]'), true) ?: null,
                 'popular_search_keywords' => SearchKeyword::getPopular(8),
+                'nav_categories' => Category::orderBy('name')->get(['id', 'name', 'slug']),
             ],
             'flash' => [
                 'success' => $request->session()->get('success'),
