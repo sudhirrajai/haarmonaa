@@ -46,9 +46,9 @@ const defaultCards: [PromoCardData, PromoCardData] = [
 
 export const PromoDualBanners: React.FC<PromoDualBannersProps> = ({ cards = defaultCards }) => {
   return (
-    <section className="py-12 sm:py-16 lg:py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+    <section className="py-4 sm:py-6 lg:py-8 bg-white">
+      <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {cards.map((card) => {
             const hasImage = Boolean(card.image && card.image.trim().length > 0);
             const isDarkText = !hasImage || card.textColor === 'dark' || !card.textColor;
@@ -62,7 +62,7 @@ export const PromoDualBanners: React.FC<PromoDualBannersProps> = ({ cards = defa
             return (
               <div
                 key={card.id}
-                className={`relative rounded-3xl sm:rounded-4xl overflow-hidden transition-all duration-500 min-h-[360px] sm:min-h-[420px] lg:min-h-[440px] flex flex-col p-8 sm:p-12 lg:p-14 group ${
+                className={`relative rounded-3xl sm:rounded-4xl overflow-hidden transition-all duration-500 min-h-[320px] sm:min-h-[380px] lg:min-h-[420px] flex flex-col p-6 sm:p-10 lg:p-12 group ${
                   hasImage ? (card.bgClass || 'bg-gray-900') : 'bg-[#f4f4f4]'
                 } ${alignClass}`}
               >
