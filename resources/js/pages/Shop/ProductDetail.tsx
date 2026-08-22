@@ -799,7 +799,14 @@ export default function ProductDetail({
             {product.description ? (
               <div
                 className="prose prose-sm sm:prose-base max-w-full overflow-x-auto text-sm text-gray-900 leading-relaxed font-normal break-words [word-break:break-word] [&_*]:max-w-full [&_img]:rounded-3xl [&_img]:my-6 [&_img]:max-h-[500px] [&_img]:w-full [&_img]:object-cover [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_h2]:text-xl [&_h2]:font-extrabold [&_h2]:text-gray-900 [&_h2]:mt-6 [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:text-gray-900 [&_h3]:mt-5 [&_h3]:mb-2 [&_table]:w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:my-4 [&_td]:border [&_td]:border-gray-200 [&_td]:p-3 [&_td]:break-words [&_th]:border [&_th]:border-gray-200 [&_th]:p-3 [&_th]:bg-gray-50 [&_th]:break-words"
-                dangerouslySetInnerHTML={{ __html: product.description }}
+                dangerouslySetInnerHTML={{
+                  __html: product.description
+                    .replace(/\\r\\n/g, '')
+                    .replace(/\\n/g, '')
+                    .replace(/\\r/g, '')
+                    .replace(/\\t/g, ' ')
+                    .replace(/>\s*\\n\s*</g, '><'),
+                }}
               />
             ) : (
               <div className="space-y-6 text-sm text-gray-900 leading-relaxed font-normal">

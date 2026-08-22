@@ -367,7 +367,8 @@ class ProductImportExportController extends Controller
                 $secondaryImage = $imagesArray[1] ?? $primaryImage;
 
                 // Description (Prefer full Description, fallback to Short description)
-                $description = ! empty($data['description']) ? $data['description'] : ($data['short_description'] ?? '');
+                $rawDescription = ! empty($data['description']) ? $data['description'] : ($data['short_description'] ?? '');
+                $description = $this->cleanDescription($rawDescription);
 
                 // Stock & Status
                 $stockQuantity = isset($data['stock']) && is_numeric($data['stock'])
@@ -615,5 +616,30 @@ class ProductImportExportController extends Controller
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="haarmonaa-products-export-'.date('Y-m-d').'.csv"',
         ]);
+    }
+
+    /**
+     * Clean and sanitize imported product description.
+     */
+    private function cleanDescription(?string $html): string
+    {
+        if (empty($html)) {
+            return '';
+        }
+
+        // 1. Remove literal escaped sequences like "\r\n", "\n", "\r", "\t" that were exported as text in CSV
+        $cleaned = str_replace(['\\r\\n', '\\n', '\\r', '\\t'], ["\n", "\n", "\n", ' '], $html);
+
+        // 2. Remove WordPress block/Gutenberg metadata attributes like data-start="...", data-end="...", data-section-id="..."
+        $cleaned = preg_replace('/\s*(data-start|data-end|data-section-id|data-is-last-node|data-is-only-node)="[^"]*"/', '', $cleaned);
+
+        // 3. Remove standalone literal \n text that might be left between tags
+        $cleaned = preg_replace('/>\s*\\\\n\s*</', '><', $cleaned);
+        $cleaned = preg_replace('/\\\\n/', ' ', $cleaned);
+
+        // 4. Remove empty paragraph tags with only whitespace or newlines
+        $cleaned = preg_replace('/<p>\s*<\/p>/', '', $cleaned);
+
+        return trim($cleaned);
     }
 }
