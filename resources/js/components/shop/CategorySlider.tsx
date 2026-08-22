@@ -106,7 +106,7 @@ export const CategorySlider: React.FC<CategorySliderProps> = ({
         {/* Fluid Horizontal Smooth-Scrolling Track matching Featured Section */}
         <div
           ref={scrollRef}
-          className="flex gap-6 overflow-x-auto scroll-smooth pb-4 pt-1 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 snap-x snap-mandatory scrollbar-none [&::-webkit-scrollbar]:hidden"
+          className="flex gap-4 sm:gap-6 overflow-x-auto scroll-smooth pb-4 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory scrollbar-none [&::-webkit-scrollbar]:hidden"
           style={{
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
@@ -116,7 +116,7 @@ export const CategorySlider: React.FC<CategorySliderProps> = ({
           {categories.map((cat) => (
             <div
               key={cat.id}
-              className="w-[82vw] sm:w-[46vw] md:w-[32vw] lg:w-[calc(25%-18px)] shrink-0 snap-start"
+              className="w-[240px] sm:w-[280px] md:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)] shrink-0 snap-start"
             >
               <Link
                 href={`/category/${cat.slug}`}
