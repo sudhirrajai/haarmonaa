@@ -62,8 +62,8 @@ export const PromoDualBanners: React.FC<PromoDualBannersProps> = ({ cards = defa
             return (
               <div
                 key={card.id}
-                className={`relative rounded-3xl sm:rounded-4xl overflow-hidden transition-all duration-500 min-h-[320px] sm:min-h-[380px] lg:min-h-[420px] flex flex-col p-6 sm:p-10 lg:p-12 group ${
-                  hasImage ? (card.bgClass || 'bg-gray-900') : 'bg-[#f4f4f4]'
+                className={`relative rounded-3xl overflow-hidden min-h-[320px] sm:min-h-[380px] lg:min-h-[420px] flex flex-col p-6 sm:p-10 lg:p-12 group isolate [transform:translateZ(0)] ${
+                  hasImage ? (card.bgClass || 'bg-gray-100') : (card.bgClass || 'bg-[#f4f4f4]')
                 } ${alignClass}`}
               >
                 {/* Background Image (If Provided) */}
