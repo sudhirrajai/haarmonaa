@@ -82,7 +82,7 @@ class MediaController extends Controller
         }
         $formattedTotalSize = round($bytes, 2).' '.($units[$i] ?? 'B');
 
-        if ($request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+        if ($request->wantsJson() && ! $request->header('X-Inertia')) {
             return response()->json([
                 'success' => true,
                 'media' => $mediaList,
@@ -160,7 +160,7 @@ class MediaController extends Controller
         }
 
         if (empty($uploadedFiles)) {
-            if ($request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            if ($request->wantsJson() && ! $request->header('X-Inertia')) {
                 return response()->json(['success' => false, 'message' => 'No files were uploaded.'], 422);
             }
 
@@ -196,7 +196,7 @@ class MediaController extends Controller
             $createdMedia[] = $media;
         }
 
-        if ($request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+        if ($request->wantsJson() && ! $request->header('X-Inertia')) {
             return response()->json([
                 'success' => true,
                 'message' => count($createdMedia).' file(s) uploaded successfully.',
@@ -219,7 +219,7 @@ class MediaController extends Controller
 
         $media->update($validated);
 
-        if ($request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+        if ($request->wantsJson() && ! $request->header('X-Inertia')) {
             return response()->json([
                 'success' => true,
                 'message' => 'Media updated successfully.',
@@ -242,7 +242,7 @@ class MediaController extends Controller
 
         $media->delete();
 
-        if ($request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+        if ($request->wantsJson() && ! $request->header('X-Inertia')) {
             return response()->json([
                 'success' => true,
                 'message' => 'Media item deleted successfully.',
@@ -259,7 +259,7 @@ class MediaController extends Controller
     {
         $ids = $request->input('ids', []);
         if (empty($ids) || ! is_array($ids)) {
-            if ($request->expectsJson()) {
+            if ($request->wantsJson() && ! $request->header('X-Inertia')) {
                 return response()->json(['success' => false, 'message' => 'No media files selected.'], 422);
             }
 
@@ -277,7 +277,7 @@ class MediaController extends Controller
             $count++;
         }
 
-        if ($request->expectsJson()) {
+        if ($request->wantsJson() && ! $request->header('X-Inertia')) {
             return response()->json([
                 'success' => true,
                 'message' => "{$count} media item(s) permanently deleted.",
