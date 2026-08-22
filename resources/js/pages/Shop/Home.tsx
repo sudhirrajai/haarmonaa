@@ -236,8 +236,11 @@ export default function Home({
               Unmatched design with supreme performance and satisfaction.
             </p>
 
-            {/* Category Filter Tabs - One Single Line */}
-            <div className="w-full overflow-x-auto no-scrollbar py-2 mt-6 sm:mt-8">
+            {/* Category Filter Tabs - One Single Line Without Scrollbar */}
+            <div
+              className="w-full overflow-x-auto no-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden py-2 mt-6 sm:mt-8"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
               <div className="flex flex-nowrap items-center justify-center gap-2 sm:gap-2.5 min-w-max mx-auto px-2">
                 <button
                   type="button"

@@ -41,3 +41,18 @@ p, span, a, label {
 .rounded-r-2xl {
     border-radius: 10px !important;
 }
+
+/* Universal Hide Scrollbar Utility */
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.no-scrollbar,
+.scrollbar-none {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+}
+
