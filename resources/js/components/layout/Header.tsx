@@ -17,6 +17,7 @@ import {
   Package,
   ShieldCheck,
   ChevronRight,
+  ChevronDown,
   Truck,
   Gift,
   Tag,
@@ -44,7 +45,15 @@ export const Header: React.FC<HeaderProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedMobileMenus, setExpandedMobileMenus] = useState<Record<string, boolean>>({});
   const accountRef = useRef<HTMLDivElement>(null);
+
+  const toggleMobileSubmenu = (itemId: string) => {
+    setExpandedMobileMenus((prev) => ({
+      ...prev,
+      [itemId]: !prev[itemId],
+    }));
+  };
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -210,35 +219,83 @@ export const Header: React.FC<HeaderProps> = ({
               </Link>
             </div>
 
-            {/* Absolute Center: Desktop Dynamic Navigation Links */}
-            <nav className="hidden lg:flex items-center justify-center space-x-8 xl:space-x-10 text-[14px] font-semibold tracking-tight text-gray-900">
+            {/* Absolute Center: Desktop Dynamic Navigation Links with Submenu Dropdown */}
+            <nav className="hidden lg:flex items-center justify-center space-x-7 xl:space-x-9 text-[14px] font-semibold tracking-tight text-gray-900">
               {navItems.map((item: any) => {
                 const isActive = item.url === '/' ? url === '/' : url.startsWith(item.url);
-                if (item.is_external) {
-                  return (
-                    <a
-                      key={item.id || item.label}
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="py-1 text-gray-700 hover:text-[#d0473e] transition-colors flex items-center gap-1"
-                    >
-                      <span>{item.label}</span>
-                    </a>
-                  );
-                }
+                const activeChildren = (item.children || []).filter((c: any) => c.is_enabled !== false);
+                const hasChildren = activeChildren.length > 0;
+
                 return (
-                  <Link
-                    key={item.id || item.label}
-                    href={item.url}
-                    className={`py-1 transition-colors ${
-                      isActive
-                        ? 'text-black font-extrabold border-b-2 border-black'
-                        : 'text-gray-700 hover:text-[#d0473e]'
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
+                  <div key={item.id || item.label} className="relative group py-4">
+                    {item.is_external ? (
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="py-1 text-gray-700 hover:text-[#d0473e] transition-colors flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>{item.label}</span>
+                        {hasChildren ? (
+                          <ChevronDown className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-200 opacity-60" />
+                        ) : (
+                          <ExternalLink className="w-3 h-3 opacity-40" />
+                        )}
+                      </a>
+                    ) : (
+                      <Link
+                        href={item.url}
+                        className={`py-1 transition-colors flex items-center gap-1 cursor-pointer ${
+                          isActive
+                            ? 'text-black font-extrabold border-b-2 border-black'
+                            : 'text-gray-700 hover:text-[#d0473e]'
+                        }`}
+                      >
+                        <span>{item.label}</span>
+                        {hasChildren && (
+                          <ChevronDown className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-200 opacity-60" />
+                        )}
+                      </Link>
+                    )}
+
+                    {/* Dropdown Menu Popup */}
+                    {hasChildren && (
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 pt-1 opacity-0 translate-y-1 invisible group-hover:opacity-100 group-hover:translate-y-0 group-hover:visible transition-all duration-200 pointer-events-none group-hover:pointer-events-auto z-50">
+                        <div className="bg-white/95 backdrop-blur-md border border-gray-100 shadow-2xl rounded-2xl p-2 min-w-[200px] space-y-0.5">
+                          {activeChildren.map((sub: any) => {
+                            const isSubActive = url === sub.url || url.startsWith(sub.url);
+                            if (sub.is_external) {
+                              return (
+                                <a
+                                  key={sub.id || sub.label}
+                                  href={sub.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center justify-between px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#d0473e] rounded-xl transition-all"
+                                >
+                                  <span>{sub.label}</span>
+                                  <ExternalLink className="w-3 h-3 opacity-40" />
+                                </a>
+                              );
+                            }
+                            return (
+                              <Link
+                                key={sub.id || sub.label}
+                                href={sub.url}
+                                className={`flex items-center justify-between px-3.5 py-2 text-xs font-semibold rounded-xl transition-all ${
+                                  isSubActive
+                                    ? 'bg-black text-white font-bold'
+                                    : 'text-gray-700 hover:bg-gray-50 hover:text-[#d0473e]'
+                                }`}
+                              >
+                                <span>{sub.label}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </nav>
@@ -475,34 +532,91 @@ export const Header: React.FC<HeaderProps> = ({
 
                 {navItems.map((item: any) => {
                   const isActive = item.url === '/' ? url === '/' : url.startsWith(item.url);
-                  if (item.is_external) {
-                    return (
-                      <a
-                        key={item.id || item.label}
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-all"
-                      >
-                        <span>{item.label}</span>
-                        <ExternalLink className="w-4 h-4 opacity-50" />
-                      </a>
-                    );
-                  }
+                  const activeChildren = (item.children || []).filter((c: any) => c.is_enabled !== false);
+                  const hasChildren = activeChildren.length > 0;
+                  const isExpanded = expandedMobileMenus[item.id] || false;
+
                   return (
-                    <Link
-                      key={item.id || item.label}
-                      href={item.url}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                        isActive
-                          ? 'bg-black text-white shadow-xs'
-                          : 'text-gray-800 hover:bg-gray-50 hover:text-black'
-                      }`}
-                    >
-                      <span>{item.label}</span>
-                      <ChevronRight className="w-4 h-4 opacity-50" />
-                    </Link>
+                    <div key={item.id || item.label} className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        {item.is_external ? (
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-all"
+                          >
+                            <span>{item.label}</span>
+                            <ExternalLink className="w-4 h-4 opacity-50" />
+                          </a>
+                        ) : (
+                          <Link
+                            href={item.url}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className={`flex-1 flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                              isActive
+                                ? 'bg-black text-white shadow-xs'
+                                : 'text-gray-800 hover:bg-gray-50 hover:text-black'
+                            }`}
+                          >
+                            <span>{item.label}</span>
+                          </Link>
+                        )}
+
+                        {hasChildren && (
+                          <button
+                            type="button"
+                            onClick={() => toggleMobileSubmenu(item.id)}
+                            className="p-2.5 ml-1 text-gray-500 hover:text-black rounded-xl hover:bg-gray-100 transition-colors cursor-pointer"
+                            aria-label="Toggle Submenu"
+                          >
+                            <ChevronDown
+                              className={`w-4 h-4 transition-transform duration-200 ${
+                                isExpanded ? 'rotate-180 text-black' : 'text-gray-400'
+                              }`}
+                            />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Expanded Submenu Accordion */}
+                      {hasChildren && isExpanded && (
+                        <div className="pl-4 space-y-1 pb-1 pt-0.5 border-l-2 border-amber-300 ml-4 animate-fade-in">
+                          {activeChildren.map((sub: any) => {
+                            const isSubActive = url === sub.url || url.startsWith(sub.url);
+                            if (sub.is_external) {
+                              return (
+                                <a
+                                  key={sub.id || sub.label}
+                                  href={sub.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-gray-600 hover:text-black hover:bg-gray-50 transition-all"
+                                >
+                                  <span>{sub.label}</span>
+                                  <ExternalLink className="w-3.5 h-3.5 opacity-40" />
+                                </a>
+                              );
+                            }
+                            return (
+                              <Link
+                                key={sub.id || sub.label}
+                                href={sub.url}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                                  isSubActive
+                                    ? 'bg-gray-100 text-black font-bold'
+                                    : 'text-gray-600 hover:text-black hover:bg-gray-50'
+                                }`}
+                              >
+                                <span>{sub.label}</span>
+                                <ChevronRight className="w-3 h-3 text-gray-300" />
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
 

@@ -20,6 +20,7 @@ import {
 interface CategoryPageProps {
   category: {
     id: number;
+    parent_id?: number | null;
     name: string;
     slug: string;
     tagline?: string;
@@ -27,6 +28,8 @@ interface CategoryPageProps {
     image?: string;
     productsCount: number;
     isCollection?: boolean;
+    parent?: { id: number; name: string; slug: string } | null;
+    subcategories?: Array<{ id: number; name: string; slug: string; image?: string }>;
   };
   products: Product[];
   categories: CategoryType[];
@@ -151,15 +154,24 @@ export default function Category({
                   `Explore our artisanal collection of ${category.name.toLowerCase()} handcrafted in 18k solid gold vermeil. Designed for everyday luxury with anti-tarnish, waterproof and hypoallergenic guarantees.`}
               </p>
 
-              <div className="pt-2 flex items-center gap-4 text-xs text-gray-400 font-medium">
-                <span>
-                  <strong className="text-white font-bold">{filteredProducts.length}</strong> {filteredProducts.length === 1 ? 'Design' : 'Designs'} Available
-                </span>
-                <span>•</span>
-                <span>Waterproof & Anti-Tarnish</span>
-                <span>•</span>
-                <span>Pan-India Delivery</span>
-              </div>
+              {/* Subcategories Filter Chips (If Category Has Children) */}
+              {category.subcategories && category.subcategories.length > 0 && (
+                <div className="pt-3 flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-bold text-amber-300 uppercase tracking-wider mr-1">
+                    Explore Types:
+                  </span>
+                  {category.subcategories.map((sub) => (
+                    <Link
+                      key={sub.id}
+                      href={`/category/${sub.slug}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 hover:bg-white text-white hover:text-black border border-white/20 text-xs font-bold transition-all shadow-xs"
+                    >
+                      <span>{sub.name}</span>
+                      <ChevronRight className="w-3 h-3 opacity-60" />
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

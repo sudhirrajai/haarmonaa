@@ -30,6 +30,8 @@ import {
   Tag,
   Gem,
   Menu,
+  CornerDownRight,
+  ChevronRight,
 } from 'lucide-react';
 
 interface SettingsProps {
@@ -141,6 +143,100 @@ export default function Index({ settings }: SettingsProps) {
     items[index] = items[targetIndex];
     items[targetIndex] = temp;
     setFormData((prev) => ({ ...prev, header_nav_items: items }));
+  };
+
+  const handleAddSubItem = (parentId: string) => {
+    const newSubItem = {
+      id: Date.now().toString(),
+      label: 'Sub Item',
+      url: '/shop',
+      is_external: false,
+      is_enabled: true,
+    };
+    setFormData((prev) => ({
+      ...prev,
+      header_nav_items: prev.header_nav_items.map((item: any) => {
+        if (item.id === parentId) {
+          return {
+            ...item,
+            children: [...(item.children || []), newSubItem],
+          };
+        }
+        return item;
+      }),
+    }));
+  };
+
+  const handleUpdateSubItem = (parentId: string, subId: string, field: string, value: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      header_nav_items: prev.header_nav_items.map((item: any) => {
+        if (item.id === parentId) {
+          return {
+            ...item,
+            children: (item.children || []).map((sub: any) =>
+              sub.id === subId ? { ...sub, [field]: value } : sub
+            ),
+          };
+        }
+        return item;
+      }),
+    }));
+  };
+
+  const handleRemoveSubItem = (parentId: string, subId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      header_nav_items: prev.header_nav_items.map((item: any) => {
+        if (item.id === parentId) {
+          return {
+            ...item,
+            children: (item.children || []).filter((sub: any) => sub.id !== subId),
+          };
+        }
+        return item;
+      }),
+    }));
+  };
+
+  const handleMoveSubItem = (parentId: string, index: number, direction: 'up' | 'down') => {
+    setFormData((prev) => ({
+      ...prev,
+      header_nav_items: prev.header_nav_items.map((item: any) => {
+        if (item.id === parentId) {
+          const subs = [...(item.children || [])];
+          const targetIndex = direction === 'up' ? index - 1 : index + 1;
+          if (targetIndex < 0 || targetIndex >= subs.length) return item;
+          const temp = subs[index];
+          subs[index] = subs[targetIndex];
+          subs[targetIndex] = temp;
+          return { ...item, children: subs };
+        }
+        return item;
+      }),
+    }));
+  };
+
+  const handleAddCategorySub = (parentId: string, label: string, url: string) => {
+    const newSubItem = {
+      id: Date.now().toString(),
+      label,
+      url,
+      is_external: false,
+      is_enabled: true,
+    };
+    setFormData((prev) => ({
+      ...prev,
+      header_nav_items: prev.header_nav_items.map((item: any) => {
+        if (item.id === parentId) {
+          return {
+            ...item,
+            children: [...(item.children || []), newSubItem],
+          };
+        }
+        return item;
+      }),
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -552,100 +648,211 @@ export default function Index({ settings }: SettingsProps) {
           </div>
 
           {/* Navigation Items List */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             {formData.header_nav_items.map((item: any, index: number) => (
               <div
                 key={item.id || index}
-                className={`p-3.5 rounded-xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                className={`p-4 rounded-2xl border transition-all space-y-3 ${
                   item.is_enabled !== false ? 'bg-white border-gray-200 shadow-2xs' : 'bg-gray-50 border-gray-200 opacity-60'
                 }`}
               >
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 w-full sm:w-auto sm:flex-1">
-                  {/* Label */}
-                  <div className="sm:col-span-5">
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-                      Menu Label
-                    </label>
-                    <input
-                      type="text"
-                      value={item.label}
-                      onChange={(e) => handleUpdateNavItem(item.id, 'label', e.target.value)}
-                      placeholder="e.g. Catalog"
-                      className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-1.5 px-2.5 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black focus:bg-white"
-                    />
-                  </div>
-
-                  {/* URL */}
-                  <div className="sm:col-span-5">
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-                      Target URL / Route
-                    </label>
-                    <input
-                      type="text"
-                      value={item.url}
-                      onChange={(e) => handleUpdateNavItem(item.id, 'url', e.target.value)}
-                      placeholder="e.g. /shop or https://..."
-                      className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-1.5 px-2.5 text-xs text-gray-900 font-mono focus:outline-hidden focus:border-black focus:bg-white"
-                    />
-                  </div>
-
-                  {/* External Toggle */}
-                  <div className="sm:col-span-2 flex items-center pt-4 sm:pt-5">
-                    <label className="flex items-center gap-1.5 text-[11px] text-gray-600 font-semibold cursor-pointer select-none">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 w-full sm:w-auto sm:flex-1">
+                    {/* Label */}
+                    <div className="sm:col-span-5">
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                        Main Menu Label
+                      </label>
                       <input
-                        type="checkbox"
-                        checked={item.is_external || false}
-                        onChange={(e) => handleUpdateNavItem(item.id, 'is_external', e.target.checked)}
-                        className="rounded border-gray-300 text-black focus:ring-black"
+                        type="text"
+                        value={item.label}
+                        onChange={(e) => handleUpdateNavItem(item.id, 'label', e.target.value)}
+                        placeholder="e.g. Catalog"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-1.5 px-2.5 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black focus:bg-white"
                       />
-                      <span>External</span>
-                    </label>
+                    </div>
+
+                    {/* URL */}
+                    <div className="sm:col-span-5">
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                        Target URL / Route
+                      </label>
+                      <input
+                        type="text"
+                        value={item.url}
+                        onChange={(e) => handleUpdateNavItem(item.id, 'url', e.target.value)}
+                        placeholder="e.g. /shop or /category/earrings"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-1.5 px-2.5 text-xs text-gray-900 font-mono focus:outline-hidden focus:border-black focus:bg-white"
+                      />
+                    </div>
+
+                    {/* External Toggle */}
+                    <div className="sm:col-span-2 flex items-center pt-4 sm:pt-5">
+                      <label className="flex items-center gap-1.5 text-[11px] text-gray-600 font-semibold cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={item.is_external || false}
+                          onChange={(e) => handleUpdateNavItem(item.id, 'is_external', e.target.checked)}
+                          className="rounded border-gray-300 text-black focus:ring-black"
+                        />
+                        <span>External</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Actions: Add Sub Link, Enable Toggle, Move Up/Down, Delete */}
+                  <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center pt-2 sm:pt-0">
+                    <button
+                      type="button"
+                      onClick={() => handleAddSubItem(item.id)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-md text-[11px] font-bold cursor-pointer transition-all"
+                      title="Add dropdown sub-menu item"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Sub Link</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateNavItem(item.id, 'is_enabled', item.is_enabled === false ? true : false)}
+                      className={`px-2.5 py-1 rounded-md text-[10px] font-bold cursor-pointer transition-all ${
+                        item.is_enabled !== false
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-gray-200 text-gray-600'
+                      }`}
+                    >
+                      {item.is_enabled !== false ? 'Active' : 'Hidden'}
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={index === 0}
+                      onClick={() => handleMoveNavItem(index, 'up')}
+                      className="p-1.5 text-gray-500 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                      title="Move Up"
+                    >
+                      <ArrowUp className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={index === formData.header_nav_items.length - 1}
+                      onClick={() => handleMoveNavItem(index, 'down')}
+                      className="p-1.5 text-gray-500 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                      title="Move Down"
+                    >
+                      <ArrowDown className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveNavItem(item.id)}
+                      className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-md cursor-pointer"
+                      title="Delete Menu Link"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
 
-                {/* Actions: Enable Toggle, Move Up/Down, Delete */}
-                <div className="flex items-center gap-1 shrink-0 self-end sm:self-center pt-2 sm:pt-0">
-                  <button
-                    type="button"
-                    onClick={() => handleUpdateNavItem(item.id, 'is_enabled', item.is_enabled === false ? true : false)}
-                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold cursor-pointer transition-all ${
-                      item.is_enabled !== false
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-gray-200 text-gray-600'
-                    }`}
-                  >
-                    {item.is_enabled !== false ? 'Active' : 'Hidden'}
-                  </button>
+                {/* Sub-Items (Dropdown Menu Links) */}
+                {item.children && item.children.length > 0 && (
+                  <div className="pl-4 sm:pl-8 pt-3 border-t border-gray-100 space-y-2.5 bg-gray-50/50 p-3 rounded-xl">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                        <CornerDownRight className="w-3 h-3 text-amber-600" />
+                        <span>Sub-Menu Links ({item.children.length}):</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleAddSubItem(item.id)}
+                        className="text-[10.5px] font-bold text-amber-700 hover:text-amber-900 cursor-pointer"
+                      >
+                        + Add another sub-item
+                      </button>
+                    </div>
 
-                  <button
-                    type="button"
-                    disabled={index === 0}
-                    onClick={() => handleMoveNavItem(index, 'up')}
-                    className="p-1.5 text-gray-500 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                    title="Move Up"
-                  >
-                    <ArrowUp className="w-4 h-4" />
-                  </button>
+                    <div className="space-y-2">
+                      {item.children.map((sub: any, subIndex: number) => (
+                        <div
+                          key={sub.id || subIndex}
+                          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2.5 bg-white border border-gray-200 rounded-lg shadow-2xs"
+                        >
+                          <div className="flex items-center gap-2 flex-1 w-full">
+                            <CornerDownRight className="w-3.5 h-3.5 text-gray-400 shrink-0 hidden sm:block" />
+                            <input
+                              type="text"
+                              value={sub.label}
+                              onChange={(e) => handleUpdateSubItem(item.id, sub.id, 'label', e.target.value)}
+                              placeholder="Submenu Label (e.g. Studs)"
+                              className="w-1/3 bg-gray-50 border border-gray-200 rounded-[6px] py-1 px-2 text-xs font-semibold text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
+                            />
+                            <input
+                              type="text"
+                              value={sub.url}
+                              onChange={(e) => handleUpdateSubItem(item.id, sub.id, 'url', e.target.value)}
+                              placeholder="URL (e.g. /category/stud-earrings)"
+                              className="flex-1 bg-gray-50 border border-gray-200 rounded-[6px] py-1 px-2 text-xs font-mono text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
+                            />
+                          </div>
 
-                  <button
-                    type="button"
-                    disabled={index === formData.header_nav_items.length - 1}
-                    onClick={() => handleMoveNavItem(index, 'down')}
-                    className="p-1.5 text-gray-500 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                    title="Move Down"
-                  >
-                    <ArrowDown className="w-4 h-4" />
-                  </button>
+                          <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
+                            <label className="flex items-center gap-1 text-[10px] text-gray-500 font-semibold cursor-pointer select-none mr-1">
+                              <input
+                                type="checkbox"
+                                checked={sub.is_external || false}
+                                onChange={(e) => handleUpdateSubItem(item.id, sub.id, 'is_external', e.target.checked)}
+                                className="rounded border-gray-300 text-black focus:ring-black w-3 h-3"
+                              />
+                              <span>Ext</span>
+                            </label>
 
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveNavItem(item.id)}
-                    className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-md cursor-pointer"
-                    title="Delete Menu Link"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateSubItem(item.id, sub.id, 'is_enabled', sub.is_enabled === false ? true : false)}
+                              className={`px-2 py-0.5 rounded text-[9px] font-bold cursor-pointer ${
+                                sub.is_enabled !== false
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  : 'bg-gray-200 text-gray-600'
+                              }`}
+                            >
+                              {sub.is_enabled !== false ? 'Active' : 'Hidden'}
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={subIndex === 0}
+                              onClick={() => handleMoveSubItem(item.id, subIndex, 'up')}
+                              className="p-1 text-gray-400 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                              title="Move Up"
+                            >
+                              <ArrowUp className="w-3.5 h-3.5" />
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={subIndex === item.children.length - 1}
+                              onClick={() => handleMoveSubItem(item.id, subIndex, 'down')}
+                              className="p-1 text-gray-400 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                              title="Move Down"
+                            >
+                              <ArrowDown className="w-3.5 h-3.5" />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSubItem(item.id, sub.id)}
+                              className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded cursor-pointer"
+                              title="Delete Sub Item"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

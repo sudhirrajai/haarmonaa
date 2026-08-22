@@ -50,8 +50,9 @@ class CategoryController extends Controller
      */
     public function show(Request $request, string $slug): Response
     {
-        // 1. Find Category by Slug or ID
-        $category = Category::where('slug', $slug)
+        // 1. Find Category by Slug or ID with parent and children
+        $category = Category::with(['parent', 'children'])
+            ->where('slug', $slug)
             ->orWhere('id', is_numeric($slug) ? (int) $slug : 0)
             ->orWhere('slug', 'like', $slug.'%')
             ->first();
@@ -69,16 +70,20 @@ class CategoryController extends Controller
             abort(404, 'Category not found');
         }
 
-        // 2. Fetch all products belonging to this category
+        // 2. Collect category IDs & names (including all subcategories)
+        $categoryIds = array_merge([$category->id], $category->children->pluck('id')->all());
+        $categoryNames = array_merge([$category->name], $category->children->pluck('name')->all());
+
+        // 3. Fetch all products belonging to this category or its subcategories
         $query = Product::with(['category', 'categories', 'variants'])
             ->where(function ($q) {
                 $q->whereNull('status')->orWhere('status', 'published');
             })
-            ->where(function ($q) use ($category) {
-                $q->where('category_id', $category->id)
-                    ->orWhere('category_name', $category->name)
-                    ->orWhereHas('categories', function ($cq) use ($category) {
-                        $cq->where('categories.id', $category->id);
+            ->where(function ($q) use ($categoryIds, $categoryNames) {
+                $q->whereIn('category_id', $categoryIds)
+                    ->orWhereIn('category_name', $categoryNames)
+                    ->orWhereHas('categories', function ($cq) use ($categoryIds) {
+                        $cq->whereIn('categories.id', $categoryIds);
                     });
             });
 
@@ -96,28 +101,66 @@ class CategoryController extends Controller
 
         $products = $query->get()->map(fn ($p) => $this->formatProduct($p))->values()->all();
 
-        // 3. Other categories for sidebar / navigation
-        $allCategories = Category::withCount('products')->get()->map(fn ($c) => [
-            'id' => $c->id,
-            'name' => $c->name,
-            'slug' => $c->slug,
-            'itemCount' => $c->products_count,
-            'image' => $c->image,
-        ])->all();
+        // 4. Other categories for sidebar / navigation
+        $allCategories = Category::with(['parent', 'children'])
+            ->withCount('products')
+            ->get()
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'parent_id' => $c->parent_id,
+                'name' => $c->name,
+                'slug' => $c->slug,
+                'itemCount' => $c->products_count,
+                'image' => $c->image,
+                'children' => $c->children->map(fn ($child) => [
+                    'id' => $child->id,
+                    'name' => $child->name,
+                    'slug' => $child->slug,
+                ])->all(),
+            ])->all();
 
         $storeName = Setting::get('store_name', 'Haarmonaa');
         $metaTitle = "{$category->name} Jewelry Collection — 18K Solid Gold Vermeil | {$storeName}";
         $metaDesc = $category->description
             ?: "Explore luxury handcrafted {$category->name} in 18K thick solid gold vermeil. Waterproof, anti-tarnish, and hypoallergenic jewelry designed for everyday elegance.";
 
+        $breadcrumbs = [
+            ['label' => 'Home', 'url' => '/'],
+            ['label' => 'Jewelry', 'url' => '/shop'],
+        ];
+
+        if ($category->parent) {
+            $breadcrumbs[] = [
+                'label' => $category->parent->name,
+                'url' => "/category/{$category->parent->slug}",
+            ];
+        }
+
+        $breadcrumbs[] = [
+            'label' => $category->name,
+            'url' => "/category/{$category->slug}",
+        ];
+
         return Inertia::render('Shop/Category', [
             'category' => [
                 'id' => $category->id,
+                'parent_id' => $category->parent_id,
                 'name' => $category->name,
                 'slug' => $category->slug,
                 'description' => $category->description,
                 'image' => $category->image,
                 'productsCount' => count($products),
+                'parent' => $category->parent ? [
+                    'id' => $category->parent->id,
+                    'name' => $category->parent->name,
+                    'slug' => $category->parent->slug,
+                ] : null,
+                'subcategories' => $category->children->map(fn ($child) => [
+                    'id' => $child->id,
+                    'name' => $child->name,
+                    'slug' => $child->slug,
+                    'image' => $child->image,
+                ])->values()->all(),
             ],
             'products' => $products,
             'categories' => $allCategories,
@@ -126,11 +169,7 @@ class CategoryController extends Controller
                 'description' => $metaDesc,
                 'canonical' => url("/category/{$category->slug}"),
                 'ogImage' => $category->image ? url($category->image) : null,
-                'breadcrumbs' => [
-                    ['label' => 'Home', 'url' => '/'],
-                    ['label' => 'Jewelry', 'url' => '/shop'],
-                    ['label' => $category->name, 'url' => "/category/{$category->slug}"],
-                ],
+                'breadcrumbs' => $breadcrumbs,
             ],
         ]);
     }

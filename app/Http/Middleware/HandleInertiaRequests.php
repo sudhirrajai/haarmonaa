@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use App\Models\Category;
-use App\Models\SearchKeyword;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -67,9 +66,9 @@ class HandleInertiaRequests extends Middleware
                 'youtube_url' => Setting::get('youtube_url', ''),
                 'pinterest_url' => Setting::get('pinterest_url', ''),
                 'instagram_posts' => json_decode(Setting::get('instagram_posts', '[]'), true) ?: null,
-                'popular_search_keywords' => SearchKeyword::getPopular(8),
-                'nav_categories' => Category::orderBy('name')->get(['id', 'name', 'slug']),
-                'enable_topbar' => filter_var(Setting::get('enable_topbar', true), FILTER_VALIDATE_BOOLEAN),
+                'nav_categories' => Category::with(['children' => function ($q) {
+                    $q->orderBy('name');
+                }])->parents()->orderBy('name')->get(['id', 'name', 'slug', 'parent_id']),
                 'topbar_text' => Setting::get('topbar_text', 'COMPLIMENTARY LUXURY GIFT BOX & EXPRESS SHIPPING ON ALL ORDERS'),
                 'topbar_link' => Setting::get('topbar_link', ''),
                 'topbar_bg_color' => Setting::get('topbar_bg_color', '#111111'),
