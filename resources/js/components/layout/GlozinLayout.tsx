@@ -7,6 +7,8 @@ import { SearchModal } from '../shop/SearchModal';
 import { Product } from '@/types/shop';
 import { useCart } from '@/context/CartContext';
 
+import { ToastNotification } from '@/components/ui/ToastNotification';
+
 interface GlozinLayoutProps {
   children: React.ReactNode;
   allProducts?: Product[];
@@ -57,6 +59,9 @@ export const GlozinLayout: React.FC<GlozinLayoutProps> = ({ children, allProduct
         onClose={() => setIsSearchOpen(false)}
         products={allProducts}
       />
+
+      {/* Global Floating Toast Notifications */}
+      <ToastNotification />
     </div>
   );
 };

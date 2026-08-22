@@ -24,6 +24,8 @@ import {
 } from 'lucide-react';
 
 
+import { ToastNotification } from '@/components/ui/ToastNotification';
+
 interface AdminLayoutProps {
   children: React.ReactNode;
   title?: string;
@@ -436,16 +438,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Das
 
         {/* Main Content Area */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
-          {/* Flash Alert Banner */}
-          {flash.success && (
-            <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-2xl text-xs font-semibold flex items-center justify-between shadow-2xs animate-fade-in">
-              <span>{flash.success}</span>
-            </div>
-          )}
-
           {children}
         </main>
       </div>
+
+      {/* Global Floating Toast Notifications (Success, Error, Validation, Warnings) */}
+      <ToastNotification />
     </div>
   );
 };

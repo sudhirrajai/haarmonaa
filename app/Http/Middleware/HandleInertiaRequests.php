@@ -65,6 +65,14 @@ class HandleInertiaRequests extends Middleware
                 'store_features' => json_decode(Setting::get('store_features', '[]'), true) ?: null,
                 'popular_search_keywords' => SearchKeyword::getPopular(8),
             ],
+            'flash' => [
+                'success' => $request->session()->get('success'),
+                'error' => $request->session()->get('error'),
+                'warning' => $request->session()->get('warning'),
+                'info' => $request->session()->get('info'),
+                'message' => $request->session()->get('message'),
+                'status' => $request->session()->get('status'),
+            ],
         ];
     }
 }
