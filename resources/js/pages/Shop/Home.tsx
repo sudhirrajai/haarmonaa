@@ -117,16 +117,15 @@ export default function Home({
         <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-b from-amber-50/40 via-white to-white border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between mb-8 sm:mb-10 lg:mb-12 gap-4">
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-100/80 text-amber-900 rounded-full text-[11px] font-extrabold tracking-wider uppercase">
-                  <SunMedium className="w-3.5 h-3.5 text-amber-600" />
-                  <span>{seasonalCollection.badge || 'EXCLUSIVE CAPSULE'}</span>
-                </div>
+              <div className="space-y-1.5">
+                <span className="text-[11px] sm:text-xs font-bold tracking-[0.2em] uppercase text-amber-700 block">
+                  {seasonalCollection.badge || 'EXCLUSIVE CAPSULE'}
+                </span>
                 <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
                   {seasonalCollection.title || 'Seasonal Collection'}
                 </h2>
                 {seasonalCollection.subtitle && (
-                  <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-500">
+                  <p className="text-xs sm:text-sm font-medium text-gray-500">
                     {seasonalCollection.subtitle}
                   </p>
                 )}

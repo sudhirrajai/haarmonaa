@@ -59,10 +59,9 @@ export const CategorySlider: React.FC<CategorySliderProps> = ({
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 sm:mb-10 lg:mb-12 gap-4">
           <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-900 rounded-full text-[11px] font-extrabold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-              <span>{subtitle}</span>
-            </div>
+            <span className="text-[11px] sm:text-xs font-bold tracking-[0.2em] uppercase text-amber-700 block">
+              {subtitle}
+            </span>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
               {title}
             </h2>

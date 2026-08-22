@@ -139,11 +139,10 @@ export default function Category({
               <span className="text-amber-400 font-bold">{category.name}</span>
             </nav>
 
-            <div className="max-w-3xl space-y-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-300 text-xs font-extrabold tracking-wider uppercase">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{category.tagline || '18K Gold Vermeil Collection'}</span>
-              </div>
+            <div className="max-w-3xl space-y-2">
+              <span className="text-[11px] sm:text-xs font-bold tracking-[0.2em] uppercase text-amber-300 block">
+                {category.tagline || '18K Gold Vermeil Collection'}
+              </span>
 
               <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white capitalize">
                 {category.name}
