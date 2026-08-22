@@ -17,7 +17,7 @@ class MediaController extends Controller
     /**
      * Display WordPress-style media library index.
      */
-    public function index(Request $request): Response
+    public function index(Request $request): Response|JsonResponse
     {
         $query = Media::query();
 
