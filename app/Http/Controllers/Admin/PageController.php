@@ -66,7 +66,7 @@ class PageController extends Controller
                 'status' => 'published',
                 'updated_at' => now()->format('M d, Y'),
                 'edit_url' => route('admin.pages.terms'),
-                'preview_url' => route('terms-of-use'),
+                'preview_url' => route('terms'),
             ],
             [
                 'id' => 'privacy',
@@ -77,7 +77,7 @@ class PageController extends Controller
                 'status' => 'published',
                 'updated_at' => now()->format('M d, Y'),
                 'edit_url' => route('admin.pages.privacy'),
-                'preview_url' => route('privacy-policy'),
+                'preview_url' => route('privacy'),
             ],
             [
                 'id' => 'contact',
