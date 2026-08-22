@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link } from '@inertiajs/react';
 import { Category } from '@/types/shop';
-import { ChevronLeft, ChevronRight, Sparkles, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 
 interface CategorySliderProps {
   categories: Category[];
@@ -42,7 +42,7 @@ export const CategorySlider: React.FC<CategorySliderProps> = ({
     if (!scrollRef.current) return;
     const container = scrollRef.current;
     const card = container.firstElementChild as HTMLElement;
-    const cardWidth = card ? card.offsetWidth + 24 : container.clientWidth * 0.6;
+    const cardWidth = card ? card.offsetWidth + 24 : container.clientWidth * 0.75;
     const scrollAmount = direction === 'left' ? -cardWidth : cardWidth;
 
     container.scrollBy({
@@ -54,16 +54,16 @@ export const CategorySlider: React.FC<CategorySliderProps> = ({
   if (!categories || categories.length === 0) return null;
 
   return (
-    <section className="py-12 sm:py-16 lg:py-20 bg-gray-50/80 border-y border-gray-100 select-none">
+    <section className="py-12 sm:py-16 lg:py-20 bg-white border-b border-gray-100 select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 sm:mb-10 lg:mb-12 gap-4">
           <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100/80 text-amber-900 rounded-full text-[11px] font-extrabold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-900 rounded-full text-[11px] font-extrabold uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5 text-amber-600" />
               <span>{subtitle}</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
               {title}
             </h2>
             <p className="text-xs sm:text-sm text-gray-500 font-medium max-w-xl">
@@ -71,59 +71,52 @@ export const CategorySlider: React.FC<CategorySliderProps> = ({
             </p>
           </div>
 
-          {/* Navigation Controls & View All Link */}
-          <div className="flex items-center gap-4 self-end sm:self-auto">
-            <Link
-              href="/shop"
-              className="text-xs font-bold uppercase tracking-wider text-gray-900 hover:text-[#d0473e] flex items-center gap-1 transition-colors"
+          {/* Navigation Controls */}
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <button
+              type="button"
+              onClick={() => handleScroll('left')}
+              disabled={!canScrollLeft}
+              className={`w-11 h-11 rounded-full border transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                canScrollLeft
+                  ? 'border-gray-300 text-gray-900 hover:border-black hover:bg-black hover:text-white shadow-xs active:scale-95'
+                  : 'border-gray-200 text-gray-300 cursor-not-allowed opacity-40'
+              }`}
+              aria-label="Previous Categories"
             >
-              <span>View All</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+              <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+            </button>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleScroll('left')}
-                disabled={!canScrollLeft}
-                className={`w-11 h-11 rounded-full border transition-all duration-200 flex items-center justify-center cursor-pointer ${
-                  canScrollLeft
-                    ? 'border-gray-300 text-gray-900 hover:border-black hover:bg-black hover:text-white shadow-xs active:scale-95 bg-white'
-                    : 'border-gray-200 text-gray-300 cursor-not-allowed opacity-40 bg-white/50'
-                }`}
-                aria-label="Previous Categories"
-              >
-                <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleScroll('right')}
-                disabled={!canScrollRight}
-                className={`w-11 h-11 rounded-full border transition-all duration-200 flex items-center justify-center cursor-pointer ${
-                  canScrollRight
-                    ? 'border-gray-300 text-gray-900 hover:border-black hover:bg-black hover:text-white shadow-xs active:scale-95 bg-white'
-                    : 'border-gray-200 text-gray-300 cursor-not-allowed opacity-40 bg-white/50'
-                }`}
-                aria-label="Next Categories"
-              >
-                <ChevronRight className="w-5 h-5 stroke-[2.5]" />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => handleScroll('right')}
+              disabled={!canScrollRight}
+              className={`w-11 h-11 rounded-full border transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                canScrollRight
+                  ? 'border-gray-300 text-gray-900 hover:border-black hover:bg-black hover:text-white shadow-xs active:scale-95'
+                  : 'border-gray-200 text-gray-300 cursor-not-allowed opacity-40'
+              }`}
+              aria-label="Next Categories"
+            >
+              <ChevronRight className="w-5 h-5 stroke-[2.5]" />
+            </button>
           </div>
         </div>
 
-        {/* Horizontal Scroll Slider Container */}
+        {/* Fluid Horizontal Smooth-Scrolling Track matching Featured Section */}
         <div
           ref={scrollRef}
-          className="flex gap-4 sm:gap-6 overflow-x-auto no-scrollbar scroll-smooth pb-4 -mx-4 px-4 sm:mx-0 sm:px-0"
-          style={{ scrollSnapType: 'x mandatory' }}
+          className="flex gap-6 overflow-x-auto scroll-smooth pb-4 pt-1 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 snap-x snap-mandatory scrollbar-none [&::-webkit-scrollbar]:hidden"
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch',
+          }}
         >
           {categories.map((cat) => (
             <div
               key={cat.id}
-              className="w-[220px] sm:w-[260px] md:w-[280px] lg:w-[300px] shrink-0"
-              style={{ scrollSnapAlign: 'start' }}
+              className="w-[82vw] sm:w-[46vw] md:w-[32vw] lg:w-[calc(25%-18px)] shrink-0 snap-start"
             >
               <Link
                 href={`/category/${cat.slug}`}
@@ -134,7 +127,7 @@ export const CategorySlider: React.FC<CategorySliderProps> = ({
                   alt={cat.name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-108"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent transition-opacity" />
 
                 <div className="absolute bottom-6 inset-x-6 text-white text-center space-y-1">
                   <h3 className="text-lg sm:text-xl font-extrabold tracking-tight drop-shadow-xs">
