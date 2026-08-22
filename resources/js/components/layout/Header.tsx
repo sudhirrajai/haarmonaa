@@ -201,6 +201,14 @@ export const Header: React.FC<HeaderProps> = ({
                               <Gem className="w-4 h-4 text-gray-500" />
                               <span>Jewelry Inventory</span>
                             </Link>
+                            <Link
+                              href="/admin/profile"
+                              onClick={() => setAccountMenuOpen(false)}
+                              className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-gray-700 hover:text-black hover:bg-gray-50 rounded-xl transition-all"
+                            >
+                              <Sparkles className="w-4 h-4 text-amber-500" />
+                              <span>Admin Profile</span>
+                            </Link>
                           </>
                         ) : (
                           <>

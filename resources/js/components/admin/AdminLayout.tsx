@@ -109,17 +109,23 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Das
 
           {/* Admin Avatar & Logout */}
           <div className="flex items-center gap-3 pl-2 border-l border-gray-200">
-            <div className="w-8 h-8 rounded-full bg-[#111111] text-amber-300 font-bold text-xs flex items-center justify-center shadow-xs">
-              {authUser.name.substring(0, 2).toUpperCase()}
-            </div>
-            <div className="hidden sm:block text-left">
-              <span className="block text-xs font-bold text-gray-900 leading-tight">{authUser.name}</span>
-              <span className="block text-[10.5px] text-gray-500 leading-tight">{authUser.email}</span>
-            </div>
+            <Link
+              href="/admin/profile"
+              className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+              title="Admin Profile & Security"
+            >
+              <div className="w-8 h-8 rounded-full bg-[#111111] text-amber-300 font-bold text-xs flex items-center justify-center shadow-xs">
+                {authUser.name.substring(0, 2).toUpperCase()}
+              </div>
+              <div className="hidden sm:block text-left">
+                <span className="block text-xs font-bold text-gray-900 leading-tight">{authUser.name}</span>
+                <span className="block text-[10.5px] text-gray-500 leading-tight">{authUser.email}</span>
+              </div>
+            </Link>
 
             <button
               onClick={handleLogout}
-              className="p-1.5 text-gray-400 hover:text-[#d0473e] rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
+              className="p-1.5 text-gray-400 hover:text-[#d0473e] rounded-lg hover:bg-rose-50 transition-colors cursor-pointer ml-1"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
@@ -335,6 +341,24 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Das
               </div>
               {url.startsWith('/admin/settings') && <ChevronRight className="w-3.5 h-3.5 text-gray-400" />}
             </Link>
+
+            {/* Profile & Security Link */}
+            <Link
+              href="/admin/profile"
+              className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+                url.startsWith('/admin/profile')
+                  ? 'bg-[#111111] text-white shadow-xs'
+                  : 'text-gray-600 hover:text-black hover:bg-gray-100/70'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Sparkles
+                  className={`w-4 h-4 ${url.startsWith('/admin/profile') ? 'text-amber-300' : 'text-gray-500'}`}
+                />
+                <span>Admin Profile</span>
+              </div>
+              {url.startsWith('/admin/profile') && <ChevronRight className="w-3.5 h-3.5 text-gray-400" />}
+            </Link>
           </div>
 
 
@@ -447,6 +471,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Das
                   >
                     <Settings className="w-4 h-4" />
                     <span>Settings</span>
+                  </Link>
+                  <Link
+                    href="/admin/profile"
+                    onClick={() => setMobileSidebarOpen(false)}
+                    className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-gray-700 hover:bg-gray-100"
+                  >
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    <span>Admin Profile</span>
                   </Link>
 
                 </div>

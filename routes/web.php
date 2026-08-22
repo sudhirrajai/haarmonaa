@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PageController as AdminPageController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\ProductImportExportController as AdminProductImportExportController;
+use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CategoryController;
@@ -73,11 +74,21 @@ Route::prefix('account')->name('account.')->middleware('auth')->group(function (
     Route::get('/orders/{order_number}', [AccountController::class, 'orderDetail'])->name('orders.show');
     Route::put('/profile', [AccountController::class, 'updateProfile'])->name('profile.update');
     Route::post('/verify-email', [AccountController::class, 'verifyEmail'])->name('verify-email');
+
+    // Customer Saved Addresses
+    Route::post('/addresses', [AccountController::class, 'storeAddress'])->name('addresses.store');
+    Route::put('/addresses/{address}', [AccountController::class, 'updateAddress'])->name('addresses.update');
+    Route::delete('/addresses/{address}', [AccountController::class, 'destroyAddress'])->name('addresses.destroy');
+    Route::patch('/addresses/{address}/default', [AccountController::class, 'setDefaultAddress'])->name('addresses.default');
 });
 
 // Admin Panel Routes (Protected by Auth & Admin Role)
 Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+    // Admin Profile & Security Settings
+    Route::get('profile', [AdminProfileController::class, 'index'])->name('profile.index');
+    Route::put('profile', [AdminProfileController::class, 'update'])->name('profile.update');
 
     // Products CSV Import & Export
     Route::get('products/import/template', [AdminProductImportExportController::class, 'downloadTemplate'])->name('products.import.template');

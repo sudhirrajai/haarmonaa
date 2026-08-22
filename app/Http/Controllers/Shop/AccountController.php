@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
+use App\Models\CustomerAddress;
 use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -21,6 +23,12 @@ class AccountController extends Controller
     public function index(Request $request): Response
     {
         $user = Auth::user();
+
+        if (! $user) {
+            return Inertia::render('Auth/Login', [
+                'products' => Product::take(6)->get(),
+            ]);
+        }
 
         // Query all orders placed by this customer (both linked user_id and email matched guest orders)
         $ordersQuery = Order::with('items')
@@ -35,16 +43,22 @@ class AccountController extends Controller
         $recentOrders = (clone $ordersQuery)->latest()->take(3)->get();
         $latestOrder = (clone $ordersQuery)->latest()->first();
 
-        // Default shipping address from last order
-        $defaultAddress = null;
-        if ($latestOrder) {
-            $defaultAddress = [
+        // Customer saved addresses
+        $addresses = CustomerAddress::where('user_id', $user->id)->orderByDesc('is_default')->latest()->get();
+
+        // If no saved addresses exist yet but they placed an order, create initial default address from last order
+        if ($addresses->isEmpty() && $latestOrder && ! empty($latestOrder->shipping_address)) {
+            $createdAddress = CustomerAddress::create([
+                'user_id' => $user->id,
                 'name' => $latestOrder->customer_name,
                 'phone' => $latestOrder->customer_phone,
-                'address' => $latestOrder->shipping_address,
+                'address_line1' => $latestOrder->shipping_address,
                 'city' => $latestOrder->city,
                 'postal_code' => $latestOrder->postal_code,
-            ];
+                'type' => 'home',
+                'is_default' => true,
+            ]);
+            $addresses = collect([$createdAddress]);
         }
 
         return Inertia::render('Shop/Account/Index', [
@@ -56,7 +70,7 @@ class AccountController extends Controller
                 'role' => $user->role,
                 'is_verified' => (bool) $user->email_verified_at,
                 'email_verified_at' => $user->email_verified_at?->toIso8601String(),
-                'created_at' => $user->created_at->toIso8601String(),
+                'created_at' => $user->created_at?->toIso8601String() ?? now()->toIso8601String(),
             ],
             'stats' => [
                 'total_orders' => $totalOrders,
@@ -64,7 +78,7 @@ class AccountController extends Controller
                 'active_orders' => $activeOrdersCount,
             ],
             'recentOrders' => $recentOrders,
-            'defaultAddress' => $defaultAddress,
+            'addresses' => $addresses,
             'products' => Product::take(4)->get(),
         ]);
     }
@@ -118,7 +132,7 @@ class AccountController extends Controller
     }
 
     /**
-     * Update Profile Details (Name, Phone, Password).
+     * Update Profile Details (Name, Phone, Email, Password).
      */
     public function updateProfile(Request $request): RedirectResponse
     {
@@ -126,6 +140,7 @@ class AccountController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'phone' => 'nullable|string|max:25',
             'current_password' => 'nullable|required_with:new_password|string',
             'new_password' => ['nullable', 'confirmed', Password::defaults()],
@@ -139,11 +154,153 @@ class AccountController extends Controller
             $user->password = Hash::make($validated['new_password']);
         }
 
+        $emailChanged = strtolower(trim($validated['email'])) !== strtolower($user->email);
+
         $user->name = $validated['name'];
+        $user->email = strtolower(trim($validated['email']));
         $user->phone = $validated['phone'] ?? null;
+
+        if ($emailChanged) {
+            $user->email_verified_at = null;
+            // Sync past orders with new email
+            Order::where('customer_email', $user->email)
+                ->whereNull('user_id')
+                ->update(['user_id' => $user->id]);
+        }
+
         $user->save();
 
-        return back()->with('success', 'Your account details have been updated.');
+        $message = $emailChanged
+            ? 'Your profile details have been updated. Please verify your new email address.'
+            : 'Your profile details have been updated successfully.';
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * Save a New Address.
+     */
+    public function storeAddress(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'phone' => 'required|string|max:25',
+            'address_line1' => 'required|string|max:255',
+            'address_line2' => 'nullable|string|max:255',
+            'city' => 'required|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'postal_code' => 'required|string|max:20',
+            'type' => 'required|string|in:home,work,other',
+            'is_default' => 'nullable|boolean',
+        ]);
+
+        $hasAddresses = CustomerAddress::where('user_id', $user->id)->exists();
+        $isDefault = ! empty($validated['is_default']) || ! $hasAddresses;
+
+        if ($isDefault) {
+            CustomerAddress::where('user_id', $user->id)->update(['is_default' => false]);
+        }
+
+        CustomerAddress::create([
+            'user_id' => $user->id,
+            'name' => $validated['name'],
+            'phone' => $validated['phone'],
+            'address_line1' => $validated['address_line1'],
+            'address_line2' => $validated['address_line2'] ?? null,
+            'city' => $validated['city'],
+            'state' => $validated['state'] ?? null,
+            'postal_code' => $validated['postal_code'],
+            'type' => $validated['type'],
+            'is_default' => $isDefault,
+        ]);
+
+        return back()->with('success', 'New address added successfully.');
+    }
+
+    /**
+     * Update an Address.
+     */
+    public function updateAddress(Request $request, CustomerAddress $address): RedirectResponse
+    {
+        $user = Auth::user();
+
+        if ($address->user_id !== $user->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'phone' => 'required|string|max:25',
+            'address_line1' => 'required|string|max:255',
+            'address_line2' => 'nullable|string|max:255',
+            'city' => 'required|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'postal_code' => 'required|string|max:20',
+            'type' => 'required|string|in:home,work,other',
+            'is_default' => 'nullable|boolean',
+        ]);
+
+        if (! empty($validated['is_default'])) {
+            CustomerAddress::where('user_id', $user->id)->update(['is_default' => false]);
+        }
+
+        $address->update([
+            'name' => $validated['name'],
+            'phone' => $validated['phone'],
+            'address_line1' => $validated['address_line1'],
+            'address_line2' => $validated['address_line2'] ?? null,
+            'city' => $validated['city'],
+            'state' => $validated['state'] ?? null,
+            'postal_code' => $validated['postal_code'],
+            'type' => $validated['type'],
+            'is_default' => ! empty($validated['is_default']) ? true : $address->is_default,
+        ]);
+
+        return back()->with('success', 'Address updated successfully.');
+    }
+
+    /**
+     * Delete an Address.
+     */
+    public function destroyAddress(Request $request, CustomerAddress $address): RedirectResponse
+    {
+        $user = Auth::user();
+
+        if ($address->user_id !== $user->id) {
+            abort(403);
+        }
+
+        $wasDefault = $address->is_default;
+        $address->delete();
+
+        if ($wasDefault) {
+            // Set the first remaining address as default
+            $nextAddress = CustomerAddress::where('user_id', $user->id)->first();
+            if ($nextAddress) {
+                $nextAddress->update(['is_default' => true]);
+            }
+        }
+
+        return back()->with('success', 'Address removed successfully.');
+    }
+
+    /**
+     * Set Default Address.
+     */
+    public function setDefaultAddress(Request $request, CustomerAddress $address): RedirectResponse
+    {
+        $user = Auth::user();
+
+        if ($address->user_id !== $user->id) {
+            abort(403);
+        }
+
+        CustomerAddress::where('user_id', $user->id)->update(['is_default' => false]);
+        $address->update(['is_default' => true]);
+
+        return back()->with('success', 'Default shipping address updated.');
     }
 
     /**
