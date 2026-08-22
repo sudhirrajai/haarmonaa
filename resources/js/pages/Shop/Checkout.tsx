@@ -58,6 +58,8 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
   });
 
   const [processing, setProcessing] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [isRedirectingToSuccess, setIsRedirectingToSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Coupon state
@@ -65,6 +67,16 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
   const [applyingCoupon, setApplyingCoupon] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
+
+  // Prevent accessing checkout when cart is empty (e.g. hitting back button from Thank You page)
+  useEffect(() => {
+    if (cart.length === 0 && !isRedirectingToSuccess && !isProcessingPayment) {
+      const timer = setTimeout(() => {
+        router.visit('/cart', { replace: true });
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [cart.length, isRedirectingToSuccess, isProcessingPayment]);
 
   // Load Razorpay Script
   useEffect(() => {
@@ -164,8 +176,9 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
           throw new Error(resData.message || 'Failed to place order. Please review your details.');
         }
 
+        setIsRedirectingToSuccess(true);
         clearCart();
-        window.location.href = resData.redirect_url;
+        window.location.replace(resData.redirect_url);
         return;
       }
 
@@ -217,12 +230,15 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
             backdropclose: false,
             ondismiss: function () {
               setProcessing(false);
+              setIsProcessingPayment(false);
               setErrorMessage('Payment was cancelled. Your bag items have been kept safe.');
             },
           },
           handler: async function (paymentResponse: any) {
             try {
+              setIsProcessingPayment(true);
               setProcessing(true);
+
               const verifyRes = await fetch('/payment/razorpay/verify', {
                 method: 'POST',
                 headers: {
@@ -240,19 +256,22 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
 
               const verifyData = await verifyRes.json();
               if (verifyRes.ok && verifyData.success) {
+                setIsRedirectingToSuccess(true);
                 clearCart();
-                window.location.href = verifyData.redirect_url;
+                window.location.replace(verifyData.redirect_url);
               } else {
                 setErrorMessage(
                   `Payment received (Ref #${paymentResponse.razorpay_payment_id}). If your bank account was debited, your order is secured and will be confirmed within 24 hours.`
                 );
                 setProcessing(false);
+                setIsProcessingPayment(false);
               }
             } catch (err) {
               setErrorMessage(
                 `Payment received (Ref #${paymentResponse.razorpay_payment_id}). If your bank was debited, your order will be confirmed within 24 hours or refunded.`
               );
               setProcessing(false);
+              setIsProcessingPayment(false);
             }
           },
         };
@@ -263,18 +282,46 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
             resp.error?.description || 'Payment was declined by your bank or UPI app. Please try another method.'
           );
           setProcessing(false);
+          setIsProcessingPayment(false);
         });
         rzp.open();
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'An unexpected error occurred during checkout.');
       setProcessing(false);
+      setIsProcessingPayment(false);
     }
   };
 
   return (
     <GlozinLayout allProducts={products}>
       <Head title="Secure Checkout — Haarmonaa Fine Jewelry" />
+
+      {/* Fullscreen Luxury Order Confirmation Loader */}
+      {(isProcessingPayment || isRedirectingToSuccess) && (
+        <div className="fixed inset-0 bg-white/95 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+          <div className="relative mb-6">
+            <div className="w-20 h-20 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 animate-pulse">
+              <CheckCircle2 className="w-10 h-10 stroke-[2.2]" />
+            </div>
+            <div className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-[#d0473e] text-white flex items-center justify-center shadow-xs">
+              <Sparkles className="w-4 h-4 animate-spin" />
+            </div>
+          </div>
+          <span className="text-[11px] font-extrabold uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 mb-3 inline-block">
+            Payment Verified
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mb-2">
+            Finalizing Your Order...
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto mb-6 leading-relaxed">
+            Thank you for shopping with Haarmonaa. We're generating your invoice and locking in your complimentary insured delivery.
+          </p>
+          <div className="w-48 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="w-full h-full bg-[#d0473e] animate-pulse rounded-full" />
+          </div>
+        </div>
+      )}
 
       {/* Header & Breadcrumbs */}
       <section className="pt-10 pb-8 bg-white text-center border-b border-gray-100/60">
@@ -298,14 +345,14 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
 
       <div className="bg-[#fafafa] py-10 sm:py-16 min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {cart.length === 0 ? (
+          {cart.length === 0 && !isProcessingPayment && !isRedirectingToSuccess ? (
             <div className="text-center py-20 bg-white border border-gray-200/80 rounded-[10px] p-10 max-w-lg mx-auto shadow-2xs space-y-4">
               <div className="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center mx-auto text-amber-700">
                 <ShoppingBag className="w-7 h-7 stroke-[1.5]" />
               </div>
               <h2 className="text-xl font-bold text-gray-900">Your bag is empty</h2>
               <p className="text-xs text-gray-500">
-                Add delicate 18k vermeil pieces to your bag before proceeding to checkout.
+                Add delicate 18k vermeil pieces to your bag before proceeding to checkout. Redirecting you to catalog...
               </p>
               <div className="pt-2">
                 <Link
