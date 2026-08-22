@@ -176,7 +176,7 @@ export default function Index({ settings }: SettingsProps) {
         </Link>
       </div>
 
-      <form onSubmit={handleSubmit} className="max-w-4xl space-y-6">
+      <form onSubmit={handleSubmit} className="w-full space-y-8">
         {/* Card 1: Brand Logo & Favicon Assets */}
         <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
           <div className="flex items-center gap-2 pb-2 border-b border-gray-100">

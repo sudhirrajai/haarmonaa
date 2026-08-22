@@ -82,12 +82,12 @@ export function SingleImageUploader({
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         {/* Thumbnail Preview Box */}
-        <div className="relative w-20 h-20 rounded-2xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0 group">
+        <div className="relative w-20 h-20 rounded-xl border border-gray-200 bg-white flex items-center justify-center overflow-hidden shrink-0 group shadow-2xs">
           {value ? (
             <>
-              <img src={value} alt="Preview" className="w-full h-full object-cover" />
+              <img src={value} alt="Preview" className="w-full h-full object-contain p-1" />
               <button
                 type="button"
                 onClick={() => onChange('')}
@@ -109,8 +109,8 @@ export function SingleImageUploader({
         </div>
 
         {/* Upload Controls & URL Input */}
-        <div className="flex-1 space-y-2">
-          <div className="flex items-center gap-2">
+        <div className="flex-1 min-w-0 space-y-2 w-full">
+          <div className="flex flex-wrap items-center gap-2">
             <input
               type="file"
               ref={fileInputRef}
@@ -126,7 +126,7 @@ export function SingleImageUploader({
               type="button"
               disabled={isUploading}
               onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2 bg-gray-900 hover:bg-[#d0473e] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-2 shrink-0 shadow-2xs disabled:opacity-50"
+              className="px-3.5 py-1.5 bg-gray-900 hover:bg-[#d0473e] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs disabled:opacity-50"
             >
               <Upload className="w-3.5 h-3.5" />
               <span>{isUploading ? 'Uploading...' : 'Upload From System'}</span>
@@ -137,7 +137,7 @@ export function SingleImageUploader({
               type="button"
               disabled={isUploading}
               onClick={() => setMediaPickerOpen(true)}
-              className="px-4 py-2 bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 text-xs font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-2 shrink-0 shadow-2xs disabled:opacity-50"
+              className="px-3.5 py-1.5 bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs disabled:opacity-50"
             >
               <Layers className="w-3.5 h-3.5 text-amber-600" />
               <span>Choose from Library</span>
@@ -147,7 +147,7 @@ export function SingleImageUploader({
               <button
                 type="button"
                 onClick={() => onChange('')}
-                className="px-3 py-2 border border-gray-200 hover:border-gray-400 text-gray-600 hover:text-black text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                className="px-2.5 py-1.5 border border-gray-200 hover:border-gray-400 text-gray-600 hover:text-rose-600 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
               >
                 Clear
               </button>
@@ -173,7 +173,7 @@ export function SingleImageUploader({
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg py-1.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white truncate"
           />
         </div>
       </div>
