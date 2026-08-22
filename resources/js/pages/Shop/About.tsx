@@ -113,10 +113,10 @@ export default function About({ products = [], aboutContent }: AboutProps) {
 
       {/* 1. Breadcrumb & Hero Statement Section */}
       {isHeroEnabled ? (
-        <section className="pt-10 pb-12 bg-white text-center">
+        <section className="pt-8 sm:pt-10 lg:pt-12 pb-8 sm:pb-10 lg:pb-12 bg-white text-center">
           <div className="max-w-4xl mx-auto px-4 sm:px-6">
             {/* Breadcrumb Navigation */}
-            <nav className="text-[13px] font-semibold text-gray-500 mb-8">
+            <nav className="text-[13px] font-semibold text-gray-500 mb-6 sm:mb-8">
               <Link href="/" className="hover:text-black transition-colors">
                 Home
               </Link>
@@ -126,19 +126,19 @@ export default function About({ products = [], aboutContent }: AboutProps) {
 
             {/* Subtitle / Welcome Badge */}
             {hero?.badge && (
-              <span className="text-xs sm:text-[13.5px] font-bold uppercase tracking-widest text-[#d0473e] block mb-3.5">
+              <span className="text-xs sm:text-[13.5px] font-bold uppercase tracking-widest text-[#d0473e] block mb-3 sm:mb-3.5">
                 {hero.badge}
               </span>
             )}
 
             {/* Main Title */}
-            <h1 className="text-4xl sm:text-5xl lg:text-[54px] font-extrabold text-gray-900 tracking-tight leading-[1.1] mb-5 whitespace-pre-line">
+            <h1 className="text-3xl sm:text-4xl lg:text-[52px] font-extrabold text-gray-900 tracking-tight leading-[1.1] mb-4 sm:mb-5 whitespace-pre-line">
               {hero?.title || 'Artisanal Fine Jewelry\nAvailable to Everyone'}
             </h1>
 
             {/* Subheading Description */}
             {hero?.description && (
-              <p className="text-[14.5px] sm:text-[15px] text-gray-600 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-xs sm:text-[14.5px] lg:text-[15px] text-gray-600 max-w-2xl mx-auto leading-relaxed">
                 {hero.description}
               </p>
             )}
@@ -146,7 +146,7 @@ export default function About({ products = [], aboutContent }: AboutProps) {
         </section>
       ) : (
         /* Standalone Minimal Breadcrumb if Hero is Disabled */
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4">
           <nav className="text-[13px] font-semibold text-gray-500">
             <Link href="/" className="hover:text-black transition-colors">
               Home
@@ -159,7 +159,7 @@ export default function About({ products = [], aboutContent }: AboutProps) {
 
       {/* 2. Hero Dual Media Banner */}
       {isMediaEnabled && (
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 my-6 sm:my-8 lg:my-12">
           <div className="grid grid-cols-1 md:grid-cols-2 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xs aspect-16/9 sm:aspect-21/9 lg:aspect-[2.35/1] max-h-[460px]">
             {/* Left Visual */}
             <div className="relative h-full overflow-hidden bg-gray-100">
@@ -201,9 +201,9 @@ export default function About({ products = [], aboutContent }: AboutProps) {
 
       {/* 3. Key Statistics Counters */}
       {isStatsEnabled && (
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
+        <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
           <div
-            className={`grid gap-8 sm:gap-10 text-center ${
+            className={`grid gap-6 sm:gap-8 lg:gap-10 text-center ${
               (stats?.items?.length ?? 3) === 2
                 ? 'grid-cols-1 md:grid-cols-2'
                 : (stats?.items?.length ?? 3) === 4
@@ -228,9 +228,9 @@ export default function About({ products = [], aboutContent }: AboutProps) {
 
       {/* 4. Why Choose Us / Core Pillars (Feature Cards) */}
       {isFeaturesEnabled && (
-        <section className="py-16 sm:py-20 bg-gray-50/70 border-t border-gray-100 mb-16 sm:mb-20">
+        <section className="py-12 sm:py-16 lg:py-20 bg-gray-50/70 border-y border-gray-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-14 space-y-2">
+            <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10 lg:mb-12 space-y-2">
               {features?.badge && (
                 <span className="text-xs font-extrabold uppercase tracking-widest text-[#d0473e] block">
                   {features.badge}
@@ -247,7 +247,7 @@ export default function About({ products = [], aboutContent }: AboutProps) {
             </div>
 
             <div
-              className={`grid gap-6 sm:gap-8 ${
+              className={`grid gap-4 sm:gap-6 lg:gap-8 ${
                 (features?.cards?.length ?? 3) === 2
                   ? 'grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto'
                   : (features?.cards?.length ?? 3) >= 4
@@ -282,8 +282,8 @@ export default function About({ products = [], aboutContent }: AboutProps) {
 
       {/* 5. Brand Manifesto Quote Banner */}
       {isQuoteEnabled && (
-        <section className="bg-[#1e2c28] text-white py-16 sm:py-20 px-4 sm:px-6 lg:px-8 mb-16 sm:mb-20 text-center relative overflow-hidden">
-          <div className="max-w-3xl mx-auto space-y-5 sm:space-y-6 relative z-10">
+        <section className="bg-[#1e2c28] text-white py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 text-center relative overflow-hidden">
+          <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 relative z-10">
             {/* Stars Rating */}
             <div className="flex items-center justify-center gap-1.5 text-[#f6e05e]">
               {[...Array(quote?.stars || 5)].map((_, i) => (
@@ -317,13 +317,13 @@ export default function About({ products = [], aboutContent }: AboutProps) {
 
       {/* 6. Alternating Split Feature Rows */}
       {isSplitRowsEnabled && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 sm:space-y-20 mb-16 sm:mb-20">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 space-y-12 sm:space-y-16 lg:space-y-20">
           {splitRows?.rows?.map((row, idx) => {
             const isImageLeft = row.image_position !== 'right';
             return (
               <div
                 key={idx}
-                className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center"
+                className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-14 items-center"
               >
                 {/* Visual Image */}
                 <div
@@ -343,7 +343,7 @@ export default function About({ products = [], aboutContent }: AboutProps) {
 
                 {/* Text Content */}
                 <div
-                  className={`lg:col-span-6 space-y-4 text-center lg:text-left ${
+                  className={`lg:col-span-6 space-y-3 sm:space-y-4 text-center lg:text-left ${
                     isImageLeft ? 'lg:pl-6 order-2' : 'order-2 lg:order-1'
                   }`}
                 >
@@ -377,9 +377,9 @@ export default function About({ products = [], aboutContent }: AboutProps) {
 
       {/* 7. Expanding Horizons / Story & Team Cards */}
       {isStoriesEnabled && (
-        <section className="py-16 sm:py-20 bg-gray-50/70 border-t border-gray-100">
+        <section className="py-12 sm:py-16 lg:py-20 bg-gray-50/70 border-t border-gray-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-14 space-y-2">
+            <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10 lg:mb-12 space-y-2">
               {stories?.badge && (
                 <span className="text-xs font-extrabold uppercase tracking-widest text-[#d0473e] block">
                   {stories.badge}
@@ -396,7 +396,7 @@ export default function About({ products = [], aboutContent }: AboutProps) {
             </div>
 
             <div
-              className={`grid gap-6 sm:gap-8 ${
+              className={`grid gap-4 sm:gap-6 lg:gap-8 ${
                 (stories?.cards?.length ?? 3) === 2
                   ? 'grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto'
                   : (stories?.cards?.length ?? 3) >= 4

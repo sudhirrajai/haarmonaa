@@ -208,12 +208,12 @@ export const ShopByGram: React.FC<ShopByGramProps> = ({
   };
 
   return (
-    <section className="py-16 sm:py-20 bg-white border-t border-gray-100 overflow-hidden">
+    <section className="py-12 sm:py-16 lg:py-20 bg-white border-t border-gray-100 overflow-hidden">
       {/* 1. Shop by Gram Instagram Section (Controlled by Toggle) */}
       {isGramActive && (
         <>
           {/* Section Header */}
-          <div className="text-center max-w-2xl mx-auto px-4 mb-10 sm:mb-12 space-y-2">
+          <div className="text-center max-w-2xl mx-auto px-4 mb-8 sm:mb-10 lg:mb-12 space-y-2">
             <a
               href={instagramUrl}
               target="_blank"
@@ -239,7 +239,7 @@ export const ShopByGram: React.FC<ShopByGramProps> = ({
           </div>
 
           {/* FULL-WIDTH Instagram Gallery Grid */}
-          <div className={`w-full px-2 sm:px-4 lg:px-6 ${isTrustActive ? 'mb-16 sm:mb-20' : ''}`}>
+          <div className={`w-full px-2 sm:px-4 lg:px-6 ${isTrustActive ? 'mb-12 sm:mb-16' : ''}`}>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-4">
               {rawPosts.map((item, idx) => (
                 <a

@@ -113,9 +113,9 @@ export default function Home({
 
       {/* DYNAMIC SEASONAL / CURATED COLLECTION SHOWCASE (Managed via Admin CMS) */}
       {seasonalCollection && seasonalCollection.enabled !== false && (
-        <section className="py-16 sm:py-20 bg-gradient-to-b from-amber-50/40 via-white to-white border-b border-gray-100">
+        <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-b from-amber-50/40 via-white to-white border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between mb-12 gap-4">
+            <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between mb-8 sm:mb-10 lg:mb-12 gap-4">
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-100/80 text-amber-900 rounded-full text-[11px] font-extrabold tracking-wider uppercase">
                   <SunMedium className="w-3.5 h-3.5 text-amber-600" />
@@ -143,10 +143,10 @@ export default function Home({
             </div>
 
             {/* Seasonal Feature Grid: Left Banner Card + Right Product Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-stretch">
               {/* Left Highlight Banner Card */}
               {seasonalCollection.banner_image && (
-                <div className="lg:col-span-4 relative rounded-3xl overflow-hidden shadow-md flex flex-col justify-end p-8 sm:p-10 min-h-[380px] bg-gray-900 text-white group">
+                <div className="lg:col-span-4 relative rounded-3xl overflow-hidden shadow-md flex flex-col justify-end p-6 sm:p-8 lg:p-10 min-h-[360px] bg-gray-900 text-white group">
                   <img
                     src={seasonalCollection.banner_image}
                     alt={seasonalCollection.title}
@@ -187,7 +187,7 @@ export default function Home({
                     seasonalCollection.banner_image ? 'lg:col-span-8' : 'lg:col-span-12'
                   } grid grid-cols-2 md:grid-cols-3 ${
                     seasonalCollection.banner_image ? 'lg:grid-cols-3' : 'lg:grid-cols-4'
-                  } gap-6 sm:gap-8`}
+                  } gap-4 sm:gap-6 lg:gap-8`}
                 >
                   {seasonalProducts.map((product) => (
                     <ProductCard
@@ -225,9 +225,9 @@ export default function Home({
       )}
 
       {/* Best Selling Section: Clean 4x2 Grid (8 Products) */}
-      <section className="py-20 bg-white">
+      <section className="py-12 sm:py-16 lg:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-14">
+          <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10 lg:mb-12">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
               Best Selling
             </h2>
@@ -236,7 +236,7 @@ export default function Home({
             </p>
 
             {/* Category Filter Tabs */}
-            <div className="flex flex-wrap justify-center gap-2 mt-8">
+            <div className="flex flex-wrap justify-center gap-2 mt-6 sm:mt-8">
               <button
                 onClick={() => setActiveCategoryTab('all')}
                 className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
@@ -281,7 +281,7 @@ export default function Home({
           </div>
 
           {/* 4-Column x 2-Row Product Grid (Exact 8 Products) */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             {displayedBestSelling.map((product) => (
               <ProductCard
                 key={product.id}
@@ -292,7 +292,7 @@ export default function Home({
             ))}
           </div>
 
-          <div className="text-center mt-14">
+          <div className="text-center mt-8 sm:mt-10 lg:mt-12">
             <Link
               href="/shop"
               className="inline-flex items-center gap-2 border-2 border-[#111111] hover:bg-[#111111] hover:text-white text-[#111111] px-8 py-3.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
@@ -305,9 +305,9 @@ export default function Home({
       </section>
 
       {/* Featured Categories Carousel Section */}
-      <section className="py-20 bg-gray-50/70 border-y border-gray-100">
+      <section className="py-12 sm:py-16 lg:py-20 bg-gray-50/70 border-y border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 sm:mb-10 lg:mb-12">
             <div>
               <span className="text-xs font-bold uppercase text-[#d0473e] tracking-widest block mb-1">
                 FINE CRAFTSMANSHIP
@@ -325,7 +325,7 @@ export default function Home({
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {categories.map((cat) => (
               <Link
                 key={cat.id}

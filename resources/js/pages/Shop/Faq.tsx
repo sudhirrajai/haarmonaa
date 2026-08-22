@@ -139,10 +139,10 @@ export default function Faq({ products = [] }: FaqProps) {
       />
 
       {/* 1. Header & Breadcrumbs */}
-      <section className="pt-10 pb-12 bg-white text-center border-b border-gray-100/60">
+      <section className="pt-8 sm:pt-10 lg:pt-12 pb-8 sm:pb-10 lg:pb-12 bg-white text-center border-b border-gray-100/60">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           {/* Breadcrumb */}
-          <nav className="text-[13px] font-semibold text-gray-500 mb-6">
+          <nav className="text-[13px] font-semibold text-gray-500 mb-4 sm:mb-6">
             <Link href="/" className="hover:text-black">
               Home
             </Link>
@@ -156,14 +156,14 @@ export default function Faq({ products = [] }: FaqProps) {
           </h1>
 
           {/* Subtitle */}
-          <p className="text-[14px] sm:text-[14.5px] text-gray-500 max-w-xl mx-auto leading-relaxed">
+          <p className="text-xs sm:text-[14px] lg:text-[14.5px] text-gray-500 max-w-xl mx-auto leading-relaxed">
             Find answers to common questions about our products, services, and policies.
           </p>
         </div>
       </section>
 
       {/* 2. Main FAQ Content */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
           {/* Left Column: Contact Card (4 Cols) */}
           <div className="lg:col-span-4">

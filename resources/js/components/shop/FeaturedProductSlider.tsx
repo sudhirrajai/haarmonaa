@@ -58,10 +58,10 @@ export const FeaturedProductSlider: React.FC<FeaturedProductSliderProps> = ({
   if (!products || products.length === 0) return null;
 
   return (
-    <section className="py-20 bg-white border-b border-gray-100 select-none">
+    <section className="py-12 sm:py-16 lg:py-20 bg-white border-b border-gray-100 select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 sm:mb-10 lg:mb-12 gap-4">
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-900 rounded-full text-[11px] font-extrabold uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5 text-amber-600" />

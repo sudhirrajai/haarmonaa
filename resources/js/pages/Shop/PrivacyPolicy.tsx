@@ -23,10 +23,10 @@ export default function PrivacyPolicy({ products = [] }: PrivacyPolicyProps) {
       />
 
       {/* Header & Breadcrumbs */}
-      <section className="pt-10 pb-12 bg-white text-center border-b border-gray-100/60">
+      <section className="pt-8 sm:pt-10 lg:pt-12 pb-8 sm:pb-10 lg:pb-12 bg-white text-center border-b border-gray-100/60">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           {/* Breadcrumb */}
-          <nav className="text-[13px] font-semibold text-gray-500 mb-6">
+          <nav className="text-[13px] font-semibold text-gray-500 mb-4 sm:mb-6">
             <Link href="/" className="hover:text-black">
               Home
             </Link>
@@ -42,7 +42,7 @@ export default function PrivacyPolicy({ products = [] }: PrivacyPolicyProps) {
       </section>
 
       {/* Content Section */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-18">
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
         <div className="space-y-10 text-[14px] sm:text-[14.5px] text-gray-600 leading-relaxed">
           {/* Section 1 */}
           <div className="space-y-3">

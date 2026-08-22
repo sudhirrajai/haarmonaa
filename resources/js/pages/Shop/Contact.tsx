@@ -54,10 +54,10 @@ export default function Contact({ products = [] }: ContactProps) {
       />
 
       {/* 1. Header & Breadcrumbs */}
-      <section className="pt-10 pb-12 bg-white text-center border-b border-gray-100/60">
+      <section className="pt-8 sm:pt-10 lg:pt-12 pb-8 sm:pb-10 lg:pb-12 bg-white text-center border-b border-gray-100/60">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           {/* Breadcrumb */}
-          <nav className="text-[13px] font-semibold text-gray-500 mb-6">
+          <nav className="text-[13px] font-semibold text-gray-500 mb-4 sm:mb-6">
             <Link href="/" className="hover:text-black">
               Home
             </Link>
@@ -71,7 +71,7 @@ export default function Contact({ products = [] }: ContactProps) {
           </h1>
 
           {/* Subtitle */}
-          <p className="text-[14px] sm:text-[14.5px] text-gray-500 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xs sm:text-[14px] lg:text-[14.5px] text-gray-500 max-w-2xl mx-auto leading-relaxed">
             {supportPhone ? (
               <>
                 Please use the form below. You can also contact customer concierge at{' '}
@@ -88,7 +88,7 @@ export default function Contact({ products = [] }: ContactProps) {
       </section>
 
       {/* 2. Main 2-Column Contact Content */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
           {/* Left Column: Support Channels (5 Cols) */}
           <div className="lg:col-span-5 space-y-8">

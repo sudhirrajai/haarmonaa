@@ -46,7 +46,7 @@ const defaultCards: [PromoCardData, PromoCardData] = [
 
 export const PromoDualBanners: React.FC<PromoDualBannersProps> = ({ cards = defaultCards }) => {
   return (
-    <section className="py-12 lg:py-16 bg-white">
+    <section className="py-12 sm:py-16 lg:py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
           {cards.map((card) => {
