@@ -110,7 +110,7 @@ export const FeaturedProductSlider: React.FC<FeaturedProductSliderProps> = ({
         {/* Fluid Horizontal Smooth-Scrolling Track */}
         <div
           ref={scrollRef}
-          className="flex gap-6 overflow-x-auto scroll-smooth pb-4 pt-1 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 snap-x snap-mandatory scrollbar-none"
+          className="flex gap-4 sm:gap-6 overflow-x-auto scroll-smooth pb-4 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory scrollbar-none [&::-webkit-scrollbar]:hidden"
           style={{
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
@@ -120,7 +120,7 @@ export const FeaturedProductSlider: React.FC<FeaturedProductSliderProps> = ({
           {products.map((product) => (
             <div
               key={product.id}
-              className="w-[82vw] sm:w-[46vw] md:w-[32vw] lg:w-[calc(25%-18px)] shrink-0 snap-start"
+              className="w-[240px] sm:w-[280px] md:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)] shrink-0 snap-start"
             >
               <ProductCard
                 product={product}
