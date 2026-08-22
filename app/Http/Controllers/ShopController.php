@@ -145,38 +145,62 @@ class ShopController extends Controller
         $banners = $rawBanners ? json_decode($rawBanners, true) : null;
 
         // Resolve Seasonal Products (Collection products or category products, newest first)
-        $seasonalTarget = $seasonal['category_slug'] ?? 'summer-solstice-capsule';
         $seasonalProducts = [];
         if (! empty($seasonal['enabled'])) {
-            // Search matching collection by slug or name
-            $matchedCollection = Collection::where('slug', $seasonalTarget)
-                ->orWhere('slug', 'summer-solstice-capsule')
-                ->orWhere('slug', 'like', '%'.$seasonalTarget.'%')
-                ->orWhere('name', 'like', '%'.$seasonalTarget.'%')
-                ->with(['products' => function ($q) {
-                    $q->where('status', '!=', 'draft');
-                }, 'products.category', 'products.categories', 'products.variants'])
-                ->first();
+            $seasonalTarget = $seasonal['category_slug'] ?? null;
+
+            // 1. Try to find collection explicitly selected in CMS setting (if set and not 'all')
+            $matchedCollection = null;
+            if (! empty($seasonalTarget) && $seasonalTarget !== 'all') {
+                $matchedCollection = Collection::where('is_active', true)
+                    ->where(function ($q) use ($seasonalTarget) {
+                        $q->where('slug', $seasonalTarget)
+                            ->orWhere('name', 'like', '%'.$seasonalTarget.'%');
+                    })
+                    ->with(['products' => function ($q) {
+                        $q->where('status', '!=', 'draft');
+                    }, 'products.category', 'products.categories', 'products.variants'])
+                    ->first();
+            }
+
+            // 2. If not explicitly chosen, find active collection marked as featured
+            if (! $matchedCollection) {
+                $matchedCollection = Collection::where('is_active', true)
+                    ->where('is_featured', true)
+                    ->with(['products' => function ($q) {
+                        $q->where('status', '!=', 'draft');
+                    }, 'products.category', 'products.categories', 'products.variants'])
+                    ->latest('updated_at')
+                    ->first();
+            }
+
+            // 3. Fallback to latest active collection
+            if (! $matchedCollection) {
+                $matchedCollection = Collection::where('is_active', true)
+                    ->with(['products' => function ($q) {
+                        $q->where('status', '!=', 'draft');
+                    }, 'products.category', 'products.categories', 'products.variants'])
+                    ->latest('updated_at')
+                    ->first();
+            }
 
             if ($matchedCollection) {
-                // Synchronize banner image and texts from collection if updated in Collections Manager
+                $seasonal['title'] = $matchedCollection->name;
+                $seasonal['subtitle'] = ! empty($matchedCollection->tagline)
+                    ? $matchedCollection->tagline
+                    : ($seasonal['subtitle'] ?? 'SUNLIT REFLECTIONS & WATERPROOF HEIRLOOMS');
+                $seasonal['badge'] = strtoupper($matchedCollection->name).' CAPSULE';
+                if (! empty($matchedCollection->description)) {
+                    $seasonal['description'] = $matchedCollection->description;
+                }
                 if (! empty($matchedCollection->banner_image)) {
                     $seasonal['banner_image'] = $matchedCollection->banner_image;
                 } elseif (! empty($matchedCollection->image)) {
                     $seasonal['banner_image'] = $matchedCollection->image;
                 }
+                $seasonal['button_text'] = 'Explore '.$matchedCollection->name;
+                $seasonal['button_link'] = '/collection/'.$matchedCollection->slug;
 
-                if (! empty($matchedCollection->name)) {
-                    $seasonal['title'] = $matchedCollection->name;
-                }
-                if (! empty($matchedCollection->tagline)) {
-                    $seasonal['subtitle'] = $matchedCollection->tagline;
-                }
-                if (! empty($matchedCollection->description)) {
-                    $seasonal['description'] = $matchedCollection->description;
-                }
-
-                // If collection has products assigned, display only those products
                 if ($matchedCollection->products->count() > 0) {
                     $seasonalProducts = $matchedCollection->products
                         ->sortByDesc('id')
@@ -186,7 +210,7 @@ class ShopController extends Controller
                 } else {
                     $seasonalProducts = [];
                 }
-            } elseif ($seasonalTarget !== 'all') {
+            } elseif (! empty($seasonalTarget) && $seasonalTarget !== 'all') {
                 $seasonalProducts = array_values(array_filter($products, function ($p) use ($seasonalTarget) {
                     return strtolower(str_replace([' ', '&'], ['-', ''], $p['category'])) === strtolower($seasonalTarget)
                         || strtolower($p['category']) === strtolower($seasonalTarget)

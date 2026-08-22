@@ -58,6 +58,7 @@ interface ProductVariantItem {
 interface ProductItem {
   id?: number;
   name: string;
+  slug?: string;
   category_id?: number;
   category_ids?: number[];
   collection_ids?: number[];
@@ -109,6 +110,7 @@ export default function Form({
 
   const [data, setData] = useState({
     name: product?.name || '',
+    slug: product?.slug || '',
     category_ids: defaultCatIds,
     collection_ids: product?.collection_ids || [],
     upsell_ids: ((product as any)?.upsell_ids as number[]) || [],
@@ -332,12 +334,51 @@ export default function Form({
                     type="text"
                     required
                     value={data.name}
-                    onChange={(e) => setData({ ...data, name: e.target.value })}
+                    onChange={(e) => {
+                      const newName = e.target.value;
+                      if (!isEditing && (!data.slug || data.slug === data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''))) {
+                        setData({
+                          ...data,
+                          name: newName,
+                          slug: newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+                        });
+                      } else {
+                        setData({ ...data, name: newName });
+                      }
+                    }}
                     placeholder="e.g. Anti-Tarnish Starfish Crown Adjustable Ring"
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
                   />
                   {errors.name && (
                     <span className="text-rose-500 text-[11px] mt-1 block">{errors.name}</span>
+                  )}
+                </div>
+
+                {/* SEO Product URL Slug */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                    Product URL Slug <span className="text-gray-400 font-normal">(Clean SEO URL)</span>
+                  </label>
+                  <div className="flex items-center rounded-xl border border-gray-200 bg-gray-50 focus-within:border-black focus-within:bg-white overflow-hidden px-3.5 py-1">
+                    <span className="text-xs text-gray-400 select-none font-mono">/product/</span>
+                    <input
+                      type="text"
+                      value={data.slug || ''}
+                      onChange={(e) =>
+                        setData({
+                          ...data,
+                          slug: e.target.value
+                            .toLowerCase()
+                            .replace(/[^a-z0-9-]/g, '-')
+                            .replace(/-+/g, '-'),
+                        })
+                      }
+                      placeholder="anti-tarnish-starfish-crown-adjustable-ring"
+                      className="w-full bg-transparent border-0 py-1.5 px-1 text-xs text-gray-900 font-mono focus:outline-hidden"
+                    />
+                  </div>
+                  {errors.slug && (
+                    <span className="text-rose-500 text-[11px] mt-1 block">{errors.slug}</span>
                   )}
                 </div>
 

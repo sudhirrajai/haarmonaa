@@ -78,6 +78,7 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:products,slug',
             'category_ids' => 'required|array|min:1',
             'category_ids.*' => 'exists:categories,id',
             'collection_ids' => 'nullable|array',
@@ -89,7 +90,7 @@ class ProductController extends Controller
             'discount_percent' => 'nullable|integer|min:0|max:100',
             'image' => 'nullable|string',
             'secondary_image' => 'nullable|string',
-            'images' => 'nullable|array|max:10',
+            'images' => 'nullable|array',
             'images.*' => 'nullable|string',
             'description' => 'nullable|string',
             'stock_quantity' => 'required|integer|min:0',
@@ -127,7 +128,18 @@ class ProductController extends Controller
 
         $validated['category_id'] = $primaryCategory ? $primaryCategory->id : null;
         $validated['category_name'] = $categories->pluck('name')->join(', ');
-        $validated['slug'] = Str::slug($validated['name']).'-'.time();
+
+        $baseSlug = ! empty($validated['slug'])
+            ? Str::slug($validated['slug'])
+            : Str::slug($validated['name']);
+
+        $slug = $baseSlug;
+        $counter = 1;
+        while (Product::where('slug', $slug)->exists()) {
+            $slug = "{$baseSlug}-{$counter}";
+            $counter++;
+        }
+        $validated['slug'] = $slug;
 
         $variants = $validated['variants'] ?? [];
         unset($validated['category_ids'], $validated['collection_ids'], $validated['variants']);
@@ -182,6 +194,7 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:products,slug,'.$product->id,
             'category_ids' => 'required|array|min:1',
             'category_ids.*' => 'exists:categories,id',
             'collection_ids' => 'nullable|array',
@@ -207,6 +220,19 @@ class ProductController extends Controller
         ]);
 
         $validated['status'] = $validated['status'] ?? ($product->status ?? 'published');
+
+        if (! empty($validated['slug'])) {
+            $validated['slug'] = Str::slug($validated['slug']);
+        } elseif (empty($product->slug) || preg_match('/-\d{8,12}$/', $product->slug)) {
+            $baseSlug = Str::slug($validated['name']);
+            $slug = $baseSlug;
+            $counter = 1;
+            while (Product::where('slug', $slug)->where('id', '!=', $product->id)->exists()) {
+                $slug = "{$baseSlug}-{$counter}";
+                $counter++;
+            }
+            $validated['slug'] = $slug;
+        }
 
         $imagesList = array_values(array_filter($request->input('images', [])));
         if (empty($imagesList) && ! empty($validated['image'])) {
