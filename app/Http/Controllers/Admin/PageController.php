@@ -36,6 +36,61 @@ class PageController extends Controller
                 'preview_url' => route('home'),
             ],
             [
+                'id' => 'about',
+                'name' => 'About Us',
+                'slug' => '/about-us',
+                'description' => 'Haarmonaa brand heritage, 7 modular story sections, counters, and gold vermeil manifesto.',
+                'sections_count' => 7,
+                'status' => 'published',
+                'updated_at' => now()->format('M d, Y'),
+                'edit_url' => route('admin.pages.about'),
+                'preview_url' => route('about'),
+            ],
+            [
+                'id' => 'faq',
+                'name' => 'FAQ & Jewelry Care',
+                'slug' => '/faq',
+                'description' => 'Customizable accordion categories, questions, care advice, and concierge help banner.',
+                'sections_count' => 4,
+                'status' => 'published',
+                'updated_at' => now()->format('M d, Y'),
+                'edit_url' => route('admin.pages.faq'),
+                'preview_url' => route('faq'),
+            ],
+            [
+                'id' => 'terms',
+                'name' => 'Terms Of Use',
+                'slug' => '/terms-of-use',
+                'description' => 'Purchase agreements, 18K vermeil warranty terms, shipping policies, and intellectual property.',
+                'sections_count' => 6,
+                'status' => 'published',
+                'updated_at' => now()->format('M d, Y'),
+                'edit_url' => route('admin.pages.terms'),
+                'preview_url' => route('terms-of-use'),
+            ],
+            [
+                'id' => 'privacy',
+                'name' => 'Privacy Policy',
+                'slug' => '/privacy-policy',
+                'description' => 'Customer data protection, Level-1 PCI DSS payment encryption, and cookie management.',
+                'sections_count' => 5,
+                'status' => 'published',
+                'updated_at' => now()->format('M d, Y'),
+                'edit_url' => route('admin.pages.privacy'),
+                'preview_url' => route('privacy-policy'),
+            ],
+            [
+                'id' => 'contact',
+                'name' => 'Contact Us',
+                'slug' => '/contact-us',
+                'description' => 'Concierge assistance, bespoke inquiry channels, customer support hours, and VIP consultation.',
+                'sections_count' => 2,
+                'status' => 'published',
+                'updated_at' => now()->format('M d, Y'),
+                'edit_url' => route('admin.pages.contact'),
+                'preview_url' => route('contact'),
+            ],
+            [
                 'id' => 'product',
                 'name' => 'Product Detail Page (Template)',
                 'slug' => '/product/{slug}',
@@ -45,39 +100,6 @@ class PageController extends Controller
                 'updated_at' => now()->format('M d, Y'),
                 'edit_url' => route('admin.pages.product'),
                 'preview_url' => '/shop',
-            ],
-            [
-                'id' => 'about',
-                'name' => 'About Us',
-                'slug' => '/about-us',
-                'description' => 'Haarmonaa brand heritage, gold vermeil craftsmanship manifesto, and artisan sustainability.',
-                'sections_count' => 3,
-                'status' => 'published',
-                'updated_at' => now()->format('M d, Y'),
-                'edit_url' => route('admin.pages.about'),
-                'preview_url' => route('about'),
-            ],
-            [
-                'id' => 'contact',
-                'name' => 'Contact Us',
-                'slug' => '/contact-us',
-                'description' => 'Concierge assistance, bespoke inquiry form, headquarters address, and VIP customer support.',
-                'sections_count' => 2,
-                'status' => 'published',
-                'updated_at' => now()->format('M d, Y'),
-                'edit_url' => route('admin.pages.contact'),
-                'preview_url' => route('contact'),
-            ],
-            [
-                'id' => 'faq',
-                'name' => 'FAQ & Jewelry Care',
-                'slug' => '/faq',
-                'description' => 'Frequently asked questions regarding anti-tarnish coating, shipping transit, and ring sizing.',
-                'sections_count' => 2,
-                'status' => 'published',
-                'updated_at' => now()->format('M d, Y'),
-                'edit_url' => route('admin.pages.faq'),
-                'preview_url' => route('faq'),
             ],
         ];
 
@@ -720,18 +742,286 @@ class PageController extends Controller
         return response()->json(['success' => false, 'message' => 'Invalid section.'], 400);
     }
 
+    /**
+     * Default structured content for Terms Of Use.
+     */
+    public static function getDefaultTermsContent(): array
+    {
+        return [
+            'header' => [
+                'badge' => 'LEGAL & POLICIES',
+                'title' => 'Terms Of Use',
+                'last_updated' => 'Last Updated: August 2026',
+            ],
+            'sections' => [
+                [
+                    'number' => '1',
+                    'title' => 'Acceptance of Terms',
+                    'content' => 'By accessing, browsing, or purchasing from our Website (haarmonaa.in), you acknowledge that you have read, understood, and agreed to be bound by these Terms of Use and our Privacy Policy.',
+                ],
+                [
+                    'number' => '2',
+                    'title' => 'Products & Handcrafted Authenticity',
+                    'content' => 'All Haarmonaa jewelry is handcrafted using thick 18K solid gold vermeil casting over hypoallergenic 925 sterling silver or solid gold metallurgy. Because each piece is hand-finished by master artisans, slight unique variations in texture and stone dimensions may occur, reflecting the authentic beauty of artisanal jewelry.',
+                ],
+                [
+                    'number' => '3',
+                    'title' => 'Pricing & Secure Payments',
+                    'content' => 'All product prices are listed in Indian Rupees (INR) and are inclusive of applicable GST unless stated otherwise. We reserve the right to revise pricing or rectify inadvertent typographical errors without prior notification. Transactions are processed via Level-1 PCI DSS encrypted payment gateways.',
+                ],
+                [
+                    'number' => '4',
+                    'title' => 'Shipping, Transit & Delivery',
+                    'content' => 'Orders are processed and dispatched within 1–2 business days in tamper-evident velvet care packaging. Express insured delivery typically arrives within 3–5 business days across India. Tracking details are automatically emailed upon dispatch.',
+                ],
+                [
+                    'number' => '5',
+                    'title' => 'Returns, Exchanges & Warranty',
+                    'content' => 'We offer a 7-day hassle-free concierge return or exchange window for unworn items in original packaging with intact security tags. Bespoke customized engravings or personalized jewelry pieces are non-returnable unless defective.',
+                ],
+                [
+                    'number' => '6',
+                    'title' => 'Intellectual Property Rights',
+                    'content' => 'All imagery, product photography, editorial copy, logo graphics, design trademarks, and brand assets are the exclusive intellectual property of Haarmonaa Studio. Unauthorized reproduction or commercial use is strictly prohibited.',
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Default structured content for Privacy Policy.
+     */
+    public static function getDefaultPrivacyContent(): array
+    {
+        return [
+            'header' => [
+                'badge' => 'DATA PROTECTION',
+                'title' => 'Privacy Policy',
+                'last_updated' => 'Last Updated: August 2026',
+            ],
+            'sections' => [
+                [
+                    'number' => '1',
+                    'title' => 'Information We Collect',
+                    'content' => 'We collect information you provide directly to us when creating an account, browsing our boutique, placing an order, subscribing to our newsletters, or contacting our concierge team. This includes your name, email address, phone number, shipping address, and payment transaction references.',
+                ],
+                [
+                    'number' => '2',
+                    'title' => 'How We Use Your Information',
+                    'content' => 'Your information is used strictly to fulfill your orders, provide dispatch tracking updates, process secure payments, offer customer concierge assistance, and send tailored editorial updates if you have opted in.',
+                ],
+                [
+                    'number' => '3',
+                    'title' => 'Payment Security & Encryption',
+                    'content' => 'We do not store complete credit card or debit card numbers on our servers. All financial transactions are processed through 256-bit SSL encrypted, RBI-compliant, and Level-1 PCI DSS certified payment processors.',
+                ],
+                [
+                    'number' => '4',
+                    'title' => 'Cookies & Browsing Experience',
+                    'content' => 'Our store uses essential session cookies to remember your bag items, currency preferences, and wishlist. We do not sell your personal data to third-party data brokers under any circumstances.',
+                ],
+                [
+                    'number' => '5',
+                    'title' => 'Your Rights & Concierge Contact',
+                    'content' => 'You have the right to request access to, update, or permanently delete your personal information from our customer directory at any time by contacting our privacy officer at support@haarmonaa.in.',
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Default structured content for FAQ & Care.
+     */
+    public static function getDefaultFaqContent(): array
+    {
+        return [
+            'header' => [
+                'badge' => 'HELP & SUPPORT',
+                'title' => 'Frequently Asked Questions',
+                'description' => 'Find answers to common questions about our anti-tarnish jewelry, shipping, sizing, and policies.',
+            ],
+            'help_card' => [
+                'enabled' => true,
+                'title' => 'Need Personal Styling Advice?',
+                'description' => 'Our master jewelry concierge is available to assist you with sizing, custom gift packaging, or order queries.',
+                'button_text' => 'Contact Concierge',
+                'button_link' => '/contact-us',
+            ],
+            'categories' => [
+                [
+                    'title' => 'Shopping & Products',
+                    'items' => [
+                        [
+                            'question' => 'Is Haarmonaa jewelry genuine 18K solid gold vermeil?',
+                            'answer' => 'Yes! All Haarmonaa pieces are engineered with thick 18K solid gold electroplating over hypoallergenic 925 sterling silver. It is 100% waterproof, sweatproof, and anti-tarnish.',
+                        ],
+                        [
+                            'question' => 'Can I save products to my wishlist?',
+                            'answer' => 'Yes! Simply click the heart icon on any product card or product detail page to save your favorite jewelry to your personalized wishlist.',
+                        ],
+                        [
+                            'question' => 'How do I know if a product is in stock?',
+                            'answer' => 'All items on our boutique display real-time stock availability. If an item is temporarily sold out, it will be clearly marked as Out of Stock.',
+                        ],
+                    ],
+                ],
+                [
+                    'title' => 'Payment & Security',
+                    'items' => [
+                        [
+                            'question' => 'What payment methods do you accept?',
+                            'answer' => 'We accept UPI (Google Pay, PhonePe, Paytm), all major credit/debit cards (Visa, MasterCard, RuPay, Amex), and Net Banking.',
+                        ],
+                        [
+                            'question' => 'Is my payment information secure?',
+                            'answer' => 'Yes, all transactions are processed via 256-bit SSL encrypted Level-1 PCI DSS compliant gateways.',
+                        ],
+                    ],
+                ],
+                [
+                    'title' => 'Shipping & Returns',
+                    'items' => [
+                        [
+                            'question' => 'How long does shipping take?',
+                            'answer' => 'Orders are dispatched within 24–48 hours. Express insured delivery takes 3–5 business days across India.',
+                        ],
+                        [
+                            'question' => 'What is your return policy?',
+                            'answer' => 'We offer a 7-day hassle-free return and exchange policy on all unworn jewelry with security tags intact.',
+                        ],
+                    ],
+                ],
+                [
+                    'title' => 'Jewelry Care & Anti-Tarnish',
+                    'items' => [
+                        [
+                            'question' => 'Can I wear Haarmonaa jewelry in the shower or pool?',
+                            'answer' => 'Yes! Our pieces are engineered with anti-tarnish waterproof metallurgical bonding. For maximum longevity, gently rinse with fresh water after saltwater/chlorine contact and dry with our included microfiber cloth.',
+                        ],
+                        [
+                            'question' => 'How should I store my fine jewelry?',
+                            'answer' => 'Store each piece individually in your complimentary Haarmonaa velvet pouch to prevent surface scratches.',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Default structured content for Contact Us.
+     */
+    public static function getDefaultContactContent(): array
+    {
+        return [
+            'header' => [
+                'badge' => 'CUSTOMER CONCIERGE',
+                'title' => 'Contact Us',
+                'description' => 'Our concierge team is available to assist you with bespoke enquiries, orders, sizing, and jewelry care.',
+            ],
+            'channels' => [
+                'email' => 'support@haarmonaa.in',
+                'phone' => '+91 98765 43210',
+                'hours' => 'Mon – Sat: 10:00 AM – 7:00 PM IST',
+                'response_time' => 'Average response time: within 2–4 hours',
+            ],
+            'form' => [
+                'title' => 'Send a Message',
+                'agreement_text' => 'I agree that my submitted data is collected and stored according to the Privacy Policy.',
+            ],
+        ];
+    }
+
+    /**
+     * Terms Of Use Page CMS.
+     */
+    public function terms(): Response
+    {
+        $raw = Setting::get('page_terms_content');
+        $decoded = $raw ? json_decode($raw, true) : null;
+        $content = array_replace_recursive(self::getDefaultTermsContent(), $decoded ?: []);
+
+        return Inertia::render('Admin/Pages/Terms', [
+            'termsContent' => $content,
+        ]);
+    }
+
+    public function updateTerms(Request $request): RedirectResponse
+    {
+        $payload = $request->input('termsContent', []);
+        Setting::set('page_terms_content', json_encode($payload));
+
+        return back()->with('success', 'Terms of Use updated successfully.');
+    }
+
+    /**
+     * Privacy Policy Page CMS.
+     */
+    public function privacy(): Response
+    {
+        $raw = Setting::get('page_privacy_content');
+        $decoded = $raw ? json_decode($raw, true) : null;
+        $content = array_replace_recursive(self::getDefaultPrivacyContent(), $decoded ?: []);
+
+        return Inertia::render('Admin/Pages/Privacy', [
+            'privacyContent' => $content,
+        ]);
+    }
+
+    public function updatePrivacy(Request $request): RedirectResponse
+    {
+        $payload = $request->input('privacyContent', []);
+        Setting::set('page_privacy_content', json_encode($payload));
+
+        return back()->with('success', 'Privacy Policy updated successfully.');
+    }
+
+    /**
+     * FAQ Page CMS.
+     */
+    public function faq(): Response
+    {
+        $raw = Setting::get('page_faq_content');
+        $decoded = $raw ? json_decode($raw, true) : null;
+        $content = array_replace_recursive(self::getDefaultFaqContent(), $decoded ?: []);
+
+        return Inertia::render('Admin/Pages/Faq', [
+            'faqContent' => $content,
+        ]);
+    }
+
+    public function updateFaq(Request $request): RedirectResponse
+    {
+        $payload = $request->input('faqContent', []);
+        Setting::set('page_faq_content', json_encode($payload));
+
+        return back()->with('success', 'FAQ page content updated successfully.');
+    }
+
+    /**
+     * Contact Us Page CMS.
+     */
+    public function contact(): Response
+    {
+        $raw = Setting::get('page_contact_content');
+        $decoded = $raw ? json_decode($raw, true) : null;
+        $content = array_replace_recursive(self::getDefaultContactContent(), $decoded ?: []);
+
+        return Inertia::render('Admin/Pages/Contact', [
+            'contactContent' => $content,
+        ]);
+    }
+
+    public function updateContact(Request $request): RedirectResponse
+    {
+        $payload = $request->input('contactContent', []);
+        Setting::set('page_contact_content', json_encode($payload));
+
+        return back()->with('success', 'Contact Us page content updated successfully.');
+    }
+
     public function product(): Response
     {
         return Inertia::render('Admin/Pages/ProductPage');
-    }
-
-    public function contact(): Response
-    {
-        return Inertia::render('Admin/Pages/Contact');
-    }
-
-    public function faq(): Response
-    {
-        return Inertia::render('Admin/Pages/Faq');
     }
 }

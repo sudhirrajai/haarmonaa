@@ -307,28 +307,48 @@ class ShopController extends Controller
 
     public function contact(): Response
     {
+        $raw = Setting::get('page_contact_content');
+        $decoded = $raw ? json_decode($raw, true) : null;
+        $content = array_replace_recursive(PageController::getDefaultContactContent(), $decoded ?: []);
+
         return Inertia::render('Shop/Contact', [
+            'contactContent' => $content,
             'products' => $this->getProducts(),
         ]);
     }
 
     public function termsOfUse(): Response
     {
+        $raw = Setting::get('page_terms_content');
+        $decoded = $raw ? json_decode($raw, true) : null;
+        $content = array_replace_recursive(PageController::getDefaultTermsContent(), $decoded ?: []);
+
         return Inertia::render('Shop/TermsOfUse', [
+            'termsContent' => $content,
             'products' => $this->getProducts(),
         ]);
     }
 
     public function privacyPolicy(): Response
     {
+        $raw = Setting::get('page_privacy_content');
+        $decoded = $raw ? json_decode($raw, true) : null;
+        $content = array_replace_recursive(PageController::getDefaultPrivacyContent(), $decoded ?: []);
+
         return Inertia::render('Shop/PrivacyPolicy', [
+            'privacyContent' => $content,
             'products' => $this->getProducts(),
         ]);
     }
 
     public function faq(): Response
     {
+        $raw = Setting::get('page_faq_content');
+        $decoded = $raw ? json_decode($raw, true) : null;
+        $content = array_replace_recursive(PageController::getDefaultFaqContent(), $decoded ?: []);
+
         return Inertia::render('Shop/Faq', [
+            'faqContent' => $content,
             'products' => $this->getProducts(),
         ]);
     }

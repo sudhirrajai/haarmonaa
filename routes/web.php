@@ -111,8 +111,14 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/pages/about', [AdminPageController::class, 'about'])->name('pages.about');
     Route::post('/pages/about', [AdminPageController::class, 'updateAbout'])->name('pages.about.update');
     Route::post('/pages/about/toggle-section', [AdminPageController::class, 'toggleAboutSection'])->name('pages.about.toggle');
-    Route::get('/pages/contact', [AdminPageController::class, 'contact'])->name('pages.contact');
+    Route::get('/pages/terms', [AdminPageController::class, 'terms'])->name('pages.terms');
+    Route::post('/pages/terms', [AdminPageController::class, 'updateTerms'])->name('pages.terms.update');
+    Route::get('/pages/privacy', [AdminPageController::class, 'privacy'])->name('pages.privacy');
+    Route::post('/pages/privacy', [AdminPageController::class, 'updatePrivacy'])->name('pages.privacy.update');
     Route::get('/pages/faq', [AdminPageController::class, 'faq'])->name('pages.faq');
+    Route::post('/pages/faq', [AdminPageController::class, 'updateFaq'])->name('pages.faq.update');
+    Route::get('/pages/contact', [AdminPageController::class, 'contact'])->name('pages.contact');
+    Route::post('/pages/contact', [AdminPageController::class, 'updateContact'])->name('pages.contact.update');
 
     // Legacy CMS redirect
     Route::redirect('/cms', '/admin/pages/home')->name('cms.index');
