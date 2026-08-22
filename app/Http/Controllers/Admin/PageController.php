@@ -720,6 +720,11 @@ class PageController extends Controller
         return response()->json(['success' => false, 'message' => 'Invalid section.'], 400);
     }
 
+    public function product(): Response
+    {
+        return Inertia::render('Admin/Pages/ProductPage');
+    }
+
     public function contact(): Response
     {
         return Inertia::render('Admin/Pages/Contact');
