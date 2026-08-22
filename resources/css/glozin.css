@@ -164,6 +164,15 @@ body {
   }
 }
 
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -175,6 +184,10 @@ body {
 
 .animate-slide-in-right {
   animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-fade-in {

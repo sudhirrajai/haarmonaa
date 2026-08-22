@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Header } from './Header';
 import { Footer } from './Footer';
+import { MobileBottomNav } from './MobileBottomNav';
 import { CartDrawer } from '../shop/CartDrawer';
 import { QuickViewModal } from '../shop/QuickViewModal';
 import { SearchModal } from '../shop/SearchModal';
 import { Product } from '@/types/shop';
 import { useCart } from '@/context/CartContext';
-
 import { ToastNotification } from '@/components/ui/ToastNotification';
 
 interface GlozinLayoutProps {
@@ -28,7 +28,7 @@ export const GlozinLayout: React.FC<GlozinLayoutProps> = ({ children, allProduct
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans text-gray-800 antialiased overflow-x-hidden selection:bg-[#d0473e] selection:text-white">
-      {/* Header with live dynamic counts directly from single global CartContext */}
+      {/* Sticky Header with centered logo on mobile & desktop menu */}
       <Header
         cartCount={cartCount}
         wishlistCount={wishlistCount}
@@ -36,11 +36,18 @@ export const GlozinLayout: React.FC<GlozinLayoutProps> = ({ children, allProduct
         onOpenSearch={() => setIsSearchOpen(true)}
       />
 
-      {/* Main Page Slot */}
-      <main className="flex-1 w-full max-w-full overflow-x-hidden">{children}</main>
+      {/* Main Page Slot with bottom spacing on mobile for sticky bottom nav */}
+      <main className="flex-1 w-full max-w-full overflow-x-hidden pb-16 md:pb-0">{children}</main>
 
       {/* Footer */}
       <Footer />
+
+      {/* Mobile Bottom Tab Navigation (Sticky 5-tab bar on mobile devices) */}
+      <MobileBottomNav
+        cartCount={cartCount}
+        wishlistCount={wishlistCount}
+        onOpenCart={() => setIsCartDrawerOpen(true)}
+      />
 
       {/* Slide-over Cart Drawer */}
       <CartDrawer />
