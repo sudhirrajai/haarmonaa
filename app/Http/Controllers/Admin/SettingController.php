@@ -51,6 +51,10 @@ class SettingController extends Controller
             'google_site_verification' => 'nullable|string|max:255',
             'bing_site_verification' => 'nullable|string|max:255',
             'og_default_image' => 'nullable|string',
+            'razorpay_key_id' => 'nullable|string|max:255',
+            'razorpay_key_secret' => 'nullable|string|max:255',
+            'razorpay_webhook_secret' => 'nullable|string|max:255',
+            'razorpay_mode' => 'nullable|string|in:test,live',
         ]);
 
         foreach ($validated as $key => $val) {

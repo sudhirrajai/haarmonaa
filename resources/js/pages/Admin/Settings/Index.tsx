@@ -18,6 +18,10 @@ import {
   Globe,
   FileCode,
   Share2,
+  ShieldCheck,
+  CreditCard,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 interface SettingsProps {
@@ -25,6 +29,7 @@ interface SettingsProps {
 }
 
 export default function Index({ settings }: SettingsProps) {
+  const [copiedWebhook, setCopiedWebhook] = useState(false);
   const [formData, setFormData] = useState({
     store_name: settings.store_name ?? 'Haarmonaa Fine Jewelry',
     store_tagline: settings.store_tagline ?? '',
@@ -35,6 +40,8 @@ export default function Index({ settings }: SettingsProps) {
     footer_logo_height: Number(settings.footer_logo_height || 48),
     store_email: settings.store_email ?? 'support@haarmonaa.in',
     store_phone: settings.store_phone ?? '',
+    currency_symbol: settings.currency_symbol ?? '₹',
+    tax_rate_percent: settings.tax_rate_percent !== undefined ? String(settings.tax_rate_percent) : '0',
     shipping_fee: settings.shipping_fee !== undefined ? String(settings.shipping_fee) : '49',
     free_shipping_min_order: settings.free_shipping_min_order !== undefined ? String(settings.free_shipping_min_order) : '49',
     store_address: settings.store_address ?? '',
@@ -48,6 +55,10 @@ export default function Index({ settings }: SettingsProps) {
     tiktok_url: settings.tiktok_url ?? '',
     youtube_url: settings.youtube_url ?? '',
     pinterest_url: settings.pinterest_url ?? '',
+    razorpay_key_id: settings.razorpay_key_id ?? '',
+    razorpay_key_secret: settings.razorpay_key_secret ?? '',
+    razorpay_webhook_secret: settings.razorpay_webhook_secret ?? '',
+    razorpay_mode: settings.razorpay_mode ?? 'test',
   });
 
   const [saving, setSaving] = useState(false);
@@ -391,6 +402,119 @@ export default function Index({ settings }: SettingsProps) {
               <span className="text-[10.5px] text-gray-500 mt-1 block">
                 Orders &ge; this subtotal receive Free Shipping. Set to <strong>0</strong> for free shipping on all orders.
               </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3.5: Razorpay Payment Gateway & Webhook Security */}
+        <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 gap-2">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-blue-600" />
+              <div>
+                <h2 className="text-sm font-bold text-gray-900">
+                  Razorpay Payment Gateway (UPI, Cards, NetBanking)
+                </h2>
+                <p className="text-[11px] text-gray-400">
+                  Automated HMAC signature verification, real-time webhooks, and background order reconciliation.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-bold border ${
+                  formData.razorpay_mode === 'live'
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    : 'bg-amber-50 text-amber-800 border-amber-200'
+                }`}
+              >
+                {formData.razorpay_mode === 'live' ? '● LIVE MODE' : '○ TEST MODE'}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                Gateway Environment Mode
+              </label>
+              <select
+                value={formData.razorpay_mode}
+                onChange={(e) => setFormData({ ...formData, razorpay_mode: e.target.value })}
+                className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black focus:bg-white"
+              >
+                <option value="test">Test Mode (rzp_test_...)</option>
+                <option value="live">Live Production (rzp_live_...)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                Razorpay Key ID <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.razorpay_key_id}
+                onChange={(e) => setFormData({ ...formData, razorpay_key_id: e.target.value })}
+                placeholder="e.g. rzp_live_xxxxxxxxxxxxxx"
+                className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 font-mono focus:outline-hidden focus:border-black focus:bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                Razorpay Key Secret <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="password"
+                value={formData.razorpay_key_secret}
+                onChange={(e) => setFormData({ ...formData, razorpay_key_secret: e.target.value })}
+                placeholder="••••••••••••••••••••••••••••"
+                className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 font-mono focus:outline-hidden focus:border-black focus:bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                Razorpay Webhook Secret <span className="text-gray-400 font-normal">(Recommended)</span>
+              </label>
+              <input
+                type="password"
+                value={formData.razorpay_webhook_secret}
+                onChange={(e) => setFormData({ ...formData, razorpay_webhook_secret: e.target.value })}
+                placeholder="Secret configured in Razorpay Dashboard"
+                className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 font-mono focus:outline-hidden focus:border-black focus:bg-white"
+              />
+            </div>
+
+            {/* Webhook Endpoint Box */}
+            <div className="sm:col-span-2 bg-blue-50/70 border border-blue-200/80 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <span className="text-[11px] font-extrabold text-blue-900 uppercase tracking-wider block">
+                  Your Webhook URL (For Razorpay Dashboard)
+                </span>
+                <code className="text-xs text-blue-800 font-mono font-bold select-all break-all">
+                  {typeof window !== 'undefined' ? `${window.location.origin}/api/webhooks/razorpay` : 'https://haarmonaa.in/api/webhooks/razorpay'}
+                </code>
+                <p className="text-[10.5px] text-blue-700/90 pt-0.5">
+                  Events to enable: <strong>payment.captured</strong>, <strong>order.paid</strong>, <strong>payment.failed</strong>, <strong>refund.processed</strong>
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const url = `${window.location.origin}/api/webhooks/razorpay`;
+                  navigator.clipboard.writeText(url);
+                  setCopiedWebhook(true);
+                  setTimeout(() => setCopiedWebhook(false), 2000);
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-2xs shrink-0 cursor-pointer"
+              >
+                {copiedWebhook ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedWebhook ? 'Copied!' : 'Copy Webhook URL'}</span>
+              </button>
             </div>
           </div>
         </div>

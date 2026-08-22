@@ -17,6 +17,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\Shop\CheckoutController;
 use App\Http\Controllers\Shop\CouponController as ShopCouponController;
+use App\Http\Controllers\Shop\RazorpayWebhookController;
 use App\Http\Controllers\Shop\SearchController;
 use App\Http\Controllers\ShopController;
 use Illuminate\Support\Facades\Route;
@@ -41,8 +42,11 @@ Route::get('/cart', [ShopController::class, 'cart'])->name('shop.cart');
 Route::get('/checkout', [CheckoutController::class, 'showCheckout'])->name('shop.checkout');
 Route::post('/checkout/apply-coupon', [ShopCouponController::class, 'apply'])->name('shop.coupon.apply');
 Route::post('/checkout/recalculate-coupons', [ShopCouponController::class, 'recalculate'])->name('shop.coupon.recalculate');
+Route::post('/checkout/create-razorpay-order', [CheckoutController::class, 'createRazorpayOrder'])->name('shop.razorpay.create-order');
 Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('shop.checkout.process');
 Route::post('/payment/razorpay/verify', [CheckoutController::class, 'verifyRazorpay'])->name('shop.razorpay.verify');
+Route::post('/api/webhooks/razorpay', [RazorpayWebhookController::class, 'handle'])->name('webhooks.razorpay');
+Route::post('/webhooks/razorpay', [RazorpayWebhookController::class, 'handle'])->name('webhooks.razorpay.alt');
 Route::get('/wishlist', [ShopController::class, 'wishlist'])->name('shop.wishlist');
 
 // Dynamic Search Logging & Popular Keyword Suggestions

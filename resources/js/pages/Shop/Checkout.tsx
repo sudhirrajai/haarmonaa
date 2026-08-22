@@ -145,26 +145,25 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
     try {
       const csrfToken =
         (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
-      const response = await fetch('/checkout/process', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-CSRF-TOKEN': csrfToken,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const resData = await response.json();
-
-      if (!response.ok || !resData.success) {
-        throw new Error(resData.message || 'Failed to place order. Please review your details.');
-      }
-
-      const orderNumber = resData.order_number;
 
       // Handle Cash on Delivery (COD)
       if (formData.paymentMethod === 'cod') {
+        const response = await fetch('/checkout/process', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const resData = await response.json();
+
+        if (!response.ok || !resData.success) {
+          throw new Error(resData.message || 'Failed to place order. Please review your details.');
+        }
+
         clearCart();
         window.location.href = resData.redirect_url;
         return;
@@ -172,23 +171,58 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
 
       // Handle Razorpay Online Payment
       if (formData.paymentMethod === 'razorpay') {
+        // Step 1: Server-Side Razorpay Order Initialization
+        const orderInitResponse = await fetch('/checkout/create-razorpay-order', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const rzpData = await orderInitResponse.json();
+
+        if (!orderInitResponse.ok || !rzpData.success) {
+          throw new Error(
+            rzpData.message || 'Unable to initiate payment session. Please try again or choose Cash on Delivery.'
+          );
+        }
+
+        const activeKey = rzpData.key_id || razorpayKey;
+        const orderNumber = rzpData.order_number;
+        const razorpayOrderId = rzpData.razorpay_order_id;
+
         if (typeof window.Razorpay === 'undefined') {
-          // Fallback simulation if razorpay script fails or demo mode
-          clearCart();
-          window.location.href = resData.redirect_url;
-          return;
+          throw new Error('Razorpay secure checkout failed to load. Please check your internet connection and retry.');
         }
 
         const options = {
-          key: razorpayKey,
-          amount: Math.round(total * 100), // in paise
-          currency: 'INR',
+          key: activeKey,
+          amount: rzpData.amount_paise,
+          currency: rzpData.currency || 'INR',
           name: 'Haarmonaa Fine Jewelry',
           description: `Order #${orderNumber}`,
-          image: '/images/logo.png',
-          order_id: resData.razorpay_order_id,
-          handler: async function (response: any) {
+          order_id: razorpayOrderId,
+          prefill: {
+            name: rzpData.customer?.name || `${formData.firstName} ${formData.lastName}`.trim(),
+            email: rzpData.customer?.email || formData.email,
+            contact: rzpData.customer?.phone || formData.phone,
+          },
+          theme: {
+            color: '#111111',
+          },
+          modal: {
+            backdropclose: false,
+            ondismiss: function () {
+              setProcessing(false);
+              setErrorMessage('Payment was cancelled. Your bag items have been kept safe.');
+            },
+          },
+          handler: async function (paymentResponse: any) {
             try {
+              setProcessing(true);
               const verifyRes = await fetch('/payment/razorpay/verify', {
                 method: 'POST',
                 headers: {
@@ -198,44 +232,35 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                 },
                 body: JSON.stringify({
                   order_number: orderNumber,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_signature: response.razorpay_signature,
+                  razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                  razorpay_order_id: paymentResponse.razorpay_order_id || razorpayOrderId,
+                  razorpay_signature: paymentResponse.razorpay_signature,
                 }),
               });
 
               const verifyData = await verifyRes.json();
-              if (verifyData.success) {
+              if (verifyRes.ok && verifyData.success) {
                 clearCart();
                 window.location.href = verifyData.redirect_url;
               } else {
-                setErrorMessage('Payment verification failed. Please contact boutique concierge.');
+                setErrorMessage(
+                  `Payment received (Ref #${paymentResponse.razorpay_payment_id}). If your bank account was debited, your order is secured and will be confirmed within 24 hours.`
+                );
                 setProcessing(false);
               }
-            } catch {
-              setErrorMessage('Error verifying payment. If amount was deducted, your order is safe.');
+            } catch (err) {
+              setErrorMessage(
+                `Payment received (Ref #${paymentResponse.razorpay_payment_id}). If your bank was debited, your order will be confirmed within 24 hours or refunded.`
+              );
               setProcessing(false);
             }
-          },
-          prefill: {
-            name: `${formData.firstName} ${formData.lastName}`.trim(),
-            email: formData.email,
-            contact: formData.phone,
-          },
-          theme: {
-            color: '#111111',
-          },
-          modal: {
-            ondismiss: function () {
-              setProcessing(false);
-            },
           },
         };
 
         const rzp = new window.Razorpay(options);
         rzp.on('payment.failed', function (resp: any) {
           setErrorMessage(
-            resp.error?.description || 'Payment was declined by your bank or UPI app.'
+            resp.error?.description || 'Payment was declined by your bank or UPI app. Please try another method.'
           );
           setProcessing(false);
         });

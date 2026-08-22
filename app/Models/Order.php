@@ -28,6 +28,10 @@ class Order extends Model
         'status',
         'payment_method',
         'payment_status',
+        'razorpay_order_id',
+        'razorpay_payment_id',
+        'razorpay_signature',
+        'payment_details',
         'notes',
     ];
 
@@ -37,6 +41,7 @@ class Order extends Model
         'tax' => 'float',
         'shipping' => 'float',
         'total_amount' => 'float',
+        'payment_details' => 'array',
     ];
 
     public function items(): HasMany
