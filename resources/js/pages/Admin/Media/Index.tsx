@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { DeleteConfirmModal } from '@/components/admin/DeleteConfirmModal';
+import { CustomDropdown, DropdownOption } from '@/components/admin/CustomDropdown';
 import {
   Image as ImageIcon,
   UploadCloud,
@@ -279,6 +280,29 @@ export default function Index({ media, filters, stats }: MediaIndexProps) {
     }
   };
 
+  const typeOptions: DropdownOption[] = [
+    { value: 'all', label: 'All Media Items', icon: Layers },
+    { value: 'image', label: 'Images Only', icon: ImageIcon },
+    { value: 'video', label: 'Videos Only', icon: Video },
+    { value: 'document', label: 'Documents / PDFs', icon: FileText },
+  ];
+
+  const sortOptions: DropdownOption[] = [
+    { value: 'latest', label: 'Newest First', icon: ArrowUpDown },
+    { value: 'oldest', label: 'Oldest First', icon: ArrowUpDown },
+    { value: 'name_asc', label: 'Title (A – Z)' },
+    { value: 'name_desc', label: 'Title (Z – A)' },
+    { value: 'size_desc', label: 'File Size (Largest)' },
+    { value: 'size_asc', label: 'File Size (Smallest)' },
+  ];
+
+  const perPageOptions: DropdownOption[] = [
+    { value: 12, label: '12 / page' },
+    { value: 24, label: '24 / page' },
+    { value: 48, label: '48 / page' },
+    { value: 96, label: '96 / page' },
+  ];
+
   return (
     <AdminLayout title="Media Library">
       <Head title="Media Library — Admin Haarmonaa" />
@@ -426,23 +450,23 @@ export default function Index({ media, filters, stats }: MediaIndexProps) {
       )}
 
       {/* Controls Bar: Search, MIME Filters, Sorting, View Modes */}
-      <div className="bg-white p-4 rounded-[10px] border border-gray-200/80 shadow-2xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+      <div className="bg-white p-3.5 rounded-[10px] border border-gray-200/80 shadow-2xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         {/* Left: Filters & Search */}
-        <div className="flex flex-wrap items-center gap-3 flex-1">
+        <div className="flex flex-wrap items-center gap-2.5 flex-1">
           {/* View Mode Toggle */}
-          <div className="flex items-center bg-gray-100 p-1 rounded-[8px]">
+          <div className="flex items-center bg-gray-100 p-1 rounded-[8px] border border-gray-200/60">
             <button
               type="button"
               onClick={() => {
                 setViewMode('grid');
                 handleFilterChange({ view: 'grid' });
               }}
-              className={`p-1.5 rounded-[6px] transition-colors cursor-pointer ${
+              className={`p-1.5 rounded-[6px] transition-all cursor-pointer ${
                 viewMode === 'grid' ? 'bg-white text-black shadow-xs' : 'text-gray-500 hover:text-black'
               }`}
               title="Grid View"
             >
-              <Grid className="w-4 h-4" />
+              <Grid className="w-3.5 h-3.5" />
             </button>
 
             <button
@@ -451,40 +475,31 @@ export default function Index({ media, filters, stats }: MediaIndexProps) {
                 setViewMode('list');
                 handleFilterChange({ view: 'list' });
               }}
-              className={`p-1.5 rounded-[6px] transition-colors cursor-pointer ${
+              className={`p-1.5 rounded-[6px] transition-all cursor-pointer ${
                 viewMode === 'list' ? 'bg-white text-black shadow-xs' : 'text-gray-500 hover:text-black'
               }`}
               title="List View"
             >
-              <ListIcon className="w-4 h-4" />
+              <ListIcon className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* Type Filter */}
-          <select
+          {/* Custom Type Filter Dropdown */}
+          <CustomDropdown
             value={filters.type || 'all'}
-            onChange={(e) => handleFilterChange({ type: e.target.value })}
-            className="bg-gray-50 border border-gray-200 rounded-[8px] py-1.5 px-3 text-xs font-bold text-gray-800 focus:outline-hidden focus:border-black cursor-pointer"
-          >
-            <option value="all">All Media Items</option>
-            <option value="image">Images Only</option>
-            <option value="video">Videos Only</option>
-            <option value="document">Documents / PDFs</option>
-          </select>
+            options={typeOptions}
+            onChange={(type) => handleFilterChange({ type })}
+            menuWidth="w-48"
+          />
 
-          {/* Sort Filter */}
-          <select
+          {/* Custom Sort Filter Dropdown */}
+          <CustomDropdown
             value={filters.sort || 'latest'}
-            onChange={(e) => handleFilterChange({ sort: e.target.value })}
-            className="bg-gray-50 border border-gray-200 rounded-[8px] py-1.5 px-3 text-xs font-bold text-gray-800 focus:outline-hidden focus:border-black cursor-pointer"
-          >
-            <option value="latest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="name_asc">Title (A – Z)</option>
-            <option value="name_desc">Title (Z – A)</option>
-            <option value="size_desc">File Size (Largest)</option>
-            <option value="size_asc">File Size (Smallest)</option>
-          </select>
+            options={sortOptions}
+            onChange={(sort) => handleFilterChange({ sort })}
+            icon={ArrowUpDown}
+            menuWidth="w-48"
+          />
 
           {/* Search Box */}
           <form onSubmit={handleSearchSubmit} className="relative flex-1 min-w-[200px] max-w-xs">
@@ -494,28 +509,37 @@ export default function Index({ media, filters, stats }: MediaIndexProps) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by file name..."
-              className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-1.5 pl-8 pr-3 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white"
+              className="w-full bg-white border border-gray-200/90 rounded-[8px] py-1.5 pl-8 pr-7 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:ring-2 focus:ring-black/10 transition-all shadow-2xs"
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch('');
+                  handleFilterChange({ search: '' });
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black p-0.5 cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
           </form>
         </div>
 
-        {/* Right: Storage Stats & Per Page */}
+        {/* Right: Storage Stats & Per Page Dropdown */}
         <div className="flex items-center justify-between md:justify-end gap-3 pt-2 md:pt-0 border-t md:border-t-0 border-gray-100">
           <div className="flex items-center gap-1.5 text-xs text-gray-500 font-semibold">
             <HardDrive className="w-3.5 h-3.5 text-gray-400" />
-            <span>Total Storage: {stats.total_size}</span>
+            <span>Total Storage: <strong className="text-gray-900">{stats.total_size}</strong></span>
           </div>
 
-          <select
+          <CustomDropdown
             value={filters.per_page || 24}
-            onChange={(e) => handleFilterChange({ per_page: Number(e.target.value) })}
-            className="bg-gray-50 border border-gray-200 rounded-[8px] py-1.5 px-2.5 text-xs font-bold text-gray-700 focus:outline-hidden focus:border-black cursor-pointer"
-          >
-            <option value={12}>12 / page</option>
-            <option value={24}>24 / page</option>
-            <option value={48}>48 / page</option>
-            <option value={96}>96 / page</option>
-          </select>
+            options={perPageOptions}
+            onChange={(per_page) => handleFilterChange({ per_page: Number(per_page) })}
+            align="right"
+            menuWidth="w-32"
+          />
         </div>
       </div>
 
