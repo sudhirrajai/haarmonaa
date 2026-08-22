@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -34,7 +35,19 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
-            return redirect()->intended(route('admin.dashboard'));
+            /** @var User $user */
+            $user = Auth::user();
+
+            // Link any past guest orders matching this user's email
+            Order::where('customer_email', $user->email)
+                ->whereNull('user_id')
+                ->update(['user_id' => $user->id]);
+
+            if ($user->isAdmin()) {
+                return redirect()->intended(route('admin.dashboard'));
+            }
+
+            return redirect()->intended(route('account.index'));
         }
 
         return back()->withErrors([
@@ -60,14 +73,24 @@ class AuthController extends Controller
 
         $user = User::create([
             'name' => $validated['name'],
-            'email' => $validated['email'],
+            'email' => strtolower(trim($validated['email'])),
             'phone' => $validated['phone'] ?? null,
+            'role' => 'customer',
             'password' => Hash::make($validated['password']),
         ]);
 
+        // Automatically link all previous guest orders placed with this email
+        $linkedOrdersCount = Order::where('customer_email', $user->email)
+            ->whereNull('user_id')
+            ->update(['user_id' => $user->id]);
+
         Auth::login($user);
 
-        return redirect()->intended(route('admin.dashboard'));
+        $welcomeMessage = $linkedOrdersCount > 0
+            ? "Welcome to Haarmonaa! We found and linked {$linkedOrdersCount} order(s) previously placed with {$user->email}."
+            : 'Welcome to Haarmonaa! Your account has been created successfully.';
+
+        return redirect()->route('account.index')->with('success', $welcomeMessage);
     }
 
     public function logout(Request $request): RedirectResponse

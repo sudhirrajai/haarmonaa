@@ -15,11 +15,13 @@ use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\SeoController;
+use App\Http\Controllers\Shop\AccountController;
 use App\Http\Controllers\Shop\CheckoutController;
 use App\Http\Controllers\Shop\CouponController as ShopCouponController;
 use App\Http\Controllers\Shop\RazorpayWebhookController;
 use App\Http\Controllers\Shop\SearchController;
 use App\Http\Controllers\ShopController;
+use App\Http\Middleware\AdminMiddleware;
 use Illuminate\Support\Facades\Route;
 
 // SEO & AI Crawlers (XML Sitemap & LLMs.txt)
@@ -64,8 +66,17 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-// Admin Panel Routes (Protected by Auth)
-Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
+// Customer Account Portal (Protected by Auth)
+Route::prefix('account')->name('account.')->middleware('auth')->group(function () {
+    Route::get('/', [AccountController::class, 'index'])->name('index');
+    Route::get('/orders', [AccountController::class, 'orders'])->name('orders');
+    Route::get('/orders/{order_number}', [AccountController::class, 'orderDetail'])->name('orders.show');
+    Route::put('/profile', [AccountController::class, 'updateProfile'])->name('profile.update');
+    Route::post('/verify-email', [AccountController::class, 'verifyEmail'])->name('verify-email');
+});
+
+// Admin Panel Routes (Protected by Auth & Admin Role)
+Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
 
     // Products CSV Import & Export

@@ -58,7 +58,12 @@ export default function Register({ products = [] }: RegisterProps) {
 
           {/* Form Container */}
           <div className="space-y-6 text-left">
-            <h2 className="text-xl font-bold text-gray-900 text-center">Create Account</h2>
+            <div className="text-center space-y-1">
+              <h2 className="text-xl font-bold text-gray-900">Create Account</h2>
+              <p className="text-xs text-gray-500">
+                Placed an order as a guest? Register with the same email to view your order history & tracking.
+              </p>
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Full Name */}
