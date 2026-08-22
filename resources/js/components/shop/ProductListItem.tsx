@@ -108,8 +108,20 @@ export const ProductListItem: React.FC<ProductListItemProps> = ({
         </div>
 
         {/* Description Text */}
-        <p className="text-[13.5px] sm:text-[14px] text-gray-600 leading-relaxed max-w-2xl">
-          {product.description}
+        <p className="text-[13px] sm:text-[13.5px] text-gray-600 leading-relaxed max-w-2xl line-clamp-3">
+          {(() => {
+            if (!product.description) return '';
+            return product.description
+              .replace(/<[^>]*>?/gm, ' ')
+              .replace(/&amp;/g, '&')
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .replace(/&quot;/g, '"')
+              .replace(/&#39;/g, "'")
+              .replace(/&nbsp;/g, ' ')
+              .replace(/\s+/g, ' ')
+              .trim();
+          })()}
         </p>
 
         {/* Action Buttons Row */}

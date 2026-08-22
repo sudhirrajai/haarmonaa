@@ -120,8 +120,20 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({
                 </div>
               </div>
 
-              <p className="text-xs text-gray-600 leading-relaxed">
-                {product.description}
+              <p className="text-xs text-gray-600 leading-relaxed line-clamp-3">
+                {(() => {
+                  if (!product.description) return '';
+                  return product.description
+                    .replace(/<[^>]*>?/gm, ' ')
+                    .replace(/&amp;/g, '&')
+                    .replace(/&lt;/g, '<')
+                    .replace(/&gt;/g, '>')
+                    .replace(/&quot;/g, '"')
+                    .replace(/&#39;/g, "'")
+                    .replace(/&nbsp;/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                })()}
               </p>
 
               {/* Color Selection */}
