@@ -45,6 +45,7 @@ Route::post('/checkout/recalculate-coupons', [ShopCouponController::class, 'reca
 Route::post('/checkout/create-razorpay-order', [CheckoutController::class, 'createRazorpayOrder'])->name('shop.razorpay.create-order');
 Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('shop.checkout.process');
 Route::post('/payment/razorpay/verify', [CheckoutController::class, 'verifyRazorpay'])->name('shop.razorpay.verify');
+Route::get('/order-success/{order_number}', [CheckoutController::class, 'orderSuccess'])->name('shop.orderSuccess');
 Route::post('/api/webhooks/razorpay', [RazorpayWebhookController::class, 'handle'])->name('webhooks.razorpay');
 Route::post('/webhooks/razorpay', [RazorpayWebhookController::class, 'handle'])->name('webhooks.razorpay.alt');
 Route::get('/wishlist', [ShopController::class, 'wishlist'])->name('shop.wishlist');
