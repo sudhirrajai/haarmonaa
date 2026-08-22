@@ -10,7 +10,9 @@ import {
   Link as LinkIcon,
   Loader2,
   AlertCircle,
+  Layers,
 } from 'lucide-react';
+import { MediaPickerModal } from '@/components/admin/MediaPickerModal';
 
 interface ProductMediaManagerProps {
   images: string[];
@@ -28,6 +30,7 @@ export const ProductMediaManager: React.FC<ProductMediaManagerProps> = ({
   const [urlInput, setUrlInput] = useState('');
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isMaxReached = images.length >= maxImages;
@@ -122,7 +125,7 @@ export const ProductMediaManager: React.FC<ProductMediaManagerProps> = ({
   return (
     <div className="space-y-4">
       {/* Header Info */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1">
         <div>
           <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
             <ImageIcon className="w-4 h-4 text-amber-600" />
@@ -132,15 +135,29 @@ export const ProductMediaManager: React.FC<ProductMediaManagerProps> = ({
             The 1st image is <strong className="text-black">Primary Cover</strong>, 2nd is <strong className="text-black">Hover</strong>, rest are <strong className="text-black">Gallery</strong>.
           </p>
         </div>
-        <span
-          className={`px-2.5 py-1 font-extrabold text-[11px] rounded-full border shrink-0 ${
-            isMaxReached
-              ? 'bg-rose-50 text-rose-800 border-rose-200'
-              : 'bg-amber-50 text-amber-900 border-amber-200'
-          }`}
-        >
-          {images.length} / {maxImages} Max
-        </span>
+
+        <div className="flex items-center gap-2">
+          {/* WordPress-style Choose from Media Library Button */}
+          <button
+            type="button"
+            disabled={isMaxReached}
+            onClick={() => setMediaPickerOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#111111] hover:bg-[#d0473e] text-white rounded-[10px] text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50"
+          >
+            <Layers className="w-3.5 h-3.5 text-amber-300" />
+            <span>Choose from Media Library</span>
+          </button>
+
+          <span
+            className={`px-2.5 py-1 font-extrabold text-[11px] rounded-full border shrink-0 ${
+              isMaxReached
+                ? 'bg-rose-50 text-rose-800 border-rose-200'
+                : 'bg-amber-50 text-amber-900 border-amber-200'
+            }`}
+          >
+            {images.length} / {maxImages} Max
+          </span>
+        </div>
       </div>
 
       {/* Upload & Drag Drop Zone */}
@@ -193,7 +210,7 @@ export const ProductMediaManager: React.FC<ProductMediaManagerProps> = ({
                 : 'Click to Upload or Drag & Drop Images'}
             </span>
             <span className="text-[11px] text-gray-400 block mt-0.5">
-              Supports PNG, JPG, WEBP, SVG (Max 10MB per file)
+              Uploaded files are also automatically stored in your store Media Library.
             </span>
           </div>
         </div>
@@ -221,6 +238,18 @@ export const ProductMediaManager: React.FC<ProductMediaManagerProps> = ({
           <span>Add URL</span>
         </button>
       </form>
+
+      {/* Media Picker Modal */}
+      <MediaPickerModal
+        isOpen={mediaPickerOpen}
+        onClose={() => setMediaPickerOpen(false)}
+        multiple={true}
+        maxSelect={maxImages - images.length}
+        title="Select Product Images from Media Library"
+        onSelect={(selected) => {
+          onChange([...images, ...selected].slice(0, maxImages));
+        }}
+      />
 
       {error && <span className="text-rose-500 text-[11px] block font-semibold">{error}</span>}
 

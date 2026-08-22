@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Attribute;
 use App\Models\Category;
 use App\Models\Collection;
+use App\Models\Media;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -336,12 +337,33 @@ class ProductController extends Controller
             'file' => 'required|image|mimes:jpeg,png,jpg,webp,gif,svg|max:10240',
         ]);
 
-        $path = $request->file('file')->store('products', 'public');
+        $uploadedFile = $request->file('file');
+        $originalName = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = $uploadedFile->getClientOriginalExtension();
+        $mimeType = $uploadedFile->getMimeType() ?: 'image/jpeg';
+        $size = $uploadedFile->getSize() ?: 0;
+
+        $slugName = Str::slug($originalName);
+        $uniqueFileName = $slugName.'-'.time().'-'.Str::random(6).'.'.$extension;
+
+        $path = $uploadedFile->storeAs('media', $uniqueFileName, 'public');
         $url = Storage::url($path);
+
+        // Index in Media table so it appears in the Media Library
+        $media = Media::create([
+            'name' => $originalName,
+            'file_name' => $uniqueFileName,
+            'disk' => 'public',
+            'mime_type' => $mimeType,
+            'size' => $size,
+            'url' => $url,
+            'alt_text' => $originalName,
+        ]);
 
         return response()->json([
             'success' => true,
             'url' => $url,
+            'media' => $media,
         ]);
     }
 

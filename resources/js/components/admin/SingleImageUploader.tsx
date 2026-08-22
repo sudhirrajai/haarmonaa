@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Loader2, Layers } from 'lucide-react';
+import { MediaPickerModal } from '@/components/admin/MediaPickerModal';
 
 interface SingleImageUploaderProps {
   value?: string;
@@ -21,6 +22,7 @@ export function SingleImageUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
 
   const handleFileUpload = async (file: File) => {
     if (!file) return;
@@ -130,6 +132,17 @@ export function SingleImageUploader({
               <span>{isUploading ? 'Uploading...' : 'Upload From System'}</span>
             </button>
 
+            {/* Choose from Media Library Button */}
+            <button
+              type="button"
+              disabled={isUploading}
+              onClick={() => setMediaPickerOpen(true)}
+              className="px-4 py-2 bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 text-xs font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-2 shrink-0 shadow-2xs disabled:opacity-50"
+            >
+              <Layers className="w-3.5 h-3.5 text-amber-600" />
+              <span>Choose from Library</span>
+            </button>
+
             {value && (
               <button
                 type="button"
@@ -140,6 +153,19 @@ export function SingleImageUploader({
               </button>
             )}
           </div>
+
+          {/* Media Picker Modal */}
+          <MediaPickerModal
+            isOpen={mediaPickerOpen}
+            onClose={() => setMediaPickerOpen(false)}
+            multiple={false}
+            title={`Select ${label} from Media Library`}
+            onSelect={(selected) => {
+              if (selected[0]) {
+                onChange(selected[0]);
+              }
+            }}
+          />
 
           {/* Fallback Direct URL input */}
           <input

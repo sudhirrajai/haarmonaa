@@ -82,6 +82,17 @@ class MediaController extends Controller
         }
         $formattedTotalSize = round($bytes, 2).' '.($units[$i] ?? 'B');
 
+        if ($request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return response()->json([
+                'success' => true,
+                'media' => $mediaList,
+                'stats' => [
+                    'total_count' => $totalCount,
+                    'total_size' => $formattedTotalSize,
+                ],
+            ]);
+        }
+
         return Inertia::render('Admin/Media/Index', [
             'media' => $mediaList,
             'filters' => [
