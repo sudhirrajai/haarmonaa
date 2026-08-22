@@ -10,6 +10,7 @@ import { SplitHeroSlider, SplitSlide } from '@/components/shop/SplitHeroSlider';
 import { PromoDualBanners, PromoCardData } from '@/components/shop/PromoDualBanners';
 import { ShopByGram } from '@/components/shop/ShopByGram';
 import { FeaturedProductSlider } from '@/components/shop/FeaturedProductSlider';
+import { CategorySlider } from '@/components/shop/CategorySlider';
 
 interface SeasonalConfig {
   enabled: boolean;
@@ -235,48 +236,54 @@ export default function Home({
               Unmatched design with supreme performance and satisfaction.
             </p>
 
-            {/* Category Filter Tabs */}
-            <div className="flex flex-wrap justify-center gap-2 mt-6 sm:mt-8">
-              <button
-                onClick={() => setActiveCategoryTab('all')}
-                className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                  activeCategoryTab === 'all'
-                    ? 'bg-[#111111] text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                All Jewelry
-              </button>
-              <button
-                onClick={() => setActiveCategoryTab('earrings')}
-                className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                  activeCategoryTab === 'earrings'
-                    ? 'bg-[#111111] text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                Earrings & Hoops
-              </button>
-              <button
-                onClick={() => setActiveCategoryTab('necklaces')}
-                className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                  activeCategoryTab === 'necklaces'
-                    ? 'bg-[#111111] text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                Necklaces & Pendants
-              </button>
-              <button
-                onClick={() => setActiveCategoryTab('bracelets')}
-                className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                  activeCategoryTab === 'bracelets'
-                    ? 'bg-[#111111] text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                Bangles & Rings
-              </button>
+            {/* Category Filter Tabs - One Single Line */}
+            <div className="w-full overflow-x-auto no-scrollbar py-2 mt-6 sm:mt-8">
+              <div className="flex flex-nowrap items-center justify-center gap-2 sm:gap-2.5 min-w-max mx-auto px-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveCategoryTab('all')}
+                  className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                    activeCategoryTab === 'all'
+                      ? 'bg-[#111111] text-white shadow-md'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  All Jewelry
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveCategoryTab('earrings')}
+                  className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                    activeCategoryTab === 'earrings'
+                      ? 'bg-[#111111] text-white shadow-md'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  Earrings & Hoops
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveCategoryTab('necklaces')}
+                  className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                    activeCategoryTab === 'necklaces'
+                      ? 'bg-[#111111] text-white shadow-md'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  Necklaces & Pendants
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveCategoryTab('bracelets')}
+                  className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                    activeCategoryTab === 'bracelets'
+                      ? 'bg-[#111111] text-white shadow-md'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  Bangles & Rings
+                </button>
+              </div>
             </div>
           </div>
 
@@ -304,51 +311,8 @@ export default function Home({
         </div>
       </section>
 
-      {/* Featured Categories Carousel Section */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-gray-50/70 border-y border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 sm:mb-10 lg:mb-12">
-            <div>
-              <span className="text-xs font-bold uppercase text-[#d0473e] tracking-widest block mb-1">
-                FINE CRAFTSMANSHIP
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-                Shop By Category
-              </h2>
-            </div>
-            <Link
-              href="/shop"
-              className="mt-4 md:mt-0 text-xs font-bold uppercase tracking-wider text-gray-900 hover:text-[#d0473e] flex items-center gap-1 transition-colors"
-            >
-              <span>View All Categories</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/category/${cat.slug}`}
-                className="group relative aspect-4/5 rounded-3xl overflow-hidden bg-white shadow-xs hover:shadow-xl transition-all duration-500"
-              >
-                <img
-                  src={cat.image}
-                  alt={cat.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-108"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent transition-opacity" />
-                <div className="absolute bottom-6 inset-x-6 text-white text-center">
-                  <h3 className="text-base font-extrabold tracking-tight mb-1">{cat.name}</h3>
-                  <span className="text-xs font-medium text-gray-300">
-                    {cat.itemCount} Designs
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Full-Width Shop By Category Interactive Horizontal Slider Section */}
+      <CategorySlider categories={categories} />
 
       {/* Two Promotional Banner Cards Section (Live from Admin CMS) */}
       {promoBannersEnabled && banners && banners.length > 0 && (
