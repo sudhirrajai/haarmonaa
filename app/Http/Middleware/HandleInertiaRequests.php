@@ -69,6 +69,7 @@ class HandleInertiaRequests extends Middleware
                 'nav_categories' => Category::with(['children' => function ($q) {
                     $q->orderBy('name');
                 }])->parents()->orderBy('name')->get(['id', 'name', 'slug', 'parent_id']),
+                'enable_topbar' => filter_var(Setting::get('enable_topbar', '1'), FILTER_VALIDATE_BOOLEAN),
                 'topbar_text' => Setting::get('topbar_text', 'COMPLIMENTARY LUXURY GIFT BOX & EXPRESS SHIPPING ON ALL ORDERS'),
                 'topbar_link' => Setting::get('topbar_link', ''),
                 'topbar_bg_color' => Setting::get('topbar_bg_color', '#111111'),

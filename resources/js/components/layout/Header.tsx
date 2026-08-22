@@ -131,12 +131,14 @@ export const Header: React.FC<HeaderProps> = ({
     (item: any) => item.is_enabled !== false
   );
 
+  const isTopbarVisible = storeSettings.enable_topbar === true || storeSettings.enable_topbar === '1' || storeSettings.enable_topbar === 'true';
+
   return (
     <>
       {/* Sticky Header Container */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100/90 shadow-2xs transition-all w-full">
         {/* Dynamic Top Promotional Bar (Customizable from Admin) */}
-        {storeSettings.enable_topbar !== false && (
+        {isTopbarVisible && (
           <div
             style={{
               backgroundColor: storeSettings.topbar_bg_color || '#111111',

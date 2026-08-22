@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { DeleteConfirmModal } from '@/components/admin/DeleteConfirmModal';
@@ -13,6 +13,8 @@ import {
   CornerDownRight,
   Layers,
   ChevronRight,
+  ChevronDown,
+  Check,
   Filter,
 } from 'lucide-react';
 import { AdminPagination, PaginationData } from '@/components/admin/AdminPagination';
@@ -135,12 +137,36 @@ export default function Index({ categories, allCategories = [], filters = {} }: 
     });
   };
 
+  const [parentDropdownOpen, setParentDropdownOpen] = useState(false);
+  const [parentSearch, setParentSearch] = useState('');
+  const parentDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close parent dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (parentDropdownRef.current && !parentDropdownRef.current.contains(event.target as Node)) {
+        setParentDropdownOpen(false);
+      }
+    };
+    if (parentDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [parentDropdownOpen]);
+
   // Eligible parent options (cannot be self or child of self when editing)
   const availableParents = allCategories.filter((c) => {
     if (!editingCategory) return true;
     if (c.id === editingCategory.id) return false;
     return true;
   });
+
+  const filteredParents = availableParents.filter((p) =>
+    p.name.toLowerCase().includes(parentSearch.toLowerCase()) ||
+    p.slug.toLowerCase().includes(parentSearch.toLowerCase())
+  );
+
+  const selectedParent = availableParents.find((p) => String(p.id) === String(formData.parent_id));
 
   return (
     <AdminLayout title="Categories">
@@ -390,25 +416,189 @@ export default function Index({ categories, allCategories = [], filters = {} }: 
                 />
               </div>
 
-              {/* Parent Category Selector */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                  Parent Category (Hierarchy)
+              {/* Parent Category Custom Dropdown Selector */}
+              <div className="relative" ref={parentDropdownRef}>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5 flex items-center justify-between">
+                  <span>Parent Category (Hierarchy)</span>
+                  {formData.parent_id && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, parent_id: '' })}
+                      className="text-[11px] font-bold text-[#d0473e] hover:underline cursor-pointer"
+                    >
+                      Clear / Make Top-Level
+                    </button>
+                  )}
                 </label>
-                <select
-                  value={formData.parent_id}
-                  onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
+
+                {/* Custom Trigger Button */}
+                <button
+                  type="button"
+                  onClick={() => setParentDropdownOpen(!parentDropdownOpen)}
+                  className="w-full bg-gray-50 hover:bg-white border border-gray-200 hover:border-black focus:border-black rounded-xl p-3 text-xs text-gray-900 transition-all flex items-center justify-between shadow-2xs cursor-pointer group"
                 >
-                  <option value="">— None (Top-Level / Main Category) —</option>
-                  {availableParents.map((parent) => (
-                    <option key={parent.id} value={parent.id}>
-                      {parent.name} {parent.parent_id ? ' (Subcategory)' : ''}
-                    </option>
-                  ))}
-                </select>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {selectedParent ? (
+                      <>
+                        <div className="w-6 h-6 rounded-lg bg-amber-50 text-amber-800 flex items-center justify-center shrink-0 border border-amber-200">
+                          <CornerDownRight className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="text-left truncate">
+                          <span className="font-bold text-gray-900 block truncate">
+                            {selectedParent.name}
+                          </span>
+                          <span className="text-[10px] text-gray-400 font-mono">
+                            /{selectedParent.slug}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-6 h-6 rounded-lg bg-gray-200 text-gray-700 flex items-center justify-center shrink-0">
+                          <Layers className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="text-left">
+                          <span className="font-bold text-gray-800 block">
+                            None (Top-Level / Main Category)
+                          </span>
+                          <span className="text-[10.5px] text-gray-400">
+                            Primary standalone catalog group
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-gray-100 text-gray-600">
+                      {selectedParent ? 'Subcategory' : 'Main'}
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 text-gray-400 group-hover:text-black transition-transform duration-200 ${
+                        parentDropdownOpen ? 'rotate-180 text-black' : ''
+                      }`}
+                    />
+                  </div>
+                </button>
+
+                {/* Custom Animated Dropdown Menu */}
+                {parentDropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-gray-200 shadow-2xl rounded-2xl p-2 z-50 animate-fade-in max-h-72 flex flex-col">
+                    {/* Search inside dropdown if categories > 4 */}
+                    {availableParents.length > 4 && (
+                      <div className="p-1 pb-2 border-b border-gray-100">
+                        <div className="relative">
+                          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                          <input
+                            type="text"
+                            value={parentSearch}
+                            onChange={(e) => setParentSearch(e.target.value)}
+                            placeholder="Filter parent categories..."
+                            className="w-full pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:bg-white focus:border-black focus:outline-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="overflow-y-auto space-y-1 py-1 flex-1">
+                      {/* Option 1: None (Top-Level Category) */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData({ ...formData, parent_id: '' });
+                          setParentDropdownOpen(false);
+                          setParentSearch('');
+                        }}
+                        className={`w-full p-2.5 rounded-xl text-left flex items-center justify-between transition-all cursor-pointer ${
+                          !formData.parent_id
+                            ? 'bg-amber-50/80 text-amber-950 font-bold border border-amber-200'
+                            : 'hover:bg-gray-50 text-gray-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-6 h-6 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                            <Layers className="w-3.5 h-3.5" />
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold block">
+                              None (Top-Level / Main Category)
+                            </span>
+                            <span className="text-[10px] text-gray-400">
+                              Standalone category (e.g. Earrings, Rings)
+                            </span>
+                          </div>
+                        </div>
+
+                        {!formData.parent_id && <Check className="w-4 h-4 text-amber-700 shrink-0" />}
+                      </button>
+
+                      {/* Filtered Parent Categories */}
+                      {filteredParents.length > 0 && (
+                        <div className="pt-2">
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2.5 pb-1 block">
+                            Select Parent Category:
+                          </span>
+                          {filteredParents.map((parent) => {
+                            const isSelected = String(formData.parent_id) === String(parent.id);
+                            return (
+                              <button
+                                key={parent.id}
+                                type="button"
+                                onClick={() => {
+                                  setFormData({ ...formData, parent_id: String(parent.id) });
+                                  setParentDropdownOpen(false);
+                                  setParentSearch('');
+                                }}
+                                className={`w-full p-2.5 rounded-xl text-left flex items-center justify-between transition-all cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-black text-white font-bold'
+                                    : 'hover:bg-gray-50 text-gray-800'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div
+                                    className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
+                                      isSelected
+                                        ? 'bg-white/20 text-white'
+                                        : parent.parent_id
+                                        ? 'bg-gray-100 text-gray-500'
+                                        : 'bg-amber-50 text-amber-800'
+                                    }`}
+                                  >
+                                    {parent.parent_id ? (
+                                      <CornerDownRight className="w-3.5 h-3.5" />
+                                    ) : (
+                                      <Layers className="w-3.5 h-3.5" />
+                                    )}
+                                  </div>
+
+                                  <div className="truncate">
+                                    <span className="text-xs font-semibold block truncate">
+                                      {parent.name}
+                                    </span>
+                                    <span
+                                      className={`text-[10px] font-mono block ${
+                                        isSelected ? 'text-gray-300' : 'text-gray-400'
+                                      }`}
+                                    >
+                                      /{parent.slug}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {isSelected && <Check className="w-4 h-4 text-white shrink-0" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <p className="text-[11px] text-gray-400 mt-1">
-                  Leave empty to create a top-level category (e.g. Earrings), or select a parent to create a subcategory (e.g. Hoops under Earrings).
+                  Choose a parent to nest this under (e.g. Hoops under Earrings), or leave as None for top-level categories.
                 </p>
               </div>
 

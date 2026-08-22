@@ -64,6 +64,12 @@ class SettingController extends Controller
             'razorpay_mode' => 'nullable|string|in:test,live',
         ]);
 
+        if (isset($validated['enable_topbar'])) {
+            $enableTopbar = filter_var($validated['enable_topbar'], FILTER_VALIDATE_BOOLEAN) ? '1' : '0';
+            Setting::set('enable_topbar', $enableTopbar);
+            unset($validated['enable_topbar']);
+        }
+
         foreach ($validated as $key => $val) {
             if (is_array($val)) {
                 Setting::set($key, json_encode($val));
