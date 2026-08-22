@@ -60,13 +60,22 @@ const defaultSlides: SplitSlide[] = [
 ];
 
 export const SplitHeroSlider: React.FC<SplitHeroSliderProps> = ({
-  slides: rawSlides = defaultSlides,
+  slides: rawSlides,
   autoPlayInterval = 6500,
 }) => {
-  const activeSlides = (rawSlides && rawSlides.length > 0 ? rawSlides : defaultSlides).filter(
-    (s) => s.enabled !== false
-  );
-  const slides = activeSlides.length > 0 ? activeSlides : defaultSlides;
+  // If rawSlides is explicitly passed as empty array, or if all slides are disabled, return null (hide slider completely)
+  if (rawSlides !== undefined && rawSlides.length === 0) {
+    return null;
+  }
+
+  const candidateSlides = rawSlides && rawSlides.length > 0 ? rawSlides : defaultSlides;
+  const activeSlides = candidateSlides.filter((s) => s.enabled !== false);
+
+  if (activeSlides.length === 0) {
+    return null;
+  }
+
+  const slides = activeSlides;
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);

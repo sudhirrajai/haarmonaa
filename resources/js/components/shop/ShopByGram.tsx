@@ -154,8 +154,31 @@ const renderFeatureIcon = (iconName: string) => {
   }
 };
 
-export const ShopByGram: React.FC = () => {
+interface ShopByGramProps {
+  shopByGramEnabled?: boolean;
+  trustBadgesEnabled?: boolean;
+}
+
+export const ShopByGram: React.FC<ShopByGramProps> = ({
+  shopByGramEnabled,
+  trustBadgesEnabled,
+}) => {
   const { settings } = (usePage().props as any) || {};
+
+  const isGramActive =
+    shopByGramEnabled !== undefined
+      ? shopByGramEnabled
+      : settings?.homepage_shop_by_gram_enabled !== '0' && settings?.homepage_shop_by_gram_enabled !== false;
+
+  const isTrustActive =
+    trustBadgesEnabled !== undefined
+      ? trustBadgesEnabled
+      : settings?.homepage_trust_badges_enabled !== '0' && settings?.homepage_trust_badges_enabled !== false;
+
+  // If both sections are disabled, do not render this entire component
+  if (!isGramActive && !isTrustActive) {
+    return null;
+  }
 
   const instagramUrl = settings?.instagram_url || 'https://instagram.com';
   const instagramHandle = settings?.instagram_handle || '@haarmonaa';
@@ -172,7 +195,8 @@ export const ShopByGram: React.FC = () => {
 
   // Fallback broken image handler
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    e.currentTarget.src = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop';
+    e.currentTarget.src =
+      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop';
   };
 
   // Dynamic responsive grid columns for Trust Features
@@ -185,100 +209,105 @@ export const ShopByGram: React.FC = () => {
 
   return (
     <section className="py-16 sm:py-20 bg-white border-t border-gray-100 overflow-hidden">
-      {/* Section Header */}
-      <div className="text-center max-w-2xl mx-auto px-4 mb-10 sm:mb-12 space-y-2">
-        <a
-          href={instagramUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 group cursor-pointer"
-        >
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight group-hover:text-[#d0473e] transition-colors">
-            Shop by Gram
-          </h2>
-          <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-[#d0473e] transition-colors" />
-        </a>
-        <p className="text-xs sm:text-[13.5px] text-gray-500 font-medium">
-          Inspire and let yourself be inspired, from one unique fashion to another. Follow{' '}
-          <a
-            href={instagramUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-gray-900 font-bold hover:underline"
-          >
-            {instagramHandle}
-          </a>
-        </p>
-      </div>
-
-      {/* FULL-WIDTH Instagram Gallery Grid */}
-      <div className="w-full px-2 sm:px-4 lg:px-6 mb-16 sm:mb-20">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-4">
-          {rawPosts.map((item, idx) => (
+      {/* 1. Shop by Gram Instagram Section (Controlled by Toggle) */}
+      {isGramActive && (
+        <>
+          {/* Section Header */}
+          <div className="text-center max-w-2xl mx-auto px-4 mb-10 sm:mb-12 space-y-2">
             <a
-              key={item.id || idx}
-              href={item.url || instagramUrl}
+              href={instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative aspect-square rounded-[10px] overflow-hidden bg-gray-100 block shadow-2xs transition-all duration-500 hover:shadow-xl"
+              className="inline-flex items-center gap-2 group cursor-pointer"
             >
-              <img
-                src={item.image}
-                alt={item.alt || 'Haarmonaa Jewelry Instagram'}
-                onError={handleImageError}
-                className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-              />
-              {/* Dark Hover Glassmorphic Overlay with Instagram Handle */}
-              <div className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-3 text-white">
-                <svg
-                  className="w-7 h-7 text-white transform scale-75 group-hover:scale-100 transition-transform duration-300 mb-1.5"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                </svg>
-                <span className="text-[11px] font-bold tracking-wider opacity-90 truncate max-w-full px-2">
-                  {item.handle || instagramHandle}
-                </span>
-                <span className="text-[9px] uppercase tracking-widest text-amber-300 font-extrabold mt-1">
-                  Shop Look
-                </span>
-              </div>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight group-hover:text-[#d0473e] transition-colors">
+                Shop by Gram
+              </h2>
+              <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-[#d0473e] transition-colors" />
             </a>
-          ))}
-        </div>
-      </div>
+            <p className="text-xs sm:text-[13.5px] text-gray-500 font-medium">
+              Inspire and let yourself be inspired, from one unique fashion to another. Follow{' '}
+              <a
+                href={instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-900 font-bold hover:underline"
+              >
+                {instagramHandle}
+              </a>
+            </p>
+          </div>
 
-      {/* Dynamic Trust Features / Value Proposition Cards */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div
-          className={`grid gap-8 sm:gap-10 text-center pt-2 ${getFeatureGridClass(
-            rawFeatures.length
-          )}`}
-        >
-          {rawFeatures.map((feat, idx) => (
-            <div key={feat.id || idx} className="space-y-2.5 px-2">
-              <div className="w-10 h-10 mx-auto flex items-center justify-center text-gray-900">
-                {feat.custom_icon ? (
+          {/* FULL-WIDTH Instagram Gallery Grid */}
+          <div className={`w-full px-2 sm:px-4 lg:px-6 ${isTrustActive ? 'mb-16 sm:mb-20' : ''}`}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-4">
+              {rawPosts.map((item, idx) => (
+                <a
+                  key={item.id || idx}
+                  href={item.url || instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative aspect-square rounded-[10px] overflow-hidden bg-gray-100 block shadow-2xs transition-all duration-500 hover:shadow-xl"
+                >
                   <img
-                    src={feat.custom_icon}
-                    alt={feat.title}
-                    className="w-8 h-8 object-contain mx-auto"
+                    src={item.image}
+                    alt={item.alt || 'Haarmonaa Jewelry Instagram'}
+                    onError={handleImageError}
+                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                   />
-                ) : (
-                  renderFeatureIcon(feat.icon)
-                )}
-              </div>
-              <h3 className="font-bold text-gray-900 text-sm tracking-tight">
-                {feat.title}
-              </h3>
-              <p className="text-xs text-gray-500 leading-relaxed max-w-[280px] mx-auto font-normal">
-                {feat.description}
-              </p>
+                  {/* Dark Hover Glassmorphic Overlay with Instagram Handle */}
+                  <div className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-3 text-white">
+                    <svg
+                      className="w-7 h-7 text-white transform scale-75 group-hover:scale-100 transition-transform duration-300 mb-1.5"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                    </svg>
+                    <span className="text-[11px] font-bold tracking-wider opacity-90 truncate max-w-full px-2">
+                      {item.handle || instagramHandle}
+                    </span>
+                    <span className="text-[9px] uppercase tracking-widest text-amber-300 font-extrabold mt-1">
+                      Shop Look
+                    </span>
+                  </div>
+                </a>
+              ))}
             </div>
-          ))}
+          </div>
+        </>
+      )}
+
+      {/* 2. Dynamic Trust Features / Value Proposition Cards (Controlled by Toggle) */}
+      {isTrustActive && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div
+            className={`grid gap-8 sm:gap-10 text-center pt-2 ${getFeatureGridClass(
+              rawFeatures.length
+            )}`}
+          >
+            {rawFeatures.map((feat, idx) => (
+              <div key={feat.id || idx} className="space-y-2.5 px-2">
+                <div className="w-10 h-10 mx-auto flex items-center justify-center text-gray-900">
+                  {feat.custom_icon ? (
+                    <img
+                      src={feat.custom_icon}
+                      alt={feat.title}
+                      className="w-8 h-8 object-contain mx-auto"
+                    />
+                  ) : (
+                    renderFeatureIcon(feat.icon)
+                  )}
+                </div>
+                <h3 className="font-bold text-gray-900 text-sm tracking-tight">{feat.title}</h3>
+                <p className="text-xs text-gray-500 leading-relaxed max-w-[280px] mx-auto font-normal">
+                  {feat.description}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 };

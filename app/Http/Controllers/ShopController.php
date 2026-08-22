@@ -120,8 +120,13 @@ class ShopController extends Controller
         }
 
         // CMS Dynamic Settings
+        $heroSliderEnabled = Setting::get('homepage_hero_slider_enabled', '1') !== '0';
         $rawSlides = Setting::get('homepage_slides');
-        $slides = $rawSlides ? json_decode($rawSlides, true) : null;
+        $slides = $heroSliderEnabled && $rawSlides ? json_decode($rawSlides, true) : ($heroSliderEnabled ? null : []);
+
+        $promoBannersEnabled = Setting::get('homepage_promo_banners_enabled', '1') !== '0';
+        $trustBadgesEnabled = Setting::get('homepage_trust_badges_enabled', '1') !== '0';
+        $shopByGramEnabled = Setting::get('homepage_shop_by_gram_enabled', '1') !== '0';
 
         $rawSeasonal = Setting::get('homepage_seasonal_collection');
         $seasonal = $rawSeasonal ? json_decode($rawSeasonal, true) : [
@@ -195,8 +200,12 @@ class ShopController extends Controller
             'bestSelling' => $bestSellers,
             'featuredCollection' => $featured,
             'categories' => $this->getCategories(),
-            'banners' => $banners ?: $this->getBanners(),
+            'banners' => $promoBannersEnabled ? ($banners ?: $this->getBanners()) : [],
             'slides' => $slides,
+            'heroSliderEnabled' => $heroSliderEnabled,
+            'promoBannersEnabled' => $promoBannersEnabled,
+            'trustBadgesEnabled' => $trustBadgesEnabled,
+            'shopByGramEnabled' => $shopByGramEnabled,
             'seasonalCollection' => $seasonal,
             'seasonalProducts' => $seasonalProducts,
         ]);

@@ -271,6 +271,8 @@ class PageController extends Controller
 
         return Inertia::render('Admin/Pages/Home', [
             'slides' => $slides,
+            'heroSliderEnabled' => Setting::get('homepage_hero_slider_enabled', '1') !== '0',
+            'promoBannersEnabled' => Setting::get('homepage_promo_banners_enabled', '1') !== '0',
             'seasonalCollection' => $seasonal,
             'promoBanners' => $banners,
             'instagram' => [
@@ -437,24 +439,33 @@ class PageController extends Controller
         }
         Setting::set('instagram_posts', json_encode($validated['posts']));
 
+        if ($request->has('enabled') || $request->has('shop_by_gram_enabled')) {
+            Setting::set('homepage_shop_by_gram_enabled', $request->boolean('shop_by_gram_enabled', $request->boolean('enabled', true)) ? '1' : '0');
+        }
+
         return back()->with('success', 'Shop by Gram (Instagram Feed) updated successfully.');
     }
 
     /**
-     * Save Trust Badges & Value Propositions (Mandatory Min 3).
+     * Save Trust Badges & Value Propositions.
      */
     public function updateTrustBadges(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'features' => 'required|array|min:3',
+            'features' => 'required|array|min:1',
             'features.*.id' => 'required',
             'features.*.icon' => 'required|string',
             'features.*.custom_icon' => 'nullable|string',
             'features.*.title' => 'required|string|max:255',
             'features.*.description' => 'required|string|max:500',
+            'trust_badges_enabled' => 'nullable|boolean',
         ]);
 
         Setting::set('store_features', json_encode($validated['features']));
+
+        if ($request->has('trust_badges_enabled')) {
+            Setting::set('homepage_trust_badges_enabled', $request->boolean('trust_badges_enabled', true) ? '1' : '0');
+        }
 
         return back()->with('success', 'Trust Badges & Value Proposition cards updated successfully.');
     }
@@ -476,9 +487,14 @@ class PageController extends Controller
             'slides.*.badge' => 'nullable|string|max:100',
             'slides.*.leftImage' => 'nullable|string|max:1000',
             'slides.*.rightImage' => 'nullable|string|max:1000',
+            'hero_slider_enabled' => 'nullable|boolean',
         ]);
 
         Setting::set('homepage_slides', json_encode($validated['slides']));
+
+        if ($request->has('hero_slider_enabled')) {
+            Setting::set('homepage_hero_slider_enabled', $request->boolean('hero_slider_enabled', true) ? '1' : '0');
+        }
 
         return back()->with('success', 'Hero split slider updated successfully.');
     }
@@ -524,11 +540,16 @@ class PageController extends Controller
             'banners.*.textColor' => 'nullable|string|in:dark,light',
             'banners.*.align' => 'nullable|string|in:left,center,right',
             'banners.*.enabled' => 'nullable|boolean',
+            'promo_banners_enabled' => 'nullable|boolean',
         ]);
 
         Setting::set('homepage_promo_banners', json_encode($validated['banners']));
 
-        return back()->with('success', 'Promotional banners updated successfully.');
+        if ($request->has('promo_banners_enabled')) {
+            Setting::set('homepage_promo_banners_enabled', $request->boolean('promo_banners_enabled', true) ? '1' : '0');
+        }
+
+        return back()->with('success', 'Promotional dual banners updated successfully.');
     }
 
     /**

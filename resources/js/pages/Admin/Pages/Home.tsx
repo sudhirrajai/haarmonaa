@@ -95,6 +95,8 @@ interface StoreFeatureItem {
 
 interface HomePageCMSProps {
   slides: SplitSlideCMS[];
+  heroSliderEnabled?: boolean;
+  promoBannersEnabled?: boolean;
   seasonalCollection: SeasonalCollectionCMS;
   promoBanners: PromoBannerCMS[];
   instagram: {
@@ -102,8 +104,10 @@ interface HomePageCMSProps {
     handle: string;
     access_token?: string;
     posts: InstagramPostItem[];
+    enabled?: boolean;
   };
   storeFeatures: StoreFeatureItem[];
+  trustBadgesEnabled?: boolean;
   categories: Category[];
   collections?: Array<{ id: number; name: string; slug: string }>;
   products: Product[];
@@ -111,10 +115,13 @@ interface HomePageCMSProps {
 
 export default function Home({
   slides: initialSlides = [],
+  heroSliderEnabled: initialHeroSliderEnabled = true,
+  promoBannersEnabled: initialPromoBannersEnabled = true,
   seasonalCollection: initialSeasonal,
   promoBanners: initialBanners = [],
   instagram: initialInstagram,
   storeFeatures: initialFeatures = [],
+  trustBadgesEnabled: initialTrustBadgesEnabled = true,
   categories = [],
   collections = [],
   products = [],
@@ -127,6 +134,10 @@ export default function Home({
   const [fetchingInsta, setFetchingInsta] = useState(false);
   const [instaMessage, setInstaMessage] = useState<string | null>(null);
   const [instantFeedback, setInstantFeedback] = useState<string | null>(null);
+
+  const [heroSliderEnabled, setHeroSliderEnabled] = useState(initialHeroSliderEnabled !== false);
+  const [promoBannersEnabled, setPromoBannersEnabled] = useState(initialPromoBannersEnabled !== false);
+  const [trustBadgesEnabled, setTrustBadgesEnabled] = useState(initialTrustBadgesEnabled !== false);
 
   const handleAsyncSectionToggle = async (section: string, enabled: boolean, itemId?: any) => {
     try {
@@ -219,7 +230,7 @@ export default function Home({
     setSaving(true);
     router.post(
       '/admin/pages/home/slider',
-      { slides },
+      { slides, hero_slider_enabled: heroSliderEnabled },
       { onFinish: () => setSaving(false) }
     );
   };
@@ -239,7 +250,7 @@ export default function Home({
     setSaving(true);
     router.post(
       '/admin/pages/home/promo-banners',
-      { banners },
+      { banners, promo_banners_enabled: promoBannersEnabled },
       { onFinish: () => setSaving(false) }
     );
   };
@@ -283,22 +294,20 @@ export default function Home({
   const handleSaveInstagram = (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    router.post('/admin/pages/home/instagram', instagram, {
-      onFinish: () => setSaving(false),
-    });
+    router.post(
+      '/admin/pages/home/instagram',
+      { ...instagram, shop_by_gram_enabled: instagram.enabled !== false },
+      { onFinish: () => setSaving(false) }
+    );
   };
 
   // --- 5. Trust Badges Handlers ---
   const handleSaveFeatures = (e: React.FormEvent) => {
     e.preventDefault();
-    if (features.length < 3) {
-      alert('A minimum of 3 Trust Badges is mandatory for the homepage layout.');
-      return;
-    }
     setSaving(true);
     router.post(
       '/admin/pages/home/trust-badges',
-      { features },
+      { features, trust_badges_enabled: trustBadgesEnabled },
       { onFinish: () => setSaving(false) }
     );
   };
@@ -358,7 +367,7 @@ export default function Home({
           }`}
         >
           <Sliders className="w-3.5 h-3.5 text-amber-400" />
-          <span>Hero Split Slider ({slides.length})</span>
+          <span>Hero Split Slider {heroSliderEnabled ? '🟢' : '⚪'}</span>
         </button>
 
         <button
@@ -371,7 +380,7 @@ export default function Home({
           }`}
         >
           <Layers className="w-3.5 h-3.5 text-blue-400" />
-          <span>Promo Dual Banners ({banners.length})</span>
+          <span>Promo Dual Banners {promoBannersEnabled ? '🟢' : '⚪'}</span>
         </button>
 
         <button
@@ -384,7 +393,7 @@ export default function Home({
           }`}
         >
           <SunMedium className="w-3.5 h-3.5 text-amber-500" />
-          <span>Seasonal Capsule {seasonal.enabled ? '🟢 (Active)' : '⚪ (Disabled)'}</span>
+          <span>Seasonal Capsule {seasonal.enabled ? '🟢' : '⚪'}</span>
         </button>
 
         <button
@@ -397,7 +406,7 @@ export default function Home({
           }`}
         >
           <Camera className="w-3.5 h-3.5 text-rose-400" />
-          <span>Shop by Gram ({instagram.posts.length} Posts)</span>
+          <span>Shop by Gram {instagram.enabled !== false ? '🟢' : '⚪'}</span>
         </button>
 
         <button
@@ -410,7 +419,7 @@ export default function Home({
           }`}
         >
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Trust Badges ({features.length} Cards)</span>
+          <span>Trust Badges {trustBadgesEnabled ? '🟢' : '⚪'}</span>
         </button>
       </div>
 
@@ -426,20 +435,33 @@ export default function Home({
       {activeTab === 'slider' && (
         <form onSubmit={handleSaveSlider} className="space-y-6">
           <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-100 gap-4">
               <div>
                 <h2 className="text-base font-extrabold text-gray-900">50/50 Hero Split Slider</h2>
                 <p className="text-xs text-gray-500">Each slide showcases 2 side-by-side images with centered typography, badge, and button.</p>
               </div>
 
-              <button
-                type="button"
-                onClick={handleAddSlide}
-                className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-xs font-bold rounded-[8px] flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add New Slide</span>
-              </button>
+              <div className="flex items-center gap-4">
+                <AdminToggle
+                  label={heroSliderEnabled ? 'Hero Section Active' : 'Hero Section Disabled'}
+                  checked={heroSliderEnabled}
+                  onChange={(val) => {
+                    setHeroSliderEnabled(val);
+                    handleAsyncSectionToggle('hero_slider', val);
+                  }}
+                  activeColor="bg-emerald-600"
+                  size="md"
+                />
+
+                <button
+                  type="button"
+                  onClick={handleAddSlide}
+                  className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-xs font-bold rounded-[8px] flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add New Slide</span>
+                </button>
+              </div>
             </div>
 
             <div className="space-y-6">
@@ -594,9 +616,22 @@ export default function Home({
       {activeTab === 'banners' && (
         <form onSubmit={handleSaveBanners} className="space-y-6">
           <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
-            <div className="pb-3 border-b border-gray-100">
-              <h2 className="text-base font-extrabold text-gray-900">Promotional Dual Banners</h2>
-              <p className="text-xs text-gray-500">Edit the two side-by-side promotional highlight blocks displayed below categories.</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 gap-4">
+              <div>
+                <h2 className="text-base font-extrabold text-gray-900">Promotional Dual Banners</h2>
+                <p className="text-xs text-gray-500">Edit the two side-by-side promotional highlight blocks displayed below categories.</p>
+              </div>
+
+              <AdminToggle
+                label={promoBannersEnabled ? 'Banners Active' : 'Banners Disabled'}
+                checked={promoBannersEnabled}
+                onChange={(val) => {
+                  setPromoBannersEnabled(val);
+                  handleAsyncSectionToggle('promo_banners', val);
+                }}
+                activeColor="bg-emerald-600"
+                size="md"
+              />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -902,16 +937,29 @@ export default function Home({
                 </div>
               </div>
 
-              {/* 1-Click Auto-Fetch Button */}
-              <button
-                type="button"
-                onClick={handleAutoFetchInstagram}
-                disabled={fetchingInsta}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white rounded-[8px] text-xs font-extrabold uppercase tracking-wider transition-all shadow-xs disabled:opacity-50 cursor-pointer shrink-0"
-              >
-                <Zap className={`w-3.5 h-3.5 ${fetchingInsta ? 'animate-spin' : ''}`} />
-                <span>{fetchingInsta ? 'Fetching Instagram...' : '⚡ Auto-Fetch Latest Posts'}</span>
-              </button>
+              <div className="flex items-center gap-4">
+                <AdminToggle
+                  label={instagram.enabled !== false ? 'Gram Section Active' : 'Gram Section Disabled'}
+                  checked={instagram.enabled !== false}
+                  onChange={(val) => {
+                    setInstagram({ ...instagram, enabled: val });
+                    handleAsyncSectionToggle('shop_by_gram', val);
+                  }}
+                  activeColor="bg-emerald-600"
+                  size="md"
+                />
+
+                {/* 1-Click Auto-Fetch Button */}
+                <button
+                  type="button"
+                  onClick={handleAutoFetchInstagram}
+                  disabled={fetchingInsta}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white rounded-[8px] text-xs font-extrabold uppercase tracking-wider transition-all shadow-xs disabled:opacity-50 cursor-pointer shrink-0"
+                >
+                  <Zap className={`w-3.5 h-3.5 ${fetchingInsta ? 'animate-spin' : ''}`} />
+                  <span>{fetchingInsta ? 'Fetching Instagram...' : '⚡ Auto-Fetch'}</span>
+                </button>
+              </div>
             </div>
 
             {instaMessage && (
@@ -1109,27 +1157,40 @@ export default function Home({
                     Homepage Trust Badges & Value Propositions
                   </h2>
                   <p className="text-xs text-gray-400">
-                    Displayed beneath Shop by Gram. <strong>Minimum 3 cards are mandatory</strong> for a balanced responsive layout.
+                    Displayed beneath Shop by Gram. Enable or disable this section on the storefront.
                   </p>
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  const newFeature: StoreFeatureItem = {
-                    id: 'feat_' + Date.now(),
-                    icon: 'Award',
-                    title: 'Solid 18K Gold Vermeil',
-                    description: 'Heirloom-grade craftsmanship with thick anti-tarnish coating.',
-                  };
-                  setFeatures((prev) => [...prev, newFeature]);
-                }}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-[#d0473e] text-white rounded-[8px] text-xs font-bold transition-all cursor-pointer shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add Trust Card</span>
-              </button>
+              <div className="flex items-center gap-4">
+                <AdminToggle
+                  label={trustBadgesEnabled ? 'Trust Section Active' : 'Trust Section Disabled'}
+                  checked={trustBadgesEnabled}
+                  onChange={(val) => {
+                    setTrustBadgesEnabled(val);
+                    handleAsyncSectionToggle('trust_badges', val);
+                  }}
+                  activeColor="bg-emerald-600"
+                  size="md"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newFeature: StoreFeatureItem = {
+                      id: 'feat_' + Date.now(),
+                      icon: 'Award',
+                      title: 'Solid 18K Gold Vermeil',
+                      description: 'Heirloom-grade craftsmanship with thick anti-tarnish coating.',
+                    };
+                    setFeatures((prev) => [...prev, newFeature]);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-[#d0473e] text-white rounded-[8px] text-xs font-bold transition-all cursor-pointer shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Trust Card</span>
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4">

@@ -30,6 +30,10 @@ interface HomeProps {
   categories: Category[];
   banners?: PromoCardData[];
   slides?: SplitSlide[];
+  heroSliderEnabled?: boolean;
+  promoBannersEnabled?: boolean;
+  trustBadgesEnabled?: boolean;
+  shopByGramEnabled?: boolean;
   seasonalCollection?: SeasonalConfig;
   seasonalProducts?: Product[];
   onAddToCart?: (product: Product) => void;
@@ -43,6 +47,10 @@ export default function Home({
   categories = [],
   banners,
   slides,
+  heroSliderEnabled = true,
+  promoBannersEnabled = true,
+  trustBadgesEnabled = true,
+  shopByGramEnabled = true,
   seasonalCollection,
   seasonalProducts = [],
   onAddToCart,
@@ -101,7 +109,7 @@ export default function Home({
       />
 
       {/* Full-Bleed 50/50 Split Hero Slider (Live from Admin CMS) */}
-      <SplitHeroSlider slides={slides} />
+      {heroSliderEnabled && <SplitHeroSlider slides={slides} />}
 
       {/* DYNAMIC SEASONAL / CURATED COLLECTION SHOWCASE (Managed via Admin CMS) */}
       {seasonalCollection && seasonalCollection.enabled !== false && (
@@ -343,7 +351,9 @@ export default function Home({
       </section>
 
       {/* Two Promotional Banner Cards Section (Live from Admin CMS) */}
-      <PromoDualBanners cards={banners as any} />
+      {promoBannersEnabled && banners && banners.length > 0 && (
+        <PromoDualBanners cards={banners as any} />
+      )}
 
       {/* Featured Collection Interactive Horizontal Slider Section */}
       {featuredCollection && featuredCollection.length > 0 && (
@@ -356,9 +366,11 @@ export default function Home({
         />
       )}
 
-
-      {/* Shop by Gram & 3 Value Proposition Cards Section */}
-      <ShopByGram />
+      {/* Shop by Gram & Value Proposition Cards Section */}
+      <ShopByGram
+        shopByGramEnabled={shopByGramEnabled}
+        trustBadgesEnabled={trustBadgesEnabled}
+      />
     </GlozinLayout>
   );
 }
