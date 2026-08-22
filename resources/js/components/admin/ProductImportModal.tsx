@@ -384,6 +384,7 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
                       <th className="py-2.5 px-3">Price</th>
                       <th className="py-2.5 px-3">MRP</th>
                       <th className="py-2.5 px-3">Collections</th>
+                      <th className="py-2.5 px-3">Attributes</th>
                       <th className="py-2.5 px-3">Images</th>
                       <th className="py-2.5 px-3">Status</th>
                     </tr>
@@ -415,6 +416,15 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
                         </td>
                         <td className="py-2.5 px-3 text-gray-500 max-w-[140px] truncate">
                           {row.collections || '—'}
+                        </td>
+                        <td className="py-2.5 px-3 text-purple-700 max-w-[150px] truncate text-[11px] font-medium">
+                          {row.attributes ? (
+                            <span className="px-2 py-0.5 bg-purple-50 border border-purple-100 rounded-md font-semibold">
+                              {row.attributes}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
                         </td>
                         <td className="py-2.5 px-3 text-gray-600">
                           {row.images ? (

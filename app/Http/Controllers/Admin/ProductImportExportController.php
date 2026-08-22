@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Attribute;
+use App\Models\AttributeValue;
 use App\Models\Category;
 use App\Models\Collection;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -36,6 +39,10 @@ class ProductImportExportController extends Controller
             'is_best_seller',
             'shipping_type',
             'shipping_fee',
+            'Attribute 1 name',
+            'Attribute 1 value(s)',
+            'Attribute 2 name',
+            'Attribute 2 value(s)',
         ];
 
         $samples = [
@@ -56,11 +63,15 @@ class ProductImportExportController extends Controller
                 '1',
                 'default',
                 '0',
+                'Material',
+                '18K Gold Vermeil',
+                'Size',
+                '6, 7, 8',
             ],
             [
                 'Floating Pearl Drop Earrings',
                 'floating-pearl-drop-earrings',
-                'Earrings',
+                'Earrings, Earrings > Hoops',
                 'Festive Collection',
                 '1499',
                 '2999',
@@ -74,24 +85,10 @@ class ProductImportExportController extends Controller
                 '0',
                 'default',
                 '0',
-            ],
-            [
-                'Celestial Starburst Pendant Necklace',
-                'celestial-starburst-pendant-necklace',
-                'Necklaces',
-                'New Arrivals',
-                '1899',
-                '3499',
-                '46',
-                '30',
-                '1',
-                '/storage/media/sample-necklace-1.webp, /storage/media/sample-necklace-2.webp',
-                'Sparkling cubic zirconia center encased in a celestial starburst medallion.',
-                'published',
-                '0',
-                '1',
-                'default',
-                '0',
+                'Gemstone',
+                'Freshwater Pearl',
+                'Style',
+                'Modern',
             ],
         ];
 
@@ -116,6 +113,7 @@ class ProductImportExportController extends Controller
 
     /**
      * Preview CSV file contents before committing to database.
+     * Supports both Haarmonaa standard CSV and WordPress/WooCommerce product exports.
      */
     public function preview(Request $request): JsonResponse
     {
@@ -130,7 +128,6 @@ class ProductImportExportController extends Controller
             return response()->json(['success' => false, 'message' => 'Unable to read the CSV file.'], 422);
         }
 
-        // Read header row
         $rawHeaders = fgetcsv($handle);
         if (! $rawHeaders) {
             fclose($handle);
@@ -138,22 +135,23 @@ class ProductImportExportController extends Controller
             return response()->json(['success' => false, 'message' => 'CSV file appears to be empty.'], 422);
         }
 
-        // Normalize header names (lowercase, trim, strip quotes/BOM)
+        // Normalize header names
         $headers = array_map(function ($h) {
             $cleaned = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', trim((string) $h));
 
             return strtolower(str_replace(' ', '_', $cleaned));
         }, $rawHeaders);
 
-        // Required headers check
-        $requiredHeaders = ['name', 'price'];
-        $missingHeaders = array_diff($requiredHeaders, $headers);
-        if (! empty($missingHeaders)) {
+        // Required field validation (Supports 'name' AND ('price' OR 'sale_price' OR 'regular_price'))
+        $hasName = in_array('name', $headers);
+        $hasPrice = in_array('price', $headers) || in_array('sale_price', $headers) || in_array('regular_price', $headers);
+
+        if (! $hasName || ! $hasPrice) {
             fclose($handle);
 
             return response()->json([
                 'success' => false,
-                'message' => 'CSV is missing required header(s): '.implode(', ', $missingHeaders),
+                'message' => 'CSV is missing required columns. It must include Product Name ("Name") and Price ("Price" or "Sale price" / "Regular price").',
             ], 422);
         }
 
@@ -162,38 +160,74 @@ class ProductImportExportController extends Controller
         $totalRows = 0;
 
         while (($row = fgetcsv($handle)) !== false) {
-            // Skip empty rows
             if (empty(array_filter($row))) {
                 continue;
             }
 
             $totalRows++;
             $rowData = [];
-
             foreach ($headers as $index => $headerKey) {
                 $rowData[$headerKey] = isset($row[$index]) ? trim($row[$index]) : '';
             }
 
-            // Simple validation check
+            // Universal price & name extraction
+            $name = $rowData['name'] ?? '';
+            $salePrice = str_replace([',', '$', '₹', ' '], '', $rowData['sale_price'] ?? '');
+            $regularPrice = str_replace([',', '$', '₹', ' '], '', $rowData['regular_price'] ?? '');
+            $priceDirect = str_replace([',', '$', '₹', ' '], '', $rowData['price'] ?? '');
+
+            $price = is_numeric($salePrice) && (float) $salePrice > 0
+                ? $salePrice
+                : (is_numeric($priceDirect) ? $priceDirect : (is_numeric($regularPrice) ? $regularPrice : ''));
+
+            $originalPrice = is_numeric($regularPrice) && (float) $regularPrice > 0
+                ? $regularPrice
+                : ($rowData['original_price'] ?? $price);
+
+            // Categories extraction
+            $category = $rowData['categories'] ?? $rowData['category'] ?? '';
+
+            // Detect attributes in row
+            $attributesFound = [];
+            foreach ($rowData as $k => $v) {
+                if (preg_match('/^attribute_(\d+)_name$/i', $k, $m)) {
+                    $attrName = trim($v);
+                    $valKey = "attribute_{$m[1]}_value(s)";
+                    $attrVal = $rowData[$valKey] ?? $rowData["attribute_{$m[1]}_values"] ?? $rowData["attribute_{$m[1]}_value"] ?? '';
+                    if (! empty($attrName) && ! empty($attrVal)) {
+                        $attributesFound[] = "{$attrName}: {$attrVal}";
+                    }
+                }
+            }
+
             $rowErrors = [];
-            if (empty($rowData['name'])) {
+            if (empty($name)) {
                 $rowErrors[] = 'Missing Product Name';
             }
-            if (! isset($rowData['price']) || ! is_numeric(str_replace(',', '', $rowData['price']))) {
+            if (! is_numeric($price)) {
                 $rowErrors[] = 'Invalid/Missing Price';
             }
 
-            $rowData['_row_number'] = $totalRows;
-            $rowData['_errors'] = $rowErrors;
-            $rowData['_is_valid'] = empty($rowErrors);
+            $previewItem = [
+                '_row_number' => $totalRows,
+                '_errors' => $rowErrors,
+                '_is_valid' => empty($rowErrors),
+                'name' => $name,
+                'category' => $category,
+                'collections' => $rowData['collections'] ?? $rowData['tags'] ?? '',
+                'price' => $price,
+                'original_price' => $originalPrice,
+                'images' => $rowData['images'] ?? '',
+                'attributes' => implode(' | ', $attributesFound),
+                'status' => $rowData['status'] ?? (isset($rowData['published']) && $rowData['published'] == '1' ? 'published' : 'published'),
+            ];
 
             if (! empty($rowErrors)) {
                 $validationErrors[] = "Row {$totalRows}: ".implode(', ', $rowErrors);
             }
 
-            // Only capture the first 10 rows for visual preview
             if ($totalRows <= 10) {
-                $previewRows[] = $rowData;
+                $previewRows[] = $previewItem;
             }
         }
 
@@ -210,7 +244,7 @@ class ProductImportExportController extends Controller
     }
 
     /**
-     * Execute full CSV import and persist to database.
+     * Execute full CSV import (supports WooCommerce & Haarmonaa CSV formats).
      */
     public function execute(Request $request): JsonResponse
     {
@@ -240,6 +274,7 @@ class ProductImportExportController extends Controller
         $createdCount = 0;
         $updatedCount = 0;
         $skippedCount = 0;
+        $attributesCount = 0;
         $errors = [];
         $rowNumber = 0;
 
@@ -258,37 +293,68 @@ class ProductImportExportController extends Controller
                 }
 
                 $name = $data['name'] ?? '';
-                $rawPrice = str_replace([',', '$', '₹'], '', $data['price'] ?? '');
 
-                if (empty($name) || ! is_numeric($rawPrice)) {
+                // Handle price from 'sale_price', 'price', or 'regular_price'
+                $salePriceRaw = str_replace([',', '$', '₹', ' '], '', $data['sale_price'] ?? '');
+                $regularPriceRaw = str_replace([',', '$', '₹', ' '], '', $data['regular_price'] ?? '');
+                $priceDirectRaw = str_replace([',', '$', '₹', ' '], '', $data['price'] ?? '');
+
+                $price = null;
+                $originalPrice = null;
+
+                if (is_numeric($salePriceRaw) && (float) $salePriceRaw > 0) {
+                    $price = (float) $salePriceRaw;
+                    $originalPrice = is_numeric($regularPriceRaw) && (float) $regularPriceRaw > 0 ? (float) $regularPriceRaw : $price;
+                } elseif (is_numeric($priceDirectRaw) && (float) $priceDirectRaw > 0) {
+                    $price = (float) $priceDirectRaw;
+                    $originalPrice = is_numeric($regularPriceRaw) && (float) $regularPriceRaw > 0 ? (float) $regularPriceRaw : (is_numeric($data['original_price'] ?? '') ? (float) $data['original_price'] : $price);
+                } elseif (is_numeric($regularPriceRaw) && (float) $regularPriceRaw > 0) {
+                    $price = (float) $regularPriceRaw;
+                    $originalPrice = (float) $regularPriceRaw;
+                }
+
+                if (empty($name) || $price === null) {
                     $skippedCount++;
-                    $errors[] = "Row {$rowNumber}: Skipped due to missing name or invalid price.";
+                    $errors[] = "Row {$rowNumber}: Skipped due to missing product name or invalid price.";
 
                     continue;
                 }
 
-                $price = (float) $rawPrice;
-                $rawOriginalPrice = str_replace([',', '$', '₹'], '', $data['original_price'] ?? '');
-                $originalPrice = is_numeric($rawOriginalPrice) && (float) $rawOriginalPrice > 0 ? (float) $rawOriginalPrice : $price;
-
+                // Calculate discount percentage
                 $discountPercent = isset($data['discount_percent']) && is_numeric($data['discount_percent'])
                     ? (int) $data['discount_percent']
                     : ($originalPrice > $price ? (int) round((($originalPrice - $price) / $originalPrice) * 100) : 0);
 
-                // Category Resolution
+                // Categories Resolution (Supports "Earrings, Earrings > Hoops" or "Rings")
+                $rawCategories = $data['categories'] ?? $data['category'] ?? '';
                 $categoryId = null;
-                $categoryName = $data['category'] ?? null;
-                if (! empty($categoryName)) {
-                    $categorySlug = Str::slug($categoryName);
-                    $category = Category::firstOrCreate(
-                        ['slug' => $categorySlug],
-                        ['name' => $categoryName, 'is_active' => true]
-                    );
-                    $categoryId = $category->id;
-                    $categoryName = $category->name;
+                $categoryName = 'Jewelry';
+                $categoryIds = [];
+
+                if (! empty($rawCategories)) {
+                    // Split by comma
+                    $catGroups = array_map('trim', explode(',', $rawCategories));
+                    foreach ($catGroups as $group) {
+                        // If hierarchical like "Earrings > Hoops"
+                        $levels = array_map('trim', explode('>', $group));
+                        foreach ($levels as $levelName) {
+                            if (! empty($levelName)) {
+                                $catSlug = Str::slug($levelName);
+                                $cat = Category::firstOrCreate(
+                                    ['slug' => $catSlug],
+                                    ['name' => $levelName, 'is_active' => true]
+                                );
+                                $categoryIds[] = $cat->id;
+                                if (! $categoryId) {
+                                    $categoryId = $cat->id;
+                                    $categoryName = $cat->name;
+                                }
+                            }
+                        }
+                    }
                 }
 
-                // Images List Resolution (comma or pipe separated)
+                // Images Resolution (comma or pipe separated URLs)
                 $rawImages = $data['images'] ?? '';
                 $imagesArray = [];
                 if (! empty($rawImages)) {
@@ -300,10 +366,29 @@ class ProductImportExportController extends Controller
                 $primaryImage = $imagesArray[0] ?? null;
                 $secondaryImage = $imagesArray[1] ?? $primaryImage;
 
+                // Description (Prefer full Description, fallback to Short description)
+                $description = ! empty($data['description']) ? $data['description'] : ($data['short_description'] ?? '');
+
+                // Stock & Status
+                $stockQuantity = isset($data['stock']) && is_numeric($data['stock'])
+                    ? (int) $data['stock']
+                    : (isset($data['stock_quantity']) && is_numeric($data['stock_quantity']) ? (int) $data['stock_quantity'] : 20);
+
+                $inStock = isset($data['in_stock?'])
+                    ? (bool) $data['in_stock?']
+                    : (isset($data['in_stock']) ? (bool) in_array(strtolower((string) $data['in_stock']), ['1', 'true', 'yes']) : true);
+
+                $status = isset($data['published'])
+                    ? ($data['published'] == '1' ? 'published' : 'draft')
+                    : (in_array(strtolower($data['status'] ?? ''), ['published', 'draft']) ? strtolower($data['status']) : $defaultStatus);
+
+                $isFeatured = (isset($data['is_featured?']) && $data['is_featured?'] == '1')
+                    || (isset($data['is_featured']) && in_array(strtolower((string) $data['is_featured']), ['1', 'true', 'yes']));
+
                 // Base Slug
                 $slug = ! empty($data['slug']) ? Str::slug($data['slug']) : Str::slug($name);
 
-                // Check for existing product by slug or name
+                // Check existing product
                 $existingProduct = null;
                 if ($updateExisting) {
                     $existingProduct = Product::where('slug', $slug)
@@ -318,12 +403,12 @@ class ProductImportExportController extends Controller
                     'price' => $price,
                     'original_price' => $originalPrice,
                     'discount_percent' => $discountPercent,
-                    'stock_quantity' => isset($data['stock_quantity']) && is_numeric($data['stock_quantity']) ? (int) $data['stock_quantity'] : 10,
-                    'in_stock' => isset($data['in_stock']) ? (bool) in_array(strtolower($data['in_stock']), ['1', 'true', 'yes']) : true,
-                    'description' => $data['description'] ?? '',
-                    'status' => in_array(strtolower($data['status'] ?? ''), ['published', 'draft']) ? strtolower($data['status']) : $defaultStatus,
-                    'is_featured' => isset($data['is_featured']) && in_array(strtolower($data['is_featured']), ['1', 'true', 'yes']),
-                    'is_best_seller' => isset($data['is_best_seller']) && in_array(strtolower($data['is_best_seller']), ['1', 'true', 'yes']),
+                    'stock_quantity' => $stockQuantity,
+                    'in_stock' => $inStock,
+                    'description' => $description,
+                    'status' => $status,
+                    'is_featured' => $isFeatured,
+                    'is_best_seller' => isset($data['is_best_seller']) && in_array(strtolower((string) $data['is_best_seller']), ['1', 'true', 'yes']),
                     'shipping_type' => in_array($data['shipping_type'] ?? '', ['default', 'free', 'flat_rate']) ? $data['shipping_type'] : 'default',
                     'shipping_fee' => isset($data['shipping_fee']) && is_numeric($data['shipping_fee']) ? (float) $data['shipping_fee'] : 0,
                 ];
@@ -339,7 +424,6 @@ class ProductImportExportController extends Controller
                     $product = $existingProduct;
                     $updatedCount++;
                 } else {
-                    // Generate unique slug for new product
                     $baseSlug = $slug;
                     $counter = 1;
                     while (Product::where('slug', $slug)->exists()) {
@@ -351,12 +435,18 @@ class ProductImportExportController extends Controller
                     $createdCount++;
                 }
 
-                // Collections association
-                if (! empty($data['collections'])) {
-                    $collectionNames = array_map('trim', explode(',', $data['collections']));
+                // Sync Multiple Categories
+                if (! empty($categoryIds)) {
+                    $product->categories()->syncWithoutDetaching($categoryIds);
+                }
+
+                // Collections / Tags Resolution
+                $rawCollections = $data['collections'] ?? $data['tags'] ?? '';
+                if (! empty($rawCollections)) {
+                    $collectionNames = array_map('trim', explode(',', $rawCollections));
                     $collectionIds = [];
                     foreach ($collectionNames as $colName) {
-                        if (! empty($colName)) {
+                        if (! empty($colName) && strlen($colName) < 80) {
                             $colSlug = Str::slug($colName);
                             $collection = Collection::firstOrCreate(
                                 ['slug' => $colSlug],
@@ -369,6 +459,72 @@ class ProductImportExportController extends Controller
                         $product->collections()->syncWithoutDetaching($collectionIds);
                     }
                 }
+
+                // ==========================================
+                // ATTRIBUTES PROCESSING (WordPress / Custom)
+                // ==========================================
+                $productAttributesData = [];
+                foreach ($data as $key => $val) {
+                    if (preg_match('/^attribute_(\d+)_name$/i', $key, $matches)) {
+                        $idx = $matches[1];
+                        $attrName = trim($val);
+                        $valKey = "attribute_{$idx}_value(s)";
+                        $attrValueStr = $data[$valKey] ?? $data["attribute_{$idx}_values"] ?? $data["attribute_{$idx}_value"] ?? '';
+
+                        if (! empty($attrName) && ! empty($attrValueStr)) {
+                            // 1. Create / find Global Attribute
+                            $attribute = Attribute::firstOrCreate(
+                                ['slug' => Str::slug($attrName)],
+                                [
+                                    'name' => ucfirst($attrName),
+                                    'display_type' => in_array(strtolower($attrName), ['color', 'colour']) ? 'color' : 'button',
+                                    'description' => ucfirst($attrName).' attribute imported from catalog',
+                                ]
+                            );
+
+                            // 2. Create / find Attribute Values
+                            $rawVals = array_map('trim', explode(',', $attrValueStr));
+                            $storedValues = [];
+                            foreach ($rawVals as $v) {
+                                if (! empty($v)) {
+                                    AttributeValue::firstOrCreate(
+                                        [
+                                            'attribute_id' => $attribute->id,
+                                            'value' => $v,
+                                        ],
+                                        [
+                                            'name' => $v,
+                                        ]
+                                    );
+                                    $storedValues[] = $v;
+                                    $attributesCount++;
+                                }
+                            }
+
+                            if (! empty($storedValues)) {
+                                $productAttributesData[$attribute->name] = $storedValues;
+                            }
+                        }
+                    }
+                }
+
+                // If attributes exist, save / update default ProductVariant
+                if (! empty($productAttributesData)) {
+                    $sku = ! empty($data['sku']) ? $data['sku'] : 'HRM-'.Str::upper(Str::random(6));
+                    ProductVariant::updateOrCreate(
+                        [
+                            'product_id' => $product->id,
+                            'sku' => $sku,
+                        ],
+                        [
+                            'name' => $product->name.' (Default)',
+                            'price' => $product->price,
+                            'stock_quantity' => $product->stock_quantity,
+                            'image' => $product->image,
+                            'attributes' => $productAttributesData,
+                        ]
+                    );
+                }
             }
 
             DB::commit();
@@ -379,8 +535,9 @@ class ProductImportExportController extends Controller
                 'created_count' => $createdCount,
                 'updated_count' => $updatedCount,
                 'skipped_count' => $skippedCount,
+                'attributes_count' => $attributesCount,
                 'errors' => $errors,
-                'message' => "Import complete: {$createdCount} created, {$updatedCount} updated, {$skippedCount} skipped.",
+                'message' => "Import complete: {$createdCount} products created, {$updatedCount} updated, {$attributesCount} attributes linked.",
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
