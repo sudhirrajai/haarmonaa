@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { GlozinLayout } from '@/components/layout/GlozinLayout';
 import { Product } from '@/types/shop';
 import { PhoneInput } from '@/components/shop/PhoneInput';
@@ -17,11 +17,29 @@ import {
   Tag,
   X,
   Plus,
+  MapPin,
+  Check,
+  Building,
+  Home,
 } from 'lucide-react';
+
+interface CustomerAddressItem {
+  id: number;
+  name: string;
+  phone: string;
+  address_line1: string;
+  address_line2?: string | null;
+  city: string;
+  state?: string | null;
+  postal_code: string;
+  type: string;
+  is_default: boolean;
+}
 
 interface CheckoutProps {
   products?: Product[];
   razorpayKey?: string;
+  savedAddresses?: CustomerAddressItem[];
 }
 
 declare global {
@@ -30,7 +48,11 @@ declare global {
   }
 }
 
-export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo123456' }: CheckoutProps) {
+export default function Checkout({
+  products = [],
+  razorpayKey = 'rzp_test_demo123456',
+  savedAddresses = [],
+}: CheckoutProps) {
   const {
     cart,
     subtotal,
@@ -46,6 +68,11 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
     cartCount,
   } = useCart();
 
+  const defaultAddr = savedAddresses.find((a) => a.is_default) || savedAddresses[0];
+  const [selectedAddressId, setSelectedAddressId] = useState<number | 'new'>(
+    defaultAddr ? defaultAddr.id : 'new'
+  );
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -56,6 +83,32 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
     postalCode: '',
     paymentMethod: 'razorpay' as 'razorpay' | 'cod',
   });
+
+  const [saveAddress, setSaveAddress] = useState(true);
+  const [setAsDefault, setSetAsDefault] = useState(false);
+
+  // Initialize or update form when selecting a saved address
+  useEffect(() => {
+    if (selectedAddressId !== 'new') {
+      const addr = savedAddresses.find((a) => a.id === selectedAddressId);
+      if (addr) {
+        const parts = addr.name.trim().split(' ');
+        const firstName = parts[0] || '';
+        const lastName = parts.slice(1).join(' ') || '';
+        const fullAddr = addr.address_line1 + (addr.address_line2 ? `, ${addr.address_line2}` : '');
+
+        setFormData((prev) => ({
+          ...prev,
+          firstName,
+          lastName,
+          phone: addr.phone,
+          address: fullAddr,
+          city: addr.city,
+          postalCode: addr.postal_code,
+        }));
+      }
+    }
+  }, [selectedAddressId, savedAddresses]);
 
   const [processing, setProcessing] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -140,6 +193,8 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
       city: formData.city,
       postal_code: formData.postalCode,
       payment_method: formData.paymentMethod,
+      save_address: selectedAddressId === 'new' ? saveAddress : false,
+      set_as_default: selectedAddressId === 'new' ? setAsDefault : false,
       coupon_code: appliedCodes.length > 0 ? appliedCodes.join(',') : null,
       coupon_codes: appliedCodes,
       items: cart.map((item) => ({
@@ -376,116 +431,237 @@ export default function Checkout({ products = [], razorpayKey = 'rzp_test_demo12
                     <span className="text-[11px] font-bold text-gray-400">Step 1 of 2</span>
                   </div>
 
-                  {/* Name Fields */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                        First Name <span className="text-[#d0473e]">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.firstName}
-                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                        placeholder="E.g. Priya"
-                        className="w-full bg-gray-50/70 border border-gray-200 rounded-[8px] py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
-                      />
-                    </div>
+                  {/* Saved Address Selector (if customer has saved addresses) */}
+                  {savedAddresses.length > 0 && (
+                    <div className="space-y-3 pb-4 border-b border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-xs font-bold text-gray-900 uppercase tracking-wider">
+                          Select Saved Delivery Address
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedAddressId('new');
+                            setFormData((prev) => ({
+                              ...prev,
+                              address: '',
+                              city: '',
+                              postalCode: '',
+                            }));
+                          }}
+                          className="text-xs font-bold text-[#d0473e] hover:underline cursor-pointer flex items-center gap-1"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>{selectedAddressId === 'new' ? 'Using New Address' : 'Use a Different Address'}</span>
+                        </button>
+                      </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                        Last Name <span className="text-[#d0473e]">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.lastName}
-                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                        placeholder="E.g. Sharma"
-                        className="w-full bg-gray-50/70 border border-gray-200 rounded-[8px] py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
-                      />
-                    </div>
-                  </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {savedAddresses.map((addr) => (
+                          <div
+                            key={addr.id}
+                            onClick={() => setSelectedAddressId(addr.id)}
+                            className={`p-4 rounded-xl border-2 transition-all cursor-pointer space-y-2 relative ${
+                              selectedAddressId === addr.id
+                                ? 'border-black bg-gray-50/80 shadow-xs'
+                                : 'border-gray-200 hover:border-gray-300 bg-white'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="radio"
+                                  name="selected_address"
+                                  checked={selectedAddressId === addr.id}
+                                  onChange={() => setSelectedAddressId(addr.id)}
+                                  className="w-4 h-4 text-black focus:ring-black cursor-pointer"
+                                />
+                                <span className="text-xs font-bold text-gray-900">{addr.name}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                                  {addr.type}
+                                </span>
+                                {addr.is_default && (
+                                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    Default
+                                  </span>
+                                )}
+                              </div>
+                            </div>
 
-                  {/* Contact Fields */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                        Email Address <span className="text-[#d0473e]">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="priya@example.com"
-                        className="w-full bg-gray-50/70 border border-gray-200 rounded-[8px] py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
-                      />
-                      <span className="text-[10.5px] text-gray-400 mt-1 block">
-                        Order confirmation & invoice will be sent here.
-                      </span>
+                            <p className="text-xs text-gray-600 leading-relaxed pl-6">
+                              {addr.address_line1}{addr.address_line2 ? `, ${addr.address_line2}` : ''}<br />
+                              <strong className="text-gray-900">{addr.city} - {addr.postal_code}</strong><br />
+                              <span className="text-gray-500">{addr.phone}</span>
+                            </p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
+                  )}
 
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                        Mobile Number <span className="text-[#d0473e]">*</span>
-                      </label>
-                      <PhoneInput
-                        value={formData.phone}
-                        onChange={(val) => setFormData({ ...formData, phone: val })}
-                        required
-                      />
-                      <span className="text-[10.5px] text-gray-400 mt-1 block">
-                        For delivery courier tracking SMS & OTP.
-                      </span>
+                  {/* Manual Address Fields (If 'new' selected or no saved addresses) */}
+                  {(selectedAddressId === 'new' || savedAddresses.length === 0) && (
+                    <div className="space-y-4 animate-fade-in">
+                      {savedAddresses.length > 0 && (
+                        <div className="text-xs font-bold text-gray-700 pb-1">
+                          Entering New Delivery Address:
+                        </div>
+                      )}
+
+                      {/* Name Fields */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                            First Name <span className="text-[#d0473e]">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={formData.firstName}
+                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                            placeholder="E.g. Priya"
+                            className="w-full bg-gray-50/70 border border-gray-200 rounded-[8px] py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                            Last Name <span className="text-[#d0473e]">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={formData.lastName}
+                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                            placeholder="E.g. Sharma"
+                            className="w-full bg-gray-50/70 border border-gray-200 rounded-[8px] py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Contact Fields */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                            Email Address <span className="text-[#d0473e]">*</span>
+                          </label>
+                          <input
+                            type="email"
+                            required
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            placeholder="priya@example.com"
+                            className="w-full bg-gray-50/70 border border-gray-200 rounded-[8px] py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
+                          />
+                          <span className="text-[10.5px] text-gray-400 mt-1 block">
+                            Order confirmation & invoice will be sent here.
+                          </span>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                            Mobile Number <span className="text-[#d0473e]">*</span>
+                          </label>
+                          <PhoneInput
+                            value={formData.phone}
+                            onChange={(val) => setFormData({ ...formData, phone: val })}
+                            required
+                          />
+                          <span className="text-[10.5px] text-gray-400 mt-1 block">
+                            For delivery courier tracking SMS & OTP.
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Street Address */}
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                          Street Address & Apartment <span className="text-[#d0473e]">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.address}
+                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                          placeholder="House / Flat No., Building Name, Street & Landmark"
+                          className="w-full bg-gray-50/70 border border-gray-200 rounded-[8px] py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
+                        />
+                      </div>
+
+                      {/* City & PIN */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                            City / District <span className="text-[#d0473e]">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={formData.city}
+                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                            placeholder="Mumbai"
+                            className="w-full bg-gray-50/70 border border-gray-200 rounded-[8px] py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                            PIN / Postal Code <span className="text-[#d0473e]">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={formData.postalCode}
+                            onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+                            placeholder="400050"
+                            className="w-full bg-gray-50/70 border border-gray-200 rounded-[8px] py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Save Address Checkbox for Logged In Customer */}
+                      {usePage<any>().props.auth?.user && (
+                        <div className="pt-3 border-t border-gray-100 space-y-2">
+                          <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-gray-800">
+                            <input
+                              type="checkbox"
+                              checked={saveAddress}
+                              onChange={(e) => setSaveAddress(e.target.checked)}
+                              className="rounded border-gray-300 text-black focus:ring-black cursor-pointer"
+                            />
+                            <span>Save this address to my account for future orders</span>
+                          </label>
+
+                          {saveAddress && (
+                            <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-600 pl-5">
+                              <input
+                                type="checkbox"
+                                checked={setAsDefault}
+                                onChange={(e) => setSetAsDefault(e.target.checked)}
+                                className="rounded border-gray-300 text-black focus:ring-black cursor-pointer"
+                              />
+                              <span>Set as my default delivery address</span>
+                            </label>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  )}
 
-                  {/* Street Address */}
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                      Street Address & Apartment <span className="text-[#d0473e]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      placeholder="House / Flat No., Building Name, Street & Landmark"
-                      className="w-full bg-gray-50/70 border border-gray-200 rounded-[8px] py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
-                    />
-                  </div>
-
-                  {/* City & PIN */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                        City / District <span className="text-[#d0473e]">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.city}
-                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        placeholder="Mumbai"
-                        className="w-full bg-gray-50/70 border border-gray-200 rounded-[8px] py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
-                      />
+                  {/* Summary of Selected Address if using saved address */}
+                  {selectedAddressId !== 'new' && savedAddresses.length > 0 && (
+                    <div className="p-4 bg-emerald-50/70 border border-emerald-200/80 rounded-xl flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2 text-emerald-900 font-medium">
+                        <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>
+                          Selected: <strong>{formData.firstName} {formData.lastName}</strong> • {formData.address}, {formData.city} ({formData.postalCode})
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-emerald-700 font-mono">{formData.phone}</span>
                     </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                        PIN / Postal Code <span className="text-[#d0473e]">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.postalCode}
-                        onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
-                        placeholder="400050"
-                        className="w-full bg-gray-50/70 border border-gray-200 rounded-[8px] py-3 px-4 text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-black focus:bg-white transition-all"
-                      />
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* 2. Payment Method Options */}

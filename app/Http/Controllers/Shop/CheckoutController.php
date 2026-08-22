@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Coupon;
 use App\Models\CouponUsage;
 use App\Models\Customer;
+use App\Models\CustomerAddress;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -16,6 +17,7 @@ use App\Services\RazorpayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -26,10 +28,16 @@ class CheckoutController extends Controller
 {
     public function showCheckout(): Response
     {
+        $user = Auth::user();
+        $savedAddresses = $user
+            ? CustomerAddress::where('user_id', $user->id)->orderByDesc('is_default')->latest()->get()
+            : [];
+
         return Inertia::render('Shop/Checkout', [
             'products' => Product::take(6)->get(),
             'razorpayKey' => RazorpayService::getKeyId(),
             'isRazorpayConfigured' => RazorpayService::isConfigured(),
+            'savedAddresses' => $savedAddresses,
         ]);
     }
 
@@ -172,6 +180,31 @@ class CheckoutController extends Controller
         $calc = $this->calculateTotals($validated);
         $customerName = trim($validated['first_name'].' '.$validated['last_name']);
         $orderNumber = 'ORD-'.date('Y').'-'.strtoupper(Str::random(6));
+        $user = Auth::user();
+
+        // Optional address saving for authenticated customer
+        if ($user && $request->boolean('save_address')) {
+            $setAsDefault = $request->boolean('set_as_default');
+            if ($setAsDefault) {
+                CustomerAddress::where('user_id', $user->id)->update(['is_default' => false]);
+            }
+            $isDefault = $setAsDefault || ! CustomerAddress::where('user_id', $user->id)->exists();
+
+            CustomerAddress::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'address_line1' => $validated['address'],
+                    'city' => $validated['city'],
+                    'postal_code' => $validated['postal_code'],
+                ],
+                [
+                    'name' => $customerName,
+                    'phone' => $validated['phone'],
+                    'type' => 'home',
+                    'is_default' => $isDefault,
+                ]
+            );
+        }
 
         try {
             // 1. Create order on Razorpay API
@@ -192,6 +225,7 @@ class CheckoutController extends Controller
             $appliedCodesString = ! empty($calc['applied_coupons']) ? implode(', ', array_column($calc['applied_coupons'], 'code')) : null;
 
             $order = Order::create([
+                'user_id' => $user?->id,
                 'order_number' => $orderNumber,
                 'customer_name' => $customerName,
                 'customer_email' => $validated['email'],
@@ -380,6 +414,31 @@ class CheckoutController extends Controller
         $calc = $this->calculateTotals($validated);
         $customerName = trim($validated['first_name'].' '.$validated['last_name']);
         $orderNumber = 'ORD-'.date('Y').'-'.strtoupper(Str::random(6));
+        $user = Auth::user();
+
+        // Optional address saving for authenticated customer
+        if ($user && $request->boolean('save_address')) {
+            $setAsDefault = $request->boolean('set_as_default');
+            if ($setAsDefault) {
+                CustomerAddress::where('user_id', $user->id)->update(['is_default' => false]);
+            }
+            $isDefault = $setAsDefault || ! CustomerAddress::where('user_id', $user->id)->exists();
+
+            CustomerAddress::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'address_line1' => $validated['address'],
+                    'city' => $validated['city'],
+                    'postal_code' => $validated['postal_code'],
+                ],
+                [
+                    'name' => $customerName,
+                    'phone' => $validated['phone'],
+                    'type' => 'home',
+                    'is_default' => $isDefault,
+                ]
+            );
+        }
 
         DB::beginTransaction();
 
@@ -387,6 +446,7 @@ class CheckoutController extends Controller
             $appliedCodesString = ! empty($calc['applied_coupons']) ? implode(', ', array_column($calc['applied_coupons'], 'code')) : null;
 
             $order = Order::create([
+                'user_id' => $user?->id,
                 'order_number' => $orderNumber,
                 'customer_name' => $customerName,
                 'customer_email' => $validated['email'],
