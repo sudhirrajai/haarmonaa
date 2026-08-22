@@ -1,6 +1,7 @@
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { GlozinLayout } from '@/components/layout/GlozinLayout';
+import { SeoHead } from '@/components/seo/SeoHead';
 import { Product } from '@/types/shop';
 
 interface PrivacyPolicyProps {
@@ -8,9 +9,18 @@ interface PrivacyPolicyProps {
 }
 
 export default function PrivacyPolicy({ products = [] }: PrivacyPolicyProps) {
+  const breadcrumbs = [
+    { label: 'Home', url: '/' },
+    { label: 'Privacy Policy', url: '/privacy-policy' },
+  ];
+
   return (
     <GlozinLayout allProducts={products}>
-      <Head title="Privacy Policy — Haarmonaa Luxury Jewelry" />
+      <SeoHead
+        title="Privacy & Data Protection Policy"
+        description="Learn how Haarmonaa protects your personal data, secure payment transactions, cookie preferences, and confidentiality."
+        breadcrumbs={breadcrumbs}
+      />
 
       {/* Header & Breadcrumbs */}
       <section className="pt-10 pb-12 bg-white text-center border-b border-gray-100/60">

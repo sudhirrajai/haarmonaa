@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { GlozinLayout } from '@/components/layout/GlozinLayout';
+import { SeoHead } from '@/components/seo/SeoHead';
 import { Product } from '@/types/shop';
 import { CheckCircle2, Phone, Mail, Clock, Send, MapPin } from 'lucide-react';
 
@@ -39,9 +40,18 @@ export default function Contact({ products = [] }: ContactProps) {
   const supportPhone = settings?.store_phone || '';
   const storeAddress = settings?.store_address || '';
 
+  const breadcrumbs = [
+    { label: 'Home', url: '/' },
+    { label: 'Contact Us', url: '/contact-us' },
+  ];
+
   return (
     <GlozinLayout allProducts={products}>
-      <Head title="Contact Us — Haarmonaa Luxury Jewelry" />
+      <SeoHead
+        title="Contact Concierge & Customer Care"
+        description="Get in touch with Haarmonaa customer concierge for bespoke jewelry inquiries, order assistance, styling advice, and support."
+        breadcrumbs={breadcrumbs}
+      />
 
       {/* 1. Header & Breadcrumbs */}
       <section className="pt-10 pb-12 bg-white text-center border-b border-gray-100/60">

@@ -5,6 +5,7 @@ import { ProductCard } from '@/components/shop/ProductCard';
 import { ProductListItem } from '@/components/shop/ProductListItem';
 import { FilterSidebar } from '@/components/shop/FilterSidebar';
 import { SortDropdown } from '@/components/shop/SortDropdown';
+import { SeoHead } from '@/components/seo/SeoHead';
 import { Product, Category, FilterState } from '@/types/shop';
 import { Grid2X2, Grid3X3, LayoutGrid, List, SlidersHorizontal, ChevronDown, Loader2, X } from 'lucide-react';
 
@@ -133,9 +134,21 @@ export default function Catalog({
       ? Math.min(100, (displayedProducts.length / filteredProducts.length) * 100)
       : 0;
 
+  const breadcrumbs = [
+    { label: 'Home', url: '/' },
+    { label: 'Fine Jewelry', url: '/shop' },
+    ...(filters.category && filters.category !== 'all'
+      ? [{ label: filters.category, url: `/shop?category=${filters.category}` }]
+      : []),
+  ];
+
   return (
     <GlozinLayout allProducts={products}>
-      <Head title="Shop — Haarmonaa Luxury Jewelry" />
+      <SeoHead
+        title="Fine Jewelry Catalog — 18K Solid Gold Vermeil"
+        description="Browse all Haarmonaa handcrafted fine jewelry collections. Rings, earrings, necklaces, and bracelets in 18k thick solid gold vermeil. Waterproof and anti-tarnish."
+        breadcrumbs={breadcrumbs}
+      />
 
       {/* Centered Page Header Banner */}
       <div className="bg-white pt-12 pb-6 text-center">

@@ -11,15 +11,24 @@ use App\Http\Controllers\Admin\PageController as AdminPageController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\SeoController;
 use App\Http\Controllers\Shop\CheckoutController;
 use App\Http\Controllers\Shop\CouponController as ShopCouponController;
 use App\Http\Controllers\Shop\SearchController;
 use App\Http\Controllers\ShopController;
 use Illuminate\Support\Facades\Route;
 
+// SEO & AI Crawlers (XML Sitemap & LLMs.txt)
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('seo.sitemap');
+Route::get('/llms.txt', [SeoController::class, 'llmsTxt'])->name('seo.llms');
+Route::get('/llms-full.txt', [SeoController::class, 'llmsFullTxt'])->name('seo.llms-full');
+
 // Storefront Public Routes
 Route::get('/', [ShopController::class, 'home'])->name('home');
 Route::get('/shop', [ShopController::class, 'catalog'])->name('shop.index');
+Route::get('/category/{slug}', [CategoryController::class, 'show'])->name('shop.category');
+Route::get('/collection/{slug}', [CategoryController::class, 'showCollection'])->name('shop.collection');
 Route::get('/about-us', [ShopController::class, 'about'])->name('about');
 Route::get('/contact-us', [ShopController::class, 'contact'])->name('contact');
 Route::get('/faq', [ShopController::class, 'faq'])->name('faq');

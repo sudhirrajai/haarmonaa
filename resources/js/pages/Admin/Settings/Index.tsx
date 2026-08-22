@@ -15,6 +15,9 @@ import {
   Sparkles,
   Layout,
   ExternalLink,
+  Globe,
+  FileCode,
+  Share2,
 } from 'lucide-react';
 
 interface SettingsProps {
@@ -32,11 +35,14 @@ export default function Index({ settings }: SettingsProps) {
     footer_logo_height: Number(settings.footer_logo_height || 48),
     store_email: settings.store_email ?? 'support@haarmonaa.in',
     store_phone: settings.store_phone ?? '',
-    currency_symbol: settings.currency_symbol ?? '₹',
-    tax_rate_percent: settings.tax_rate_percent !== undefined ? String(settings.tax_rate_percent) : '0',
     shipping_fee: settings.shipping_fee !== undefined ? String(settings.shipping_fee) : '49',
     free_shipping_min_order: settings.free_shipping_min_order !== undefined ? String(settings.free_shipping_min_order) : '49',
     store_address: settings.store_address ?? '',
+    meta_title_suffix: settings.meta_title_suffix ?? '18K Anti-Tarnish Gold Vermeil Jewelry',
+    meta_description: settings.meta_description ?? 'Haarmonaa Fine Jewelry — Everyday luxury handcrafted from 18K thick solid gold vermeil. 100% waterproof, anti-tarnish, hypoallergenic, and sweatproof.',
+    google_site_verification: settings.google_site_verification ?? '',
+    bing_site_verification: settings.bing_site_verification ?? '',
+    og_default_image: settings.og_default_image ?? '',
   });
 
   const [saving, setSaving] = useState(false);
@@ -380,6 +386,100 @@ export default function Index({ settings }: SettingsProps) {
               <span className="text-[10.5px] text-gray-500 mt-1 block">
                 Orders &ge; this subtotal receive Free Shipping. Set to <strong>0</strong> for free shipping on all orders.
               </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: SEO, OpenGraph & AI Search Engine Indexing */}
+        <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 gap-2">
+            <div className="flex items-center gap-2">
+              <Globe className="w-4 h-4 text-emerald-600" />
+              <h2 className="text-sm font-bold text-gray-900">
+                SEO, OpenGraph & AI Search Indexing (Perplexity, SearchGPT, Google)
+              </h2>
+            </div>
+
+            {/* Quick Live Sitemap / LLM Links */}
+            <div className="flex items-center gap-2">
+              <a
+                href="/sitemap.xml"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-[6px] text-[11px] font-bold transition-all"
+              >
+                <span>sitemap.xml</span>
+                <ExternalLink className="w-3 h-3 text-gray-400" />
+              </a>
+
+              <a
+                href="/llms.txt"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-[6px] text-[11px] font-bold transition-all"
+              >
+                <span>llms.txt</span>
+                <ExternalLink className="w-3 h-3 text-amber-500" />
+              </a>
+
+              <a
+                href="/llms-full.txt"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 rounded-[6px] text-[11px] font-bold transition-all"
+              >
+                <span>llms-full.txt</span>
+                <ExternalLink className="w-3 h-3 text-purple-500" />
+              </a>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                Default Meta Title Suffix
+              </label>
+              <input
+                type="text"
+                value={formData.meta_title_suffix}
+                onChange={(e) => setFormData({ ...formData, meta_title_suffix: e.target.value })}
+                placeholder="e.g. 18K Anti-Tarnish Gold Vermeil Jewelry"
+                className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
+              />
+              <span className="text-[10.5px] text-gray-500 mt-1 block">
+                Appended to all page titles: <code>[Page Name] | [Suffix]</code>.
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                Google Search Console Verification Tag
+              </label>
+              <input
+                type="text"
+                value={formData.google_site_verification}
+                onChange={(e) =>
+                  setFormData({ ...formData, google_site_verification: e.target.value })
+                }
+                placeholder="e.g. google-site-verification=abc123xyz"
+                className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
+              />
+              <span className="text-[10.5px] text-gray-500 mt-1 block">
+                Paste your verification code from Google Search Console.
+              </span>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                Default Website Meta Description
+              </label>
+              <textarea
+                rows={2}
+                value={formData.meta_description}
+                onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
+                placeholder="Default description displayed on Google search results and AI search engine summaries..."
+                className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
+              />
             </div>
           </div>
         </div>

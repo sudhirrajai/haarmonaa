@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { GlozinLayout } from '@/components/layout/GlozinLayout';
 import { ProductCard } from '@/components/shop/ProductCard';
+import { SeoHead } from '@/components/seo/SeoHead';
 import { Product } from '@/types/shop';
 import { useCart } from '@/context/CartContext';
 
@@ -213,9 +214,63 @@ export default function ProductDetail({
     },
   ];
 
+  const cleanDescription = product.description
+    ? product.description.replace(/<[^>]*>?/gm, '').trim()
+    : `${product.name} — Handcrafted fine jewelry in 18k solid gold vermeil. Waterproof, anti-tarnish, and hypoallergenic for everyday luxury.`;
+
+  const productSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    image: uniqueImages.length > 0 ? uniqueImages : [product.image],
+    description: cleanDescription,
+    sku: `HAAR-${product.id}`,
+    brand: {
+      '@type': 'Brand',
+      name: 'Haarmonaa',
+    },
+    category: product.category,
+    offers: {
+      '@type': 'Offer',
+      url: typeof window !== 'undefined' ? window.location.href : `https://haarmonaa.vmcore.in/product/${product.slug}`,
+      priceCurrency: 'INR',
+      price: product.price,
+      priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      itemCondition: 'https://schema.org/NewCondition',
+      availability: product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      seller: {
+        '@type': 'Organization',
+        name: 'Haarmonaa',
+      },
+    },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: product.rating || 4.9,
+      reviewCount: product.reviewCount || 18,
+      bestRating: '5',
+      worstRating: '1',
+    },
+  };
+
+  const breadcrumbs = [
+    { label: 'Home', url: '/' },
+    { label: 'Jewelry', url: '/shop' },
+    ...(product.category
+      ? [{ label: product.category, url: `/category/${product.category.toLowerCase().replace(/\s+/g, '-')}` }]
+      : []),
+    { label: product.name, url: `/product/${product.slug}` },
+  ];
+
   return (
     <GlozinLayout allProducts={[product, ...relatedProducts]}>
-      <Head title={`${product.name} — Haarmonaa Glozin Luxury Jewelry`} />
+      <SeoHead
+        title={`${product.name} — 18K Gold Vermeil Jewelry`}
+        description={cleanDescription}
+        ogImage={uniqueImages[0] || product.image}
+        ogType="product"
+        breadcrumbs={breadcrumbs}
+        structuredData={productSchema}
+      />
 
       {/* TOP HEADER BREADCRUMB & NEXT/PREV NAVIGATION BAR */}
       <div className="border-b border-gray-100 py-3 bg-white">
@@ -229,7 +284,16 @@ export default function ProductDetail({
               Fine Jewelry
             </Link>
             <ChevronRight className="w-3 h-3 text-gray-400" />
-            <span className="text-gray-900 font-bold truncate">{product.category || 'Earrings'}</span>
+            {product.category ? (
+              <Link
+                href={`/category/${product.category.toLowerCase().replace(/\s+/g, '-')}`}
+                className="text-gray-900 font-bold hover:underline truncate"
+              >
+                {product.category}
+              </Link>
+            ) : (
+              <span className="text-gray-900 font-bold truncate">Earrings</span>
+            )}
           </nav>
 
           <div className="flex items-center gap-3">

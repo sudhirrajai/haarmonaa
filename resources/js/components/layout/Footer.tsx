@@ -167,22 +167,22 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-3 text-xs text-gray-400">
               <li>
-                <Link href="/shop?category=bracelets" className="hover:text-white transition-colors">
+                <Link href="/category/bracelets" className="hover:text-white transition-colors">
                   Bracelets
                 </Link>
               </li>
               <li>
-                <Link href="/shop?category=earrings" className="hover:text-white transition-colors">
+                <Link href="/category/earrings" className="hover:text-white transition-colors">
                   Earrings
                 </Link>
               </li>
               <li>
-                <Link href="/shop?category=necklaces" className="hover:text-white transition-colors">
+                <Link href="/category/necklaces" className="hover:text-white transition-colors">
                   Necklaces
                 </Link>
               </li>
               <li>
-                <Link href="/shop?category=rings" className="hover:text-white transition-colors">
+                <Link href="/category/rings" className="hover:text-white transition-colors">
                   Rings
                 </Link>
               </li>

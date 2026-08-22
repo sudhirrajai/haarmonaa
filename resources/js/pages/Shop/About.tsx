@@ -1,6 +1,7 @@
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { GlozinLayout } from '@/components/layout/GlozinLayout';
+import { SeoHead } from '@/components/seo/SeoHead';
 import { Product } from '@/types/shop';
 import { Star, Sparkles, ShieldCheck, HeartHandshake, ArrowRight, Award, Gem, Truck } from 'lucide-react';
 
@@ -9,9 +10,18 @@ interface AboutProps {
 }
 
 export default function About({ products = [] }: AboutProps) {
+  const breadcrumbs = [
+    { label: 'Home', url: '/' },
+    { label: 'About Us', url: '/about-us' },
+  ];
+
   return (
     <GlozinLayout allProducts={products}>
-      <Head title="About Us — Haarmonaa Luxury Jewelry" />
+      <SeoHead
+        title="About Us — Artisan Heritage & 18K Gold Vermeil Craftsmanship"
+        description="Learn about Haarmonaa's heritage, sustainable gold vermeil metallurgy, anti-tarnish waterproof guarantees, and vision for everyday fine jewelry."
+        breadcrumbs={breadcrumbs}
+      />
 
       {/* 1. Breadcrumb & Hero Statement */}
       <section className="pt-10 pb-12 bg-white text-center">

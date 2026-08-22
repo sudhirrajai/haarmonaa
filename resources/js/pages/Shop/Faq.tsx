@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { GlozinLayout } from '@/components/layout/GlozinLayout';
+import { SeoHead } from '@/components/seo/SeoHead';
 import { Product } from '@/types/shop';
 import { Plus, Minus } from 'lucide-react';
 
@@ -109,9 +110,33 @@ export default function Faq({ products = [] }: FaqProps) {
     },
   ];
 
+  const allFaqItems = faqCategories.flatMap((c) => c.items);
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: allFaqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
+  };
+
+  const breadcrumbs = [
+    { label: 'Home', url: '/' },
+    { label: 'FAQ & Care Guide', url: '/faq' },
+  ];
+
   return (
     <GlozinLayout allProducts={products}>
-      <Head title="FAQ — Haarmonaa Luxury Jewelry" />
+      <SeoHead
+        title="FAQ & Jewelry Care Guide — Frequently Asked Questions"
+        description="Find answers regarding Haarmonaa 18K solid gold vermeil jewelry, anti-tarnish waterproof guarantees, ring sizing, express shipping, and 7-day concierge returns."
+        breadcrumbs={breadcrumbs}
+        structuredData={faqSchema}
+      />
 
       {/* 1. Header & Breadcrumbs */}
       <section className="pt-10 pb-12 bg-white text-center border-b border-gray-100/60">

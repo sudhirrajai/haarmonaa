@@ -42,6 +42,11 @@ class SettingController extends Controller
             'instagram_handle' => 'nullable|string|max:100',
             'instagram_posts' => 'nullable',
             'store_features' => 'nullable',
+            'meta_title_suffix' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:1000',
+            'google_site_verification' => 'nullable|string|max:255',
+            'bing_site_verification' => 'nullable|string|max:255',
+            'og_default_image' => 'nullable|string',
         ]);
 
         foreach ($validated as $key => $val) {

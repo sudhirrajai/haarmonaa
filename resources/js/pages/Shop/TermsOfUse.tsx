@@ -1,6 +1,7 @@
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { GlozinLayout } from '@/components/layout/GlozinLayout';
+import { SeoHead } from '@/components/seo/SeoHead';
 import { Product } from '@/types/shop';
 
 interface TermsOfUseProps {
@@ -8,9 +9,18 @@ interface TermsOfUseProps {
 }
 
 export default function TermsOfUse({ products = [] }: TermsOfUseProps) {
+  const breadcrumbs = [
+    { label: 'Home', url: '/' },
+    { label: 'Terms Of Use', url: '/terms-of-use' },
+  ];
+
   return (
     <GlozinLayout allProducts={products}>
-      <Head title="Terms Of Use — Haarmonaa Luxury Jewelry" />
+      <SeoHead
+        title="Terms of Use & Purchase Agreement"
+        description="Review the terms and conditions governing purchases, payments, shipping, warranties, and user conduct on Haarmonaa."
+        breadcrumbs={breadcrumbs}
+      />
 
       {/* Header & Breadcrumbs */}
       <section className="pt-10 pb-12 bg-white text-center border-b border-gray-100/60">

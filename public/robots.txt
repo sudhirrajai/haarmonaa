@@ -1,2 +1,21 @@
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /checkout
+Disallow: /payment/*
+
+# AI Search & Crawlers (Perplexity, SearchGPT, Gemini, Claude, Applebot)
+User-agent: GPTBot
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+
+# Sitemap & LLMs Index
+Sitemap: https://haarmonaa.vmcore.in/sitemap.xml
+# LLMs Text Standard
+# https://haarmonaa.vmcore.in/llms.txt
