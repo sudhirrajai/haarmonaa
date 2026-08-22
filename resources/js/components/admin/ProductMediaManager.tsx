@@ -125,7 +125,7 @@ export const ProductMediaManager: React.FC<ProductMediaManagerProps> = ({
   return (
     <div className="space-y-4">
       {/* Header Info */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-gray-100">
         <div>
           <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
             <ImageIcon className="w-4 h-4 text-amber-600" />
@@ -136,15 +136,15 @@ export const ProductMediaManager: React.FC<ProductMediaManagerProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           {/* WordPress-style Choose from Media Library Button */}
           <button
             type="button"
             disabled={isMaxReached}
             onClick={() => setMediaPickerOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#111111] hover:bg-[#d0473e] text-white rounded-[10px] text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50"
+            className="whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#111111] hover:bg-[#d0473e] text-white rounded-[8px] text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50"
           >
-            <Layers className="w-3.5 h-3.5 text-amber-300" />
+            <Layers className="w-3.5 h-3.5 text-amber-300 shrink-0" />
             <span>Choose from Media Library</span>
           </button>
 
@@ -172,13 +172,12 @@ export const ProductMediaManager: React.FC<ProductMediaManagerProps> = ({
           setDragOver(false);
           if (!isMaxReached) handleFileUpload(e.dataTransfer.files);
         }}
-        onClick={() => !isMaxReached && fileInputRef.current?.click()}
-        className={`border-2 border-dashed rounded-3xl p-5 text-center transition-all ${
+        className={`border-2 border-dashed rounded-3xl p-6 text-center transition-all ${
           isMaxReached
             ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
             : dragOver
-            ? 'border-black bg-amber-50/50 scale-[0.99] cursor-pointer'
-            : 'border-gray-200 hover:border-gray-400 bg-gray-50/60 hover:bg-white cursor-pointer'
+            ? 'border-black bg-amber-50/50 scale-[0.99]'
+            : 'border-gray-200 bg-gray-50/60'
         }`}
       >
         <input
@@ -191,14 +190,14 @@ export const ProductMediaManager: React.FC<ProductMediaManagerProps> = ({
           className="hidden"
         />
 
-        <div className="flex flex-col items-center justify-center space-y-2">
-          <div className="w-10 h-10 rounded-full bg-white shadow-2xs border border-gray-200 flex items-center justify-center text-gray-700">
+        <div className="flex flex-col items-center justify-center space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-white shadow-2xs border border-gray-200 flex items-center justify-center text-gray-700">
             {uploading ? (
-              <Loader2 className="w-5 h-5 animate-spin text-amber-600" />
+              <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
             ) : isMaxReached ? (
-              <AlertCircle className="w-5 h-5 text-rose-500" />
+              <AlertCircle className="w-6 h-6 text-rose-500" />
             ) : (
-              <Upload className="w-4 h-4 text-gray-600" />
+              <Upload className="w-5 h-5 text-gray-600" />
             )}
           </div>
           <div>
@@ -207,12 +206,34 @@ export const ProductMediaManager: React.FC<ProductMediaManagerProps> = ({
                 ? 'Uploading images...'
                 : isMaxReached
                 ? `Maximum limit of ${maxImages} images reached`
-                : 'Click to Upload or Drag & Drop Images'}
+                : 'Drag & drop product images here'}
             </span>
             <span className="text-[11px] text-gray-400 block mt-0.5">
-              Uploaded files are also automatically stored in your store Media Library.
+              Supports PNG, JPG, WEBP, SVG (Max 10MB per file)
             </span>
           </div>
+
+          {!isMaxReached && (
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>Upload From Computer</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMediaPickerOpen(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-gray-100 text-gray-800 border border-gray-200 text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
+              >
+                <Layers className="w-3.5 h-3.5 text-amber-600" />
+                <span>Select From Media Library</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

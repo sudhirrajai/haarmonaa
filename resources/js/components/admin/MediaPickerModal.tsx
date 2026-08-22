@@ -56,13 +56,27 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch media library items
+  // ESC Key listener to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  // Fetch media library items using dedicated JSON endpoint
   const fetchMedia = async (query = '') => {
     setLoading(true);
     try {
-      const url = new URL('/admin/media', window.location.origin);
-      url.searchParams.set('type', 'image');
-      url.searchParams.set('per_page', '60');
+      const url = new URL('/admin/media/items', window.location.origin);
       if (query) {
         url.searchParams.set('search', query);
       }
@@ -75,9 +89,21 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
       });
 
       const data = await response.json();
-      if (data.media?.data) {
-        setMediaItems(data.media.data);
+      let items: MediaItem[] = [];
+
+      if (Array.isArray(data.items)) {
+        items = data.items;
+      } else if (Array.isArray(data.media?.data)) {
+        items = data.media.data;
+      } else if (Array.isArray(data.media)) {
+        items = data.media;
+      } else if (Array.isArray(data.data)) {
+        items = data.data;
+      } else if (Array.isArray(data)) {
+        items = data;
       }
+
+      setMediaItems(items);
     } catch (err) {
       console.error('Failed to load media library', err);
     } finally {
@@ -173,8 +199,15 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
-      <div className="bg-white rounded-[16px] max-w-5xl w-full h-[90vh] max-h-[780px] shadow-2xl border border-gray-200/90 flex flex-col overflow-hidden">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in"
+    >
+      <div className="bg-white rounded-[16px] max-w-5xl w-full h-[90vh] max-h-[780px] shadow-2xl border border-gray-200/90 flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white">
           <div className="flex items-center gap-3">
@@ -184,7 +217,8 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
             <div>
               <h3 className="text-base font-extrabold text-gray-900 tracking-tight">{title}</h3>
               <p className="text-[11px] text-gray-400">
-                {multiple ? `Select up to ${maxSelect} images` : 'Choose 1 image'} for this product field.
+                {multiple ? `Select up to ${maxSelect} images` : 'Choose 1 image'} for this product field.{' '}
+                <span className="text-gray-400 font-mono">(Press Esc to close)</span>
               </p>
             </div>
           </div>
@@ -219,6 +253,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
             type="button"
             onClick={onClose}
             className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+            title="Close (Esc)"
           >
             <X className="w-5 h-5" />
           </button>
@@ -309,7 +344,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                 </form>
 
                 <div className="text-[11px] font-bold text-gray-400">
-                  {mediaItems.length} items loaded
+                  {mediaItems.length} items available
                 </div>
               </div>
 
@@ -329,7 +364,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setActiveTab('upload')}
-                      className="px-4 py-1.5 bg-black text-white text-xs font-bold rounded-lg"
+                      className="px-4 py-1.5 bg-black text-white text-xs font-bold rounded-lg cursor-pointer"
                     >
                       Upload Now
                     </button>
@@ -354,7 +389,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                         >
                           <img
                             src={item.url}
-                            alt={item.name}
+                            alt={item.alt_text || item.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                             loading="lazy"
                           />
@@ -398,7 +433,7 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
                     <p className="font-bold text-gray-900 truncate" title={focusedItem.name}>
                       {focusedItem.name}
                     </p>
-                    <p className="text-gray-400 font-mono">{focusedItem.file_name}</p>
+                    <p className="text-gray-400 font-mono text-[10px] break-all">{focusedItem.file_name}</p>
                     <p>{focusedItem.human_readable_size}</p>
                   </div>
                 </div>

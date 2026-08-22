@@ -110,6 +110,38 @@ class MediaController extends Controller
     }
 
     /**
+     * Dedicated JSON endpoint for Media Picker Modal.
+     */
+    public function items(Request $request): JsonResponse
+    {
+        $query = Media::query();
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('file_name', 'like', "%{$search}%")
+                    ->orWhere('alt_text', 'like', "%{$search}%");
+            });
+        }
+
+        if ($type = $request->input('type')) {
+            if ($type === 'image') {
+                $query->where('mime_type', 'like', 'image/%');
+            } elseif ($type === 'video') {
+                $query->where('mime_type', 'like', 'video/%');
+            }
+        }
+
+        $items = $query->latest('id')->take(100)->get();
+
+        return response()->json([
+            'success' => true,
+            'items' => $items,
+            'total' => $items->count(),
+        ]);
+    }
+
+    /**
      * Upload single or multiple files to media library.
      */
     public function store(Request $request): JsonResponse|RedirectResponse

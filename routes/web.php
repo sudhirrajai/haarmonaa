@@ -86,6 +86,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
     // Media Library (WordPress-Style Media Management)
     Route::get('media', [AdminMediaController::class, 'index'])->name('media.index');
+    Route::get('media/items', [AdminMediaController::class, 'items'])->name('media.items');
     Route::post('media/upload', [AdminMediaController::class, 'store'])->name('media.store');
     Route::post('media/bulk-delete', [AdminMediaController::class, 'bulkDestroy'])->name('media.bulk-destroy');
     Route::put('media/{media}', [AdminMediaController::class, 'update'])->name('media.update');
