@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
-import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Category, Product } from '@/types/shop';
 import { SingleImageUploader } from '@/components/admin/SingleImageUploader';
 import { AdminToggle } from '@/components/admin/AdminToggle';
@@ -34,8 +33,13 @@ import {
   ArrowLeft,
   X,
   ChevronRight,
-  Settings,
-  SlidersHorizontal,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Maximize2,
+  Minimize2,
+  RefreshCw,
+  Undo,
+  Store,
 } from 'lucide-react';
 
 interface HomePageBuilderProps {
@@ -300,11 +304,13 @@ export default function HomePageBuilder({
   const [sections, setSections] = useState<SectionBlock[]>(initialSections);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [sidebarTab, setSidebarTab] = useState<'tree' | 'add'>('tree');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [hasChanges, setHasChanges] = useState(false);
 
   const selectedSection = sections.find((s) => s.id === selectedSectionId);
 
@@ -332,6 +338,7 @@ export default function HomePageBuilder({
     setSections(newSections);
     setDraggedIndex(null);
     setDragOverIndex(null);
+    setHasChanges(true);
   };
 
   const handleDragEnd = () => {
@@ -348,6 +355,7 @@ export default function HomePageBuilder({
     newSections[index] = newSections[targetIndex];
     newSections[targetIndex] = temp;
     setSections(newSections);
+    setHasChanges(true);
   };
 
   // --- Section Actions ---
@@ -355,6 +363,7 @@ export default function HomePageBuilder({
     setSections((prev) =>
       prev.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
     );
+    setHasChanges(true);
   };
 
   const duplicateSection = (index: number) => {
@@ -369,6 +378,7 @@ export default function HomePageBuilder({
     updated.splice(index + 1, 0, clone);
     setSections(updated);
     setSelectedSectionId(clone.id);
+    setHasChanges(true);
   };
 
   const deleteSection = (index: number) => {
@@ -383,6 +393,7 @@ export default function HomePageBuilder({
       if (selectedSectionId === sections[index].id) {
         setSelectedSectionId(null);
       }
+      setHasChanges(true);
     }
   };
 
@@ -398,6 +409,7 @@ export default function HomePageBuilder({
     setSections((prev) => [...prev, newSection]);
     setSelectedSectionId(newSection.id);
     setSidebarTab('tree');
+    setHasChanges(true);
   };
 
   const updateSelectedSectionSettings = (newSettings: any) => {
@@ -407,6 +419,7 @@ export default function HomePageBuilder({
         s.id === selectedSectionId ? { ...s, settings: { ...s.settings, ...newSettings } } : s
       )
     );
+    setHasChanges(true);
   };
 
   const updateSelectedSectionName = (name: string) => {
@@ -414,6 +427,7 @@ export default function HomePageBuilder({
     setSections((prev) =>
       prev.map((s) => (s.id === selectedSectionId ? { ...s, name } : s))
     );
+    setHasChanges(true);
   };
 
   // --- Save Handler ---
@@ -429,6 +443,7 @@ export default function HomePageBuilder({
         onSuccess: () => {
           setIsSaving(false);
           setSaveSuccess(true);
+          setHasChanges(false);
           setTimeout(() => setSaveSuccess(false), 4000);
         },
         onError: () => {
@@ -446,43 +461,61 @@ export default function HomePageBuilder({
   };
 
   return (
-    <AdminLayout title="Theme Customizer — Landing Page Builder">
-      <Head title="Theme Customizer — Haarmonaa" />
+    <div className="h-screen w-screen flex flex-col bg-[#0f1117] text-gray-100 overflow-hidden select-none font-sans">
+      <Head title="Theme Customizer — Haarmonaa Fine Jewelry" />
 
-      {/* Top Customizer Bar */}
-      <div className="flex items-center justify-between gap-4 pb-4 mb-4 border-b border-gray-200">
+      {/* TOP HEADER (Shopify Customizer Chrome Bar) */}
+      <header className="h-14 bg-[#1a1d26] border-b border-gray-800 px-4 flex items-center justify-between shrink-0 z-30">
+        {/* Left Side: Exit Link & Page Name */}
         <div className="flex items-center gap-3">
           <Link
             href="/admin/pages"
-            className="p-2 rounded-xl border border-gray-200 hover:bg-gray-100 transition-colors text-gray-600"
-            title="Back to Pages"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-xs font-semibold text-gray-200 transition-colors"
+            title="Exit to Pages List"
           >
             <ArrowLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Exit</span>
           </Link>
-          <div>
-            <h1 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight flex items-center gap-2">
-              <span>Homepage Theme Customizer</span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 uppercase tracking-wider">
-                Live Drag & Drop
-              </span>
-            </h1>
+
+          <div className="h-4 w-px bg-gray-700 mx-1 hidden sm:block" />
+
+          {/* Toggle Sidebar Button */}
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className={`p-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              sidebarOpen
+                ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+            }`}
+            title={sidebarOpen ? 'Collapse Sidebar (Full Preview)' : 'Open Left Editor Sidebar'}
+          >
+            {sidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
+          </button>
+
+          {/* Current Page Badge */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-white tracking-tight">Homepage</span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-widest">
+              Live Theme
+            </span>
           </div>
         </div>
 
-        {/* Center Viewport Switcher */}
-        <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200 shadow-2xs">
+        {/* Center: Device Viewport Switcher */}
+        <div className="flex items-center bg-gray-900 p-1 rounded-xl border border-gray-800 shadow-inner">
           <button
             type="button"
             onClick={() => setPreviewDevice('desktop')}
-            title="Desktop View (100%)"
+            title="Desktop View (Full Width)"
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               previewDevice === 'desktop'
-                ? 'bg-white text-gray-900 shadow-xs'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-gray-800 text-white shadow-sm'
+                : 'text-gray-400 hover:text-gray-200'
             }`}
           >
             <Monitor className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Desktop</span>
+            <span className="hidden md:inline">Desktop</span>
           </button>
           <button
             type="button"
@@ -490,12 +523,12 @@ export default function HomePageBuilder({
             title="Tablet View (768px)"
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               previewDevice === 'tablet'
-                ? 'bg-white text-gray-900 shadow-xs'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-gray-800 text-white shadow-sm'
+                : 'text-gray-400 hover:text-gray-200'
             }`}
           >
             <Tablet className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Tablet</span>
+            <span className="hidden md:inline">Tablet</span>
           </button>
           <button
             type="button"
@@ -503,35 +536,37 @@ export default function HomePageBuilder({
             title="Mobile Phone View (375px)"
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               previewDevice === 'mobile'
-                ? 'bg-white text-gray-900 shadow-xs'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-gray-800 text-white shadow-sm'
+                : 'text-gray-400 hover:text-gray-200'
             }`}
           >
             <Smartphone className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Mobile</span>
+            <span className="hidden md:inline">Mobile (375px)</span>
           </button>
         </div>
 
-        {/* Right Actions */}
-        <div className="flex items-center gap-2">
+        {/* Right Side: Storefront Link & Save Button */}
+        <div className="flex items-center gap-3">
           <a
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
           >
             <span className="hidden sm:inline">View Store</span>
-            <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
+            <ExternalLink className="w-3.5 h-3.5" />
           </a>
 
           <button
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className={`inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-sm cursor-pointer ${
+            className={`flex items-center gap-2 px-5 py-1.5 rounded-xl text-xs font-bold text-white transition-all shadow-md cursor-pointer ${
               saveSuccess
                 ? 'bg-emerald-600'
-                : 'bg-[#111111] hover:bg-[#d0473e]'
+                : hasChanges
+                ? 'bg-amber-600 hover:bg-amber-500 animate-pulse'
+                : 'bg-white/15 hover:bg-white/25 text-white'
             } disabled:opacity-50`}
           >
             {saveSuccess ? (
@@ -542,26 +577,30 @@ export default function HomePageBuilder({
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                <span>{isSaving ? 'Saving...' : 'Save Live'}</span>
+                <span>{isSaving ? 'Saving...' : hasChanges ? 'Save Changes' : 'Saved'}</span>
               </>
             )}
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Split Screen: Left Sidebar + Right Live Preview Canvas (Shopify Style) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* LEFT SIDEBAR (Shopify Customizer Tree & Inspector) */}
-        <div className="lg:col-span-4 xl:col-span-4 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col h-[calc(100vh-140px)] sticky top-4 overflow-hidden">
+      {/* BODY WORKSPACE (Shopify Split-Screen Editor) */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* LEFT SIDEBAR (Collapsible Shopify Inspector Drawer) */}
+        <aside
+          className={`h-full bg-[#161922] border-r border-gray-800 transition-all duration-300 flex flex-col shrink-0 z-20 ${
+            sidebarOpen ? 'w-[360px] sm:w-[390px]' : 'w-0 -translate-x-full overflow-hidden border-none'
+          }`}
+        >
           {/* If a section is selected, show its dedicated Inspector Panel */}
           {selectedSection ? (
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full bg-[#161922]">
               {/* Inspector Header */}
-              <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/70">
+              <div className="p-3.5 border-b border-gray-800 flex items-center justify-between bg-[#12141c]">
                 <button
                   type="button"
                   onClick={() => setSelectedSectionId(null)}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-700 hover:text-black transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 text-xs font-bold text-gray-300 hover:text-white transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span>All Sections</span>
@@ -577,24 +616,24 @@ export default function HomePageBuilder({
               </div>
 
               {/* Inspector Content */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5">
+              <div className="flex-1 overflow-y-auto p-4 space-y-5 text-gray-200">
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                     Section Name (Admin Label)
                   </label>
                   <input
                     type="text"
                     value={selectedSection.name}
                     onChange={(e) => updateSelectedSectionName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-bold focus:ring-1 focus:ring-black focus:border-black"
+                    className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-bold text-white focus:ring-1 focus:ring-amber-400 focus:border-amber-400"
                   />
                 </div>
 
                 {/* Specific Form Fields */}
                 {selectedSection.type === 'curated_capsule' && (
-                  <div className="space-y-4 pt-2 border-t border-gray-100">
+                  <div className="space-y-4 pt-2 border-t border-gray-800">
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                         Capsule Headline (Title)
                       </label>
                       <input
@@ -604,12 +643,12 @@ export default function HomePageBuilder({
                           updateSelectedSectionSettings({ title: e.target.value })
                         }
                         placeholder="e.g. Summer Solstice Edition"
-                        className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-medium"
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white focus:ring-1 focus:ring-amber-400"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                         Tagline / Sub-Headline
                       </label>
                       <input
@@ -619,13 +658,13 @@ export default function HomePageBuilder({
                           updateSelectedSectionSettings({ subtitle: e.target.value })
                         }
                         placeholder="e.g. SUNLIT REFLECTIONS & HEIRLOOMS"
-                        className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-medium"
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white focus:ring-1 focus:ring-amber-400"
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                           Badge Label
                         </label>
                         <input
@@ -635,12 +674,12 @@ export default function HomePageBuilder({
                             updateSelectedSectionSettings({ badge: e.target.value })
                           }
                           placeholder="e.g. SUMMER CAPSULE"
-                          className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-medium"
+                          className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                           Theme Styling
                         </label>
                         <select
@@ -648,7 +687,7 @@ export default function HomePageBuilder({
                           onChange={(e) =>
                             updateSelectedSectionSettings({ theme: e.target.value })
                           }
-                          className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-medium bg-white"
+                          className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
                         >
                           <option value="gold">Warm Gold</option>
                           <option value="rose">Rose Gold</option>
@@ -659,7 +698,7 @@ export default function HomePageBuilder({
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                         Target Collection / Category
                       </label>
                       <select
@@ -667,7 +706,7 @@ export default function HomePageBuilder({
                         onChange={(e) =>
                           updateSelectedSectionSettings({ category_slug: e.target.value })
                         }
-                        className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-medium bg-white"
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
                       >
                         <option value="all">Featured Products (Automatic)</option>
                         <optgroup label="Collections">
@@ -688,7 +727,7 @@ export default function HomePageBuilder({
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                         Editorial Description
                       </label>
                       <textarea
@@ -697,7 +736,7 @@ export default function HomePageBuilder({
                         onChange={(e) =>
                           updateSelectedSectionSettings({ description: e.target.value })
                         }
-                        className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-medium"
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
                       />
                     </div>
 
@@ -708,13 +747,13 @@ export default function HomePageBuilder({
                         onChange={(url) =>
                           updateSelectedSectionSettings({ banner_image: url })
                         }
-                        hint="Recommended: 1200x800px luxury photograph."
+                        hint="Recommended: 1200x800px portrait photograph."
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                           Button Text
                         </label>
                         <input
@@ -723,11 +762,11 @@ export default function HomePageBuilder({
                           onChange={(e) =>
                             updateSelectedSectionSettings({ button_text: e.target.value })
                           }
-                          className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-medium"
+                          className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                           Button Link
                         </label>
                         <input
@@ -736,7 +775,7 @@ export default function HomePageBuilder({
                           onChange={(e) =>
                             updateSelectedSectionSettings({ button_link: e.target.value })
                           }
-                          className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-medium"
+                          className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
                         />
                       </div>
                     </div>
@@ -745,9 +784,9 @@ export default function HomePageBuilder({
 
                 {/* Hero Slider Settings */}
                 {selectedSection.type === 'hero_slider' && (
-                  <div className="space-y-4 pt-2 border-t border-gray-100">
+                  <div className="space-y-4 pt-2 border-t border-gray-800">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-gray-900">
+                      <span className="text-xs font-bold text-white">
                         Slides ({(selectedSection.settings?.slides || []).length})
                       </span>
                       <button
@@ -768,7 +807,7 @@ export default function HomePageBuilder({
                           };
                           updateSelectedSectionSettings({ slides: [...current, newSlide] });
                         }}
-                        className="text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-200 cursor-pointer"
+                        className="text-xs font-bold text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 px-2.5 py-1 rounded-lg border border-amber-500/40 cursor-pointer"
                       >
                         + Add Slide
                       </button>
@@ -776,16 +815,16 @@ export default function HomePageBuilder({
 
                     <div className="space-y-3">
                       {(selectedSection.settings?.slides || []).map((slide: any, sIdx: number) => (
-                        <div key={slide.id || sIdx} className="p-3 rounded-xl border border-gray-200 bg-gray-50/50 space-y-3">
+                        <div key={slide.id || sIdx} className="p-3 rounded-xl border border-gray-800 bg-gray-900/60 space-y-3">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-gray-900">Slide #{sIdx + 1}</span>
+                            <span className="text-xs font-bold text-gray-200">Slide #{sIdx + 1}</span>
                             <button
                               type="button"
                               onClick={() => {
                                 const slides = selectedSection.settings.slides.filter((_: any, i: number) => i !== sIdx);
                                 updateSelectedSectionSettings({ slides });
                               }}
-                              className="text-red-500 hover:bg-red-50 p-1 rounded"
+                              className="text-red-400 hover:bg-red-500/20 p-1 rounded"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -799,7 +838,7 @@ export default function HomePageBuilder({
                               updateSelectedSectionSettings({ slides });
                             }}
                             placeholder="Headline Title"
-                            className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs font-bold"
+                            className="w-full px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs font-bold text-white"
                           />
                           <input
                             type="text"
@@ -810,7 +849,7 @@ export default function HomePageBuilder({
                               updateSelectedSectionSettings({ slides });
                             }}
                             placeholder="Subtitle"
-                            className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs"
+                            className="w-full px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs text-white"
                           />
                           <SingleImageUploader
                             label="Left Image"
@@ -838,9 +877,9 @@ export default function HomePageBuilder({
 
                 {/* Best Selling Settings */}
                 {selectedSection.type === 'best_selling' && (
-                  <div className="space-y-4 pt-2 border-t border-gray-100">
+                  <div className="space-y-4 pt-2 border-t border-gray-800">
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                         Section Title
                       </label>
                       <input
@@ -849,11 +888,11 @@ export default function HomePageBuilder({
                         onChange={(e) =>
                           updateSelectedSectionSettings({ title: e.target.value })
                         }
-                        className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-medium"
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                         Subtitle
                       </label>
                       <input
@@ -862,39 +901,7 @@ export default function HomePageBuilder({
                         onChange={(e) =>
                           updateSelectedSectionSettings({ subtitle: e.target.value })
                         }
-                        className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-medium"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Featured Products Settings */}
-                {selectedSection.type === 'featured_products' && (
-                  <div className="space-y-4 pt-2 border-t border-gray-100">
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
-                        Section Title
-                      </label>
-                      <input
-                        type="text"
-                        value={selectedSection.settings?.title || ''}
-                        onChange={(e) =>
-                          updateSelectedSectionSettings({ title: e.target.value })
-                        }
-                        className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-medium"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
-                        Subtitle
-                      </label>
-                      <input
-                        type="text"
-                        value={selectedSection.settings?.subtitle || ''}
-                        onChange={(e) =>
-                          updateSelectedSectionSettings({ subtitle: e.target.value })
-                        }
-                        className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-medium"
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
                       />
                     </div>
                   </div>
@@ -902,9 +909,9 @@ export default function HomePageBuilder({
 
                 {/* Custom HTML Settings */}
                 {selectedSection.type === 'custom_html' && (
-                  <div className="space-y-4 pt-2 border-t border-gray-100">
+                  <div className="space-y-4 pt-2 border-t border-gray-800">
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                         HTML & CSS Content
                       </label>
                       <textarea
@@ -913,7 +920,7 @@ export default function HomePageBuilder({
                         onChange={(e) =>
                           updateSelectedSectionSettings({ html_content: e.target.value })
                         }
-                        className="w-full px-3 py-2 rounded-xl border border-gray-300 font-mono text-xs text-emerald-400 bg-gray-900"
+                        className="w-full px-3 py-2 rounded-xl border border-gray-700 font-mono text-xs text-emerald-400 bg-gray-900"
                       />
                     </div>
                   </div>
@@ -924,14 +931,14 @@ export default function HomePageBuilder({
             /* Sidebar Main Tabs: Sections Tree vs Presets Library */
             <div className="flex flex-col h-full">
               {/* Tab Switcher */}
-              <div className="flex border-b border-gray-200 bg-gray-50/70 p-2 gap-1.5">
+              <div className="flex border-b border-gray-800 bg-[#12141c] p-2 gap-1.5 shrink-0">
                 <button
                   type="button"
                   onClick={() => setSidebarTab('tree')}
                   className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     sidebarTab === 'tree'
-                      ? 'bg-white text-gray-900 shadow-xs'
-                      : 'text-gray-500 hover:text-gray-900'
+                      ? 'bg-gray-800 text-white shadow-xs'
+                      : 'text-gray-400 hover:text-white'
                   }`}
                 >
                   Sections ({sections.length})
@@ -941,8 +948,8 @@ export default function HomePageBuilder({
                   onClick={() => setSidebarTab('add')}
                   className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                     sidebarTab === 'add'
-                      ? 'bg-amber-50 text-amber-900 border border-amber-200 shadow-xs'
-                      : 'text-gray-500 hover:text-gray-900'
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-xs'
+                      : 'text-gray-400 hover:text-white'
                   }`}
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -953,8 +960,8 @@ export default function HomePageBuilder({
               {/* Tab 1: Sections Tree with Real Drag & Drop */}
               {sidebarTab === 'tree' ? (
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                  <p className="text-[11px] font-semibold text-gray-500 px-1">
-                    Drag handles to reorder sections. Click to edit settings.
+                  <p className="text-[10px] font-semibold text-gray-400 px-1 uppercase tracking-wider">
+                    Drag handles to reorder sections. Click to edit.
                   </p>
 
                   {sections.map((sec, index) => {
@@ -970,22 +977,24 @@ export default function HomePageBuilder({
                         onDrop={() => handleDrop(index)}
                         onDragEnd={handleDragEnd}
                         onClick={() => setSelectedSectionId(sec.id)}
-                        className={`group relative rounded-xl border p-3 transition-all cursor-pointer ${
-                          isDragOver ? 'border-amber-500 bg-amber-50/60 shadow-md ring-2 ring-amber-400' : 'bg-white border-gray-200/90 hover:border-gray-300 hover:bg-gray-50/60'
-                        } ${!sec.enabled ? 'opacity-60 bg-gray-50' : ''}`}
+                        className={`group relative rounded-xl border p-2.5 transition-all cursor-pointer ${
+                          isDragOver
+                            ? 'border-amber-400 bg-amber-500/20 shadow-lg ring-2 ring-amber-400'
+                            : 'bg-gray-900/80 border-gray-800 hover:border-gray-700 hover:bg-gray-800/80'
+                        } ${!sec.enabled ? 'opacity-50' : ''}`}
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-700 p-0.5">
+                            <div className="cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-300 p-0.5">
                               <GripVertical className="w-4 h-4" />
                             </div>
 
-                            <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-700 flex items-center justify-center shrink-0 group-hover:bg-amber-100 group-hover:text-amber-900 transition-colors">
-                              <Icon className="w-4 h-4" />
+                            <div className="w-7 h-7 rounded-lg bg-gray-800 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                              <Icon className="w-3.5 h-3.5" />
                             </div>
 
                             <div className="min-w-0">
-                              <p className="text-xs font-bold text-gray-900 truncate leading-tight group-hover:text-amber-900">
+                              <p className="text-xs font-bold text-white truncate leading-tight group-hover:text-amber-300">
                                 {sec.name}
                               </p>
                               <p className="text-[10px] text-gray-400 font-mono capitalize truncate">
@@ -1004,7 +1013,7 @@ export default function HomePageBuilder({
                                 toggleSection(sec.id);
                               }}
                               className={`p-1 rounded cursor-pointer ${
-                                sec.enabled ? 'text-emerald-600 hover:bg-emerald-50' : 'text-gray-400 hover:bg-gray-200'
+                                sec.enabled ? 'text-emerald-400 hover:bg-emerald-500/20' : 'text-gray-500 hover:bg-gray-800'
                               }`}
                             >
                               {sec.enabled ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
@@ -1016,7 +1025,7 @@ export default function HomePageBuilder({
                                 e.stopPropagation();
                                 duplicateSection(index);
                               }}
-                              className="p-1 rounded text-gray-400 hover:text-amber-700 hover:bg-amber-50 cursor-pointer"
+                              className="p-1 rounded text-gray-400 hover:text-amber-300 hover:bg-amber-500/20 cursor-pointer"
                             >
                               <Copy className="w-3.5 h-3.5" />
                             </button>
@@ -1027,11 +1036,11 @@ export default function HomePageBuilder({
                                 e.stopPropagation();
                                 deleteSection(index);
                               }}
-                              className="p-1 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                              className="p-1 rounded text-gray-400 hover:text-red-400 hover:bg-red-500/20 cursor-pointer"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
-                            <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 group-hover:translate-x-0.5 transition-all" />
+                            <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-gray-300 group-hover:translate-x-0.5 transition-all" />
                           </div>
                         </div>
                       </div>
@@ -1040,9 +1049,9 @@ export default function HomePageBuilder({
                 </div>
               ) : (
                 /* Tab 2: Add Section Presets Catalog */
-                <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
-                  <p className="text-[11px] font-semibold text-gray-500 px-1">
-                    Select a section preset to add to your landing page:
+                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  <p className="text-[10px] font-semibold text-gray-400 px-1 uppercase tracking-wider">
+                    Select a section preset to add to your page:
                   </p>
                   {SECTION_PRESETS.map((preset) => {
                     const Icon = preset.icon;
@@ -1050,22 +1059,22 @@ export default function HomePageBuilder({
                       <div
                         key={preset.type}
                         onClick={() => addSection(preset)}
-                        className="p-3.5 rounded-xl border border-gray-200 hover:border-amber-400 hover:bg-amber-50/40 hover:shadow-xs transition-all cursor-pointer flex items-center justify-between gap-3 group"
+                        className="p-3 rounded-xl border border-gray-800 bg-gray-900/60 hover:border-amber-500/50 hover:bg-amber-500/10 hover:shadow-xs transition-all cursor-pointer flex items-center justify-between gap-3 group"
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-800 border border-amber-200/60 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                            <Icon className="w-4 h-4" />
+                          <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                            <Icon className="w-3.5 h-3.5" />
                           </div>
                           <div className="min-w-0">
-                            <h4 className="text-xs font-bold text-gray-900 group-hover:text-amber-900 truncate">
+                            <h4 className="text-xs font-bold text-white group-hover:text-amber-300 truncate">
                               {preset.name}
                             </h4>
-                            <p className="text-[10px] text-gray-500 line-clamp-1 leading-tight">
+                            <p className="text-[10px] text-gray-400 line-clamp-1 leading-tight">
                               {preset.description}
                             </p>
                           </div>
                         </div>
-                        <Plus className="w-4 h-4 text-amber-800 shrink-0 group-hover:scale-120 transition-transform" />
+                        <Plus className="w-4 h-4 text-amber-400 shrink-0 group-hover:scale-120 transition-transform" />
                       </div>
                     );
                   })}
@@ -1073,17 +1082,17 @@ export default function HomePageBuilder({
               )}
             </div>
           )}
-        </div>
+        </aside>
 
-        {/* RIGHT LIVE PREVIEW CANVAS (Live Dynamic Storefront) */}
-        <div className="lg:col-span-8 xl:col-span-8 flex justify-center bg-gray-100/70 p-3 sm:p-6 rounded-2xl border border-gray-200/80 min-h-[calc(100vh-140px)] overflow-x-auto">
+        {/* RIGHT MAIN WORKSPACE (Real-Time Live Storefront Canvas) */}
+        <main className="flex-1 h-full bg-[#0b0d13] overflow-y-auto overflow-x-hidden flex flex-col items-center p-2 sm:p-6 transition-all">
           <div
-            className={`transition-all duration-300 bg-white shadow-xl overflow-hidden rounded-2xl border border-gray-200/60 ${
+            className={`transition-all duration-300 bg-white shadow-2xl overflow-hidden rounded-2xl border border-gray-800 ${
               previewDevice === 'desktop'
-                ? 'w-full'
+                ? 'w-full max-w-7xl'
                 : previewDevice === 'tablet'
-                ? 'w-[768px] max-w-full'
-                : 'w-[375px] max-w-full'
+                ? 'w-[768px] max-w-full my-auto'
+                : 'w-[375px] max-w-full my-auto shadow-2xl ring-8 ring-gray-900 rounded-[36px]'
             }`}
           >
             <SectionRenderer
@@ -1092,8 +1101,8 @@ export default function HomePageBuilder({
               categories={categories}
             />
           </div>
-        </div>
+        </main>
       </div>
-    </AdminLayout>
+    </div>
   );
 }
