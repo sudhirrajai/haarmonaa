@@ -120,15 +120,15 @@ export const SplitHeroSlider: React.FC<SplitHeroSliderProps> = ({
 
   return (
     <section
-      className="group relative w-full overflow-hidden bg-[#111111] select-none"
+      className="@container group relative w-full overflow-hidden bg-[#111111] select-none"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="w-full grid grid-cols-1 lg:grid-cols-2 min-h-[520px] sm:min-h-[580px] lg:min-h-[640px] xl:min-h-[720px]">
+      <div className="w-full grid grid-cols-1 @[768px]:grid-cols-2 min-h-[460px] @sm:min-h-[520px] @lg:min-h-[640px]">
         {/* Left Half: Animated Image Layer + Smooth Keyframe Overlay Text */}
-        <div className="relative w-full h-full min-h-[440px] sm:min-h-[520px] lg:min-h-full overflow-hidden bg-gray-900 flex flex-col justify-end p-8 sm:p-14 lg:p-16 xl:p-20">
+        <div className="relative w-full h-full min-h-[380px] @sm:min-h-[440px] @lg:min-h-full overflow-hidden bg-gray-900 flex flex-col justify-end p-6 @sm:p-10 @lg:p-14">
           {/* Cross-fade Ken Burns Background Images */}
           {slides.map((slide, idx) => {
             const isActive = idx === currentSlide;
@@ -151,34 +151,34 @@ export const SplitHeroSlider: React.FC<SplitHeroSliderProps> = ({
           })}
 
           {/* Smooth Multi-Stop Cinematic Vignette Gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/10 pointer-events-none z-1" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10 pointer-events-none z-1" />
 
           {/* Text Content Block with Staggered Keyframe Animation */}
           <div
             key={`content-${currentSlide}`}
-            className="relative z-10 space-y-4 max-w-xl transition-all duration-700 ease-out animate-fade-in"
+            className="relative z-10 space-y-3 @sm:space-y-4 max-w-xl transition-all duration-700 ease-out animate-fade-in"
           >
             {activeSlide.badge && (
               <div className="inline-block animate-slide-up">
-                <span className="bg-[#111111]/90 backdrop-blur-md text-amber-300 text-[10px] font-extrabold uppercase tracking-widest px-3.5 py-1.5 rounded-full border border-amber-300/30 shadow-lg">
+                <span className="bg-[#111111]/90 backdrop-blur-md text-amber-300 text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full border border-amber-300/30 shadow-lg">
                   {activeSlide.badge}
                 </span>
               </div>
             )}
 
-            <span className="text-xs sm:text-sm font-extrabold uppercase tracking-widest text-amber-100 block drop-shadow-md">
+            <span className="text-[11px] @sm:text-xs font-extrabold uppercase tracking-widest text-amber-100 block drop-shadow-md">
               {activeSlide.subtitle}
             </span>
 
-            <h1 className="text-3xl sm:text-5xl lg:text-5xl xl:text-6xl font-extrabold text-white tracking-tight leading-[1.08] drop-shadow-lg">
+            <h1 className="text-2xl @sm:text-3xl @md:text-4xl @lg:text-5xl font-extrabold text-white tracking-tight leading-tight break-words drop-shadow-lg">
               {activeSlide.title}
             </h1>
 
             {activeSlide.showButton !== false && activeSlide.buttonText && (
-              <div className="pt-3">
+              <div className="pt-2 @sm:pt-3">
                 <Link
                   href={activeSlide.buttonLink || '/shop'}
-                  className="inline-flex items-center gap-2 bg-white hover:bg-[#d0473e] text-black hover:text-white px-8 py-3.5 rounded-full text-xs sm:text-sm font-extrabold uppercase tracking-wider transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 cursor-pointer"
+                  className="inline-flex items-center gap-2 bg-white hover:bg-[#d0473e] text-black hover:text-white px-6 @sm:px-8 py-2.5 @sm:py-3.5 rounded-full text-xs @sm:text-sm font-extrabold uppercase tracking-wider transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 cursor-pointer"
                 >
                   <span>{activeSlide.buttonText}</span>
                   <ChevronRight className="w-4 h-4 stroke-[2.5]" />
