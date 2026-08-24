@@ -109,11 +109,22 @@ class PageController extends Controller
     }
 
     /**
-     * Edit Homepage all sections.
+     * Get or build default modular homepage sections.
      */
-    public function home(): Response
+    public static function getHomepageSections(): array
     {
-        $defaultSlides = [
+        $raw = Setting::get('homepage_layout_sections');
+        if ($raw) {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded) && ! empty($decoded)) {
+                return $decoded;
+            }
+        }
+
+        // Build default sections with current settings
+        $heroSliderEnabled = Setting::get('homepage_hero_slider_enabled', '1') !== '0';
+        $rawSlides = Setting::get('homepage_slides');
+        $slides = $rawSlides ? json_decode($rawSlides, true) : [
             [
                 'id' => 1,
                 'subtitle' => 'CAPTIVATING COLLECTION',
@@ -152,7 +163,8 @@ class PageController extends Controller
             ],
         ];
 
-        $defaultSeasonal = [
+        $rawSeasonal = Setting::get('homepage_seasonal_collection');
+        $seasonal = $rawSeasonal ? json_decode($rawSeasonal, true) : [
             'enabled' => true,
             'title' => 'Summer Solstice Edition',
             'subtitle' => 'SUNLIT REFLECTIONS & WATERPROOF HEIRLOOMS',
@@ -165,7 +177,8 @@ class PageController extends Controller
             'button_link' => '/shop?category=necklaces',
         ];
 
-        $defaultBanners = [
+        $rawBanners = Setting::get('homepage_promo_banners');
+        $banners = $rawBanners ? json_decode($rawBanners, true) : [
             [
                 'id' => 1,
                 'subtitle' => 'EPITOME OF REFINEMENT',
@@ -192,7 +205,8 @@ class PageController extends Controller
             ],
         ];
 
-        $defaultGramImages = [
+        $rawGram = Setting::get('instagram_posts');
+        $instagramPosts = $rawGram ? json_decode($rawGram, true) : [
             [
                 'id' => 1,
                 'image' => 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=800&auto=format&fit=crop',
@@ -237,7 +251,8 @@ class PageController extends Controller
             ],
         ];
 
-        $defaultFeatures = [
+        $rawFeatures = Setting::get('store_features');
+        $storeFeatures = $rawFeatures ? json_decode($rawFeatures, true) : [
             [
                 'id' => 'feat_1',
                 'icon' => 'Package',
@@ -258,20 +273,94 @@ class PageController extends Controller
             ],
         ];
 
-        $rawSlides = Setting::get('homepage_slides');
-        $slides = $rawSlides ? json_decode($rawSlides, true) : $defaultSlides;
+        return [
+            [
+                'id' => 'sec_hero_slider',
+                'type' => 'hero_slider',
+                'name' => 'Split Hero Slider',
+                'enabled' => $heroSliderEnabled,
+                'settings' => [
+                    'slides' => $slides,
+                ],
+            ],
+            [
+                'id' => 'sec_seasonal_capsule_1',
+                'type' => 'curated_capsule',
+                'name' => $seasonal['title'] ?? 'Seasonal Collection Capsule',
+                'enabled' => ! empty($seasonal['enabled']),
+                'settings' => $seasonal,
+            ],
+            [
+                'id' => 'sec_category_slider',
+                'type' => 'category_slider',
+                'name' => 'Shop By Category Track',
+                'enabled' => true,
+                'settings' => [
+                    'title' => 'Shop By Category',
+                    'subtitle' => 'EXPLORE TIMELESS CRAFTSMANSHIP',
+                ],
+            ],
+            [
+                'id' => 'sec_best_selling',
+                'type' => 'best_selling',
+                'name' => 'Best Selling Products Grid',
+                'enabled' => true,
+                'settings' => [
+                    'title' => 'Best Selling Products',
+                    'subtitle' => 'TIMELESS EVERYDAY LUXURY IN 18K GOLD VERMEIL',
+                    'badge' => 'MOST LOVED PIECES',
+                ],
+            ],
+            [
+                'id' => 'sec_dual_banners',
+                'type' => 'dual_banners',
+                'name' => 'Dual Promo Banners',
+                'enabled' => Setting::get('homepage_promo_banners_enabled', '1') !== '0',
+                'settings' => [
+                    'banners' => $banners,
+                ],
+            ],
+            [
+                'id' => 'sec_featured_slider',
+                'type' => 'featured_products',
+                'name' => 'Featured Products Slider',
+                'enabled' => true,
+                'settings' => [
+                    'title' => 'Captivating Collection',
+                    'subtitle' => 'HANDCRAFTED 18K THICK SOLID GOLD VERMEIL',
+                    'filter' => 'featured',
+                    'view_all_link' => '/shop',
+                ],
+            ],
+            [
+                'id' => 'sec_shop_by_gram',
+                'type' => 'shop_by_gram',
+                'name' => 'Shop By Gram (Instagram Grid)',
+                'enabled' => Setting::get('homepage_shop_by_gram_enabled', '1') !== '0',
+                'settings' => [
+                    'handle' => Setting::get('instagram_handle', '@haarmonaa'),
+                    'url' => Setting::get('instagram_url', 'https://instagram.com/haarmonaa'),
+                    'posts' => $instagramPosts,
+                ],
+            ],
+            [
+                'id' => 'sec_trust_badges',
+                'type' => 'trust_badges',
+                'name' => 'Luxury Trust Badges',
+                'enabled' => Setting::get('homepage_trust_badges_enabled', '1') !== '0',
+                'settings' => [
+                    'features' => $storeFeatures,
+                ],
+            ],
+        ];
+    }
 
-        $rawSeasonal = Setting::get('homepage_seasonal_collection');
-        $seasonal = $rawSeasonal ? json_decode($rawSeasonal, true) : $defaultSeasonal;
-
-        $rawBanners = Setting::get('homepage_promo_banners');
-        $banners = $rawBanners ? json_decode($rawBanners, true) : $defaultBanners;
-
-        $rawGram = Setting::get('instagram_posts');
-        $instagramPosts = $rawGram ? json_decode($rawGram, true) : $defaultGramImages;
-
-        $rawFeatures = Setting::get('store_features');
-        $storeFeatures = $rawFeatures ? json_decode($rawFeatures, true) : $defaultFeatures;
+    /**
+     * Edit Homepage all sections & visual builder.
+     */
+    public function home(): Response
+    {
+        $sections = self::getHomepageSections();
 
         try {
             $categories = Schema::hasTable('categories') ? Category::select(['id', 'name', 'slug'])->get() : collect();
@@ -292,24 +381,62 @@ class PageController extends Controller
         }
 
         return Inertia::render('Admin/Pages/Home', [
-            'slides' => $slides,
-            'heroSliderEnabled' => Setting::get('homepage_hero_slider_enabled', '1') !== '0',
-            'promoBannersEnabled' => Setting::get('homepage_promo_banners_enabled', '1') !== '0',
-            'seasonalCollection' => $seasonal,
-            'promoBanners' => $banners,
-            'instagram' => [
-                'url' => Setting::get('instagram_url', 'https://instagram.com/haarmonaa'),
-                'handle' => Setting::get('instagram_handle', '@haarmonaa'),
-                'access_token' => Setting::get('instagram_access_token', ''),
-                'posts' => $instagramPosts,
-                'enabled' => Setting::get('homepage_shop_by_gram_enabled', '1') !== '0',
-            ],
-            'storeFeatures' => $storeFeatures,
-            'trustBadgesEnabled' => Setting::get('homepage_trust_badges_enabled', '1') !== '0',
+            'sections' => $sections,
             'categories' => $categories,
             'collections' => $collections,
             'products' => $products,
         ]);
+    }
+
+    /**
+     * Save all visual builder sections and update layout.
+     */
+    public function saveLayoutSections(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'sections' => 'required|array',
+        ]);
+
+        $sections = $validated['sections'];
+        Setting::set('homepage_layout_sections', json_encode($sections));
+
+        // Sync legacy settings if corresponding sections exist
+        foreach ($sections as $sec) {
+            if ($sec['type'] === 'hero_slider') {
+                Setting::set('homepage_hero_slider_enabled', ! empty($sec['enabled']) ? '1' : '0');
+                if (! empty($sec['settings']['slides'])) {
+                    Setting::set('homepage_slides', json_encode($sec['settings']['slides']));
+                }
+            } elseif ($sec['type'] === 'curated_capsule' && ! empty($sec['settings'])) {
+                $seasonal = $sec['settings'];
+                $seasonal['enabled'] = ! empty($sec['enabled']);
+                Setting::set('homepage_seasonal_collection', json_encode($seasonal));
+                Setting::set('homepage_seasonal_collection_enabled', ! empty($sec['enabled']) ? '1' : '0');
+            } elseif ($sec['type'] === 'dual_banners') {
+                Setting::set('homepage_promo_banners_enabled', ! empty($sec['enabled']) ? '1' : '0');
+                if (! empty($sec['settings']['banners'])) {
+                    Setting::set('homepage_promo_banners', json_encode($sec['settings']['banners']));
+                }
+            } elseif ($sec['type'] === 'shop_by_gram') {
+                Setting::set('homepage_shop_by_gram_enabled', ! empty($sec['enabled']) ? '1' : '0');
+                if (! empty($sec['settings']['posts'])) {
+                    Setting::set('instagram_posts', json_encode($sec['settings']['posts']));
+                }
+                if (! empty($sec['settings']['handle'])) {
+                    Setting::set('instagram_handle', $sec['settings']['handle']);
+                }
+                if (! empty($sec['settings']['url'])) {
+                    Setting::set('instagram_url', $sec['settings']['url']);
+                }
+            } elseif ($sec['type'] === 'trust_badges') {
+                Setting::set('homepage_trust_badges_enabled', ! empty($sec['enabled']) ? '1' : '0');
+                if (! empty($sec['settings']['features'])) {
+                    Setting::set('store_features', json_encode($sec['settings']['features']));
+                }
+            }
+        }
+
+        return back()->with('success', 'Landing page sections layout and configurations saved successfully.');
     }
 
     /**

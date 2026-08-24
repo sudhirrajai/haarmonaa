@@ -220,7 +220,67 @@ class ShopController extends Controller
             }
         }
 
+        // 4. Resolve Dynamic Layout Sections
+        $rawSections = PageController::getHomepageSections();
+        $sections = [];
+
+        foreach ($rawSections as $sec) {
+            if (empty($sec['enabled'])) {
+                continue;
+            }
+
+            if ($sec['type'] === 'curated_capsule') {
+                $settings = $sec['settings'] ?? [];
+                $targetSlug = $settings['category_slug'] ?? null;
+                $capsuleProducts = [];
+
+                if (! empty($targetSlug) && $targetSlug !== 'all') {
+                    $matchedColl = Collection::where('is_active', true)
+                        ->where(function ($q) use ($targetSlug) {
+                            $q->where('slug', $targetSlug)->orWhere('name', 'like', '%'.$targetSlug.'%');
+                        })
+                        ->with(['products' => function ($q) {
+                            $q->where('status', '!=', 'draft');
+                        }, 'products.category', 'products.categories', 'products.variants'])
+                        ->first();
+
+                    if ($matchedColl && $matchedColl->products->count() > 0) {
+                        $capsuleProducts = $matchedColl->products
+                            ->sortByDesc('id')
+                            ->map(fn ($p) => $this->formatProduct($p))
+                            ->values()
+                            ->all();
+
+                        if (empty($settings['title'])) {
+                            $settings['title'] = $matchedColl->name;
+                        }
+                    } else {
+                        // Match by category
+                        $capsuleProducts = array_values(array_filter($products, function ($p) use ($targetSlug) {
+                            return strtolower(str_replace([' ', '&'], ['-', ''], $p['category'])) === strtolower($targetSlug)
+                                || strtolower($p['category']) === strtolower($targetSlug)
+                                || in_array(strtolower($targetSlug), array_map('strtolower', $p['categories'] ?? []));
+                        }));
+                    }
+                }
+
+                if (empty($capsuleProducts)) {
+                    $capsuleProducts = $featured;
+                }
+
+                $sec['resolved_products'] = $capsuleProducts;
+                $sec['settings'] = $settings;
+            } elseif ($sec['type'] === 'featured_products') {
+                $sec['resolved_products'] = $featured;
+            } elseif ($sec['type'] === 'best_selling') {
+                $sec['resolved_products'] = $bestSellers;
+            }
+
+            $sections[] = $sec;
+        }
+
         return Inertia::render('Shop/Home', [
+            'sections' => $sections,
             'products' => $products,
             'bestSelling' => $bestSellers,
             'featuredCollection' => $featured,

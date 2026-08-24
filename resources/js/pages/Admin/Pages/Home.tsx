@@ -5,6 +5,7 @@ import { Category, Product } from '@/types/shop';
 import { SingleImageUploader } from '@/components/admin/SingleImageUploader';
 import { VisualIconPicker } from '@/components/admin/VisualIconPicker';
 import { AdminToggle } from '@/components/admin/AdminToggle';
+import { SectionRenderer, SectionBlock } from '@/components/shop/builder/SectionRenderer';
 import {
   Sparkles,
   Sliders,
@@ -12,1291 +13,1465 @@ import {
   Save,
   Plus,
   Trash2,
+  Copy,
   Eye,
   EyeOff,
-  SunMedium,
-  CheckCircle2,
+  GripVertical,
+  ChevronUp,
+  ChevronDown,
   ExternalLink,
+  Smartphone,
+  Tablet,
+  Monitor,
+  CheckCircle2,
+  ShoppingBag,
+  Grid,
   Image as ImageIcon,
-  MoveUp,
-  MoveDown,
-  RefreshCw,
   Camera,
   ShieldCheck,
-  Package,
-  Truck,
-  Award,
-  MessageSquareText,
-  Headphones,
-  Gem,
-  RotateCcw,
-  Heart,
-  Clock,
-  Gift,
+  FileText,
+  HelpCircle,
+  Code,
   ArrowLeft,
-  Zap,
+  X,
+  Palette,
+  Edit3,
 } from 'lucide-react';
 
-interface SplitSlideCMS {
-  id: number | string;
-  subtitle: string;
-  title: string;
-  buttonText: string;
-  buttonLink: string;
-  showButton: boolean;
-  enabled: boolean;
-  badge?: string;
-  leftImage: string;
-  rightImage: string;
-}
-
-interface SeasonalCollectionCMS {
-  enabled: boolean;
-  title: string;
-  subtitle: string;
-  badge: string;
-  description: string;
-  category_slug: string;
-  product_ids: number[];
-  banner_image: string;
-  button_text: string;
-  button_link: string;
-}
-
-interface PromoBannerCMS {
-  id: number | string;
-  subtitle?: string;
-  title: string;
-  description?: string;
-  buttonText?: string;
-  buttonLink?: string;
-  image?: string;
-  bgClass?: string;
-  textColor?: 'dark' | 'light';
-  align?: 'left' | 'center' | 'right';
-  enabled: boolean;
-}
-
-interface InstagramPostItem {
-  id: string | number;
-  image: string;
-  alt?: string;
-  handle?: string;
-  url?: string;
-}
-
-interface StoreFeatureItem {
-  id: string | number;
-  icon: string;
-  custom_icon?: string;
-  title: string;
-  description: string;
-}
-
-interface HomePageCMSProps {
-  slides: SplitSlideCMS[];
-  heroSliderEnabled?: boolean;
-  promoBannersEnabled?: boolean;
-  seasonalCollection: SeasonalCollectionCMS;
-  promoBanners: PromoBannerCMS[];
-  instagram: {
-    url: string;
-    handle: string;
-    access_token?: string;
-    posts: InstagramPostItem[];
-    enabled?: boolean;
-  };
-  storeFeatures: StoreFeatureItem[];
-  trustBadgesEnabled?: boolean;
+interface HomePageBuilderProps {
+  sections: SectionBlock[];
   categories: Category[];
-  collections?: Array<{ id: number; name: string; slug: string }>;
+  collections: { id: number; name: string; slug: string }[];
   products: Product[];
 }
 
-export default function Home({
-  slides: initialSlides = [],
-  heroSliderEnabled: initialHeroSliderEnabled = true,
-  promoBannersEnabled: initialPromoBannersEnabled = true,
-  seasonalCollection: initialSeasonal,
-  promoBanners: initialBanners = [],
-  instagram: initialInstagram,
-  storeFeatures: initialFeatures = [],
-  trustBadgesEnabled: initialTrustBadgesEnabled = true,
+const SECTION_PRESETS = [
+  {
+    type: 'curated_capsule',
+    name: 'Curated / Seasonal Capsule',
+    description: 'Highlight banner with badge, headline, and curated collection/category product carousel.',
+    icon: Sparkles,
+    badge: 'Popular',
+    defaultSettings: {
+      title: 'Summer Solstice Edition',
+      subtitle: 'SUNLIT REFLECTIONS & WATERPROOF HEIRLOOMS',
+      badge: 'SUMMER 2026 CAPSULE',
+      description: 'A radiant curation of waterproof, anti-tarnish 18k solid gold vermeil designed to shine effortlessly.',
+      category_slug: 'all',
+      banner_image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=1200&auto=format&fit=crop',
+      button_text: 'Explore Summer Edit',
+      button_link: '/shop',
+      theme: 'gold',
+    },
+  },
+  {
+    type: 'hero_slider',
+    name: 'Split Hero Slider',
+    description: 'Full-bleed 50/50 split luxury slider with dual images, typography, and call-to-action buttons.',
+    icon: Sliders,
+    badge: 'Essential',
+    defaultSettings: {
+      slides: [
+        {
+          id: 1,
+          subtitle: 'CAPTIVATING COLLECTION',
+          title: 'Sculpted By Light',
+          buttonText: 'Shop Collection',
+          buttonLink: '/shop',
+          showButton: true,
+          enabled: true,
+          badge: 'NEW 2026',
+          leftImage: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1200&auto=format&fit=crop',
+          rightImage: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=1200&auto=format&fit=crop',
+        },
+        {
+          id: 2,
+          subtitle: '18K SOLID GOLD & VERMEIL',
+          title: 'Modern Baroque Pearl Series',
+          buttonText: 'Explore Pearls',
+          buttonLink: '/shop?category=earrings',
+          showButton: true,
+          enabled: true,
+          badge: 'HOT RELEASE',
+          leftImage: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=1200&auto=format&fit=crop',
+          rightImage: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=1200&auto=format&fit=crop',
+        },
+      ],
+    },
+  },
+  {
+    type: 'featured_products',
+    name: 'Featured Products Slider',
+    description: 'Interactive horizontal swipeable product slider showcasing handpicked masterpieces.',
+    icon: ShoppingBag,
+    defaultSettings: {
+      title: 'Captivating Collection',
+      subtitle: 'HANDCRAFTED 18K THICK SOLID GOLD VERMEIL',
+      filter: 'featured',
+      view_all_link: '/shop',
+    },
+  },
+  {
+    type: 'best_selling',
+    name: 'Best Selling Products Grid',
+    description: '4x2 clean grid of 8 products with interactive category filter tabs (Earrings, Necklaces, Rings, Bangles).',
+    icon: Grid,
+    defaultSettings: {
+      title: 'Best Selling Products',
+      subtitle: 'TIMELESS EVERYDAY LUXURY IN 18K GOLD VERMEIL',
+      badge: 'MOST LOVED PIECES',
+      view_all_link: '/shop',
+      view_all_text: 'Explore Entire Collection',
+    },
+  },
+  {
+    type: 'category_slider',
+    name: 'Shop By Category Track',
+    description: 'Interactive category slider showcasing all store categories with product counts.',
+    icon: Layers,
+    defaultSettings: {
+      title: 'Shop By Category',
+      subtitle: 'EXPLORE TIMELESS CRAFTSMANSHIP',
+    },
+  },
+  {
+    type: 'dual_banners',
+    name: 'Dual Promo Marketing Banners',
+    description: 'Two side-by-side promotional campaign cards with customizable typography and CTA buttons.',
+    icon: ImageIcon,
+    defaultSettings: {
+      banners: [
+        {
+          id: 1,
+          subtitle: 'EPITOME OF REFINEMENT',
+          title: 'Light The Wonders',
+          description: "This season, the ordinary becomes extraordinary. Glozin's ambassadors open gates to wonder, where dreams come alive.",
+          buttonText: 'Shop Now',
+          buttonLink: '/shop',
+          bgClass: 'bg-[#f4f4f4]',
+          textColor: 'dark',
+          align: 'center',
+          enabled: true,
+        },
+        {
+          id: 2,
+          image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=1200&auto=format&fit=crop',
+          subtitle: 'HAARMONAA ICONIC',
+          title: 'Sculpted Solid Gold Hoops',
+          description: 'Timeless architectural curves crafted for effortless daily statement.',
+          buttonText: 'Explore Hoops',
+          buttonLink: '/shop?category=earrings',
+          textColor: 'light',
+          align: 'left',
+          enabled: true,
+        },
+      ],
+    },
+  },
+  {
+    type: 'story_manifesto',
+    name: 'Brand Story & Manifesto',
+    description: 'Luxury editorial story section with high-res jewelry image, quote, vermeil seal, and brand story CTA.',
+    icon: FileText,
+    defaultSettings: {
+      badge: 'THE HAARMONAA MANIFESTO',
+      title: 'Sculpted for Everyday Splendor',
+      subtitle: '18K SOLID GOLD VERMEIL & CONSCIOUS LUXURY',
+      quote: '“Jewelry shouldn’t be reserved for special occasions. It should accompany every breath, sunlight glance, and spontaneous celebration of your life.”',
+      body_text: 'At Haarmonaa, each jewel is meticulously electroplated with a lavish 2.5–3.0 micron layer of genuine 18K solid gold over premium 925 sterling silver — creating certified waterproof, anti-tarnish, and hypoallergenic masterpieces designed to endure forever.',
+      signature_name: 'The Atelier Team',
+      signature_title: 'Haarmonaa Fine Jewelry',
+      image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=1200&auto=format&fit=crop',
+      button_text: 'Read Brand Story',
+      button_link: '/about-us',
+    },
+  },
+  {
+    type: 'trust_badges',
+    name: 'Luxury Trust Badges',
+    description: 'Value proposition cards (Free worldwide shipping, 18K vermeil warranty, 24/7 concierge, bespoke packaging).',
+    icon: ShieldCheck,
+    defaultSettings: {
+      title: 'The Haarmonaa Promise',
+      subtitle: 'CERTIFIED LUXURY EXPERIENCE & UNCOMPROMISING CRAFTSMANSHIP',
+      features: [
+        {
+          id: 'feat_1',
+          icon: 'Package',
+          title: 'Free Shipping',
+          description: 'Enjoy free worldwide shipping and returns, with customs and duties taxes included.',
+        },
+        {
+          id: 'feat_2',
+          icon: 'ShieldCheck',
+          title: 'Free Returns',
+          description: 'Free returns within 15 days, please make sure the items are in undamaged condition.',
+        },
+        {
+          id: 'feat_3',
+          icon: 'MessageSquareText',
+          title: 'Support Online',
+          description: 'We support customers 24/7, send questions we will solve for you immediately.',
+        },
+      ],
+    },
+  },
+  {
+    type: 'faq_accordion',
+    name: 'FAQ & Care Accordion',
+    description: 'Expandable accordion questions and answers about materials, sizing, waterproof warranty, and shipping.',
+    icon: HelpCircle,
+    defaultSettings: {
+      badge: 'CONCIERGE & ADVICE',
+      title: 'Frequently Asked Questions',
+      subtitle: 'Everything you need to know about our craftsmanship, materials, and care.',
+      items: [
+        {
+          id: 'faq_1',
+          question: 'What is 18K Solid Gold Vermeil?',
+          answer: 'Gold Vermeil is a premium technique requiring a thick minimum layer of 2.5 microns of real 18K solid gold over genuine 925 sterling silver.',
+        },
+        {
+          id: 'faq_2',
+          question: 'Is Haarmonaa jewelry 100% waterproof and sweatproof?',
+          answer: 'Yes! All Haarmonaa jewelry is engineered with certified anti-tarnish sealing, making it completely waterproof and sweatproof.',
+        },
+        {
+          id: 'faq_3',
+          question: 'What is your shipping and return policy?',
+          answer: 'We offer complimentary express shipping across India and a hassle-free 15-day return policy.',
+        },
+      ],
+    },
+  },
+  {
+    type: 'shop_by_gram',
+    name: 'Shop By Gram (Instagram)',
+    description: 'UGC social shopping grid displaying curated Instagram community photos.',
+    icon: Camera,
+    defaultSettings: {
+      handle: '@haarmonaa',
+      url: 'https://instagram.com/haarmonaa',
+      posts: [
+        {
+          id: 1,
+          image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=800&auto=format&fit=crop',
+          alt: 'Haarmonaa Silver Floral Bracelet & Rings',
+          handle: '@haarmonaa_official',
+          url: 'https://instagram.com',
+        },
+        {
+          id: 2,
+          image: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=800&auto=format&fit=crop',
+          alt: 'Haarmonaa Diamond Solitaire Ring',
+          handle: '@haarmonaa_muse',
+          url: 'https://instagram.com',
+        },
+        {
+          id: 3,
+          image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=800&auto=format&fit=crop',
+          alt: 'Haarmonaa Sparkling Choker & Crystal Band',
+          handle: '@haarmonaa_daily',
+          url: 'https://instagram.com',
+        },
+      ],
+    },
+  },
+  {
+    type: 'custom_html',
+    name: 'Custom HTML / Embed Block',
+    description: 'Raw HTML & CSS embed container for countdown timers, promotional codes, or custom marketing banners.',
+    icon: Code,
+    defaultSettings: {
+      html_content: '<div class="text-center py-10 bg-amber-50/50 rounded-3xl border border-amber-200/50 p-6">\n  <span class="text-xs font-bold uppercase tracking-widest text-amber-800">VIP EXCLUSIVE PROMO</span>\n  <h3 class="text-2xl font-bold text-gray-900 mt-1">Get 15% Off Your First 18K Vermeil Order</h3>\n  <p class="text-xs text-gray-600 mt-1">Use coupon code <strong class="text-amber-900 bg-amber-100 px-2 py-0.5 rounded">VERMEIL15</strong> at checkout.</p>\n</div>',
+      container_width: 'boxed',
+      bg_color: '#ffffff',
+      padding_y: 'medium',
+    },
+  },
+];
+
+export default function HomePageBuilder({
+  sections: initialSections = [],
   categories = [],
   collections = [],
   products = [],
-}: HomePageCMSProps) {
-  const [activeTab, setActiveTab] = useState<
-    'slider' | 'banners' | 'seasonal' | 'instagram' | 'features'
-  >('slider');
+}: HomePageBuilderProps) {
+  const [sections, setSections] = useState<SectionBlock[]>(initialSections);
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(
+    initialSections[0]?.id || null
+  );
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'editor' | 'preview'>('editor');
+  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
-  const [saving, setSaving] = useState(false);
-  const [fetchingInsta, setFetchingInsta] = useState(false);
-  const [instaMessage, setInstaMessage] = useState<string | null>(null);
-  const [instantFeedback, setInstantFeedback] = useState<string | null>(null);
+  const activeSection = sections.find((s) => s.id === activeSectionId);
+  const activeSectionIndex = sections.findIndex((s) => s.id === activeSectionId);
 
-  const [heroSliderEnabled, setHeroSliderEnabled] = useState(initialHeroSliderEnabled !== false);
-  const [promoBannersEnabled, setPromoBannersEnabled] = useState(initialPromoBannersEnabled !== false);
-  const [trustBadgesEnabled, setTrustBadgesEnabled] = useState(initialTrustBadgesEnabled !== false);
-
-  const handleAsyncSectionToggle = async (section: string, enabled: boolean, itemId?: any) => {
-    try {
-      const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
-      const response = await fetch('/admin/pages/home/toggle-section', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          'X-CSRF-TOKEN': csrfToken,
-        },
-        body: JSON.stringify({
-          section,
-          enabled,
-          item_id: itemId,
-        }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setInstantFeedback(data.message || 'Visibility updated immediately');
-        setTimeout(() => setInstantFeedback(null), 3000);
-      }
-    } catch {
-      setInstantFeedback('Network error while toggling section');
-      setTimeout(() => setInstantFeedback(null), 3000);
-    }
+  // --- Drag & Drop Reordering ---
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
   };
 
-  // States
-  const [slides, setSlides] = useState<SplitSlideCMS[]>(Array.isArray(initialSlides) ? initialSlides : []);
-  const [seasonal, setSeasonal] = useState<SeasonalCollectionCMS>(
-    initialSeasonal || {
-      enabled: false,
-      title: '',
-      subtitle: '',
-      badge: '',
-      description: '',
-      category_slug: 'all',
-      product_ids: [],
-      banner_image: '',
-      button_text: '',
-      button_link: '',
-    }
-  );
-  const [banners, setBanners] = useState<PromoBannerCMS[]>(Array.isArray(initialBanners) ? initialBanners : []);
-  const [instagram, setInstagram] = useState(
-    initialInstagram || {
-      url: 'https://instagram.com/haarmonaa',
-      handle: '@haarmonaa',
-      access_token: '',
-      posts: [],
-    }
-  );
-  const [features, setFeatures] = useState<StoreFeatureItem[]>(Array.isArray(initialFeatures) ? initialFeatures : []);
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
 
-  // --- 1. Split Hero Slider Handlers ---
-  const handleAddSlide = () => {
-    const newSlide: SplitSlideCMS = {
-      id: Date.now(),
-      subtitle: 'NEW CURATION 2026',
-      title: 'Heirloom Gold Statement',
-      buttonText: 'Shop New Arrivals',
-      buttonLink: '/shop',
-      showButton: true,
-      enabled: true,
-      badge: 'NEW',
-      leftImage: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1200&auto=format&fit=crop',
-      rightImage: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=1200&auto=format&fit=crop',
+    const newSections = [...sections];
+    const item = newSections.splice(draggedIndex, 1)[0];
+    newSections.splice(index, 0, item);
+    setDraggedIndex(index);
+    setSections(newSections);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
+  const moveSection = (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= sections.length) return;
+
+    const newSections = [...sections];
+    const temp = newSections[index];
+    newSections[index] = newSections[targetIndex];
+    newSections[targetIndex] = temp;
+    setSections(newSections);
+  };
+
+  // --- Section Actions ---
+  const toggleSection = (id: string) => {
+    setSections((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
+    );
+  };
+
+  const duplicateSection = (index: number) => {
+    const source = sections[index];
+    const clone: SectionBlock = {
+      ...JSON.parse(JSON.stringify(source)),
+      id: `sec_${source.type}_${Date.now()}`,
+      name: `${source.name} (Copy)`,
     };
-    setSlides([...slides, newSlide]);
+
+    const updated = [...sections];
+    updated.splice(index + 1, 0, clone);
+    setSections(updated);
+    setActiveSectionId(clone.id);
   };
 
-  const handleUpdateSlide = (index: number, field: keyof SplitSlideCMS, value: any) => {
-    const updated = [...slides];
-    updated[index] = { ...updated[index], [field]: value };
-    setSlides(updated);
-  };
-
-  const handleDeleteSlide = (index: number) => {
-    if (slides.length <= 1) {
-      alert('You must keep at least 1 hero slide.');
+  const deleteSection = (index: number) => {
+    if (sections.length <= 1) {
+      alert('You must have at least one section on your landing page.');
       return;
     }
-    setSlides(slides.filter((_, i) => i !== index));
-  };
 
-  const handleSaveSlider = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    router.post(
-      '/admin/pages/home/slider',
-      { slides, hero_slider_enabled: heroSliderEnabled },
-      { onFinish: () => setSaving(false) }
-    );
-  };
-
-  // --- 2. Seasonal Collection Handlers ---
-  const handleSaveSeasonal = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    router.post('/admin/pages/home/seasonal-collection', seasonal, {
-      onFinish: () => setSaving(false),
-    });
-  };
-
-  // --- 3. Promo Banners Handlers ---
-  const handleSaveBanners = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    router.post(
-      '/admin/pages/home/promo-banners',
-      { banners, promo_banners_enabled: promoBannersEnabled },
-      { onFinish: () => setSaving(false) }
-    );
-  };
-
-  // --- 4. Instagram Auto-Fetch & Save ---
-  const handleAutoFetchInstagram = async () => {
-    setFetchingInsta(true);
-    setInstaMessage(null);
-    try {
-      const response = await fetch('/admin/pages/home/instagram-fetch', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN':
-            (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
-        },
-        body: JSON.stringify({
-          handle: instagram.handle,
-          url: instagram.url,
-          access_token: instagram.access_token,
-        }),
-      });
-
-      const data = await response.json();
-      if (data.success && Array.isArray(data.posts)) {
-        setInstagram((prev) => ({
-          ...prev,
-          posts: data.posts,
-        }));
-        setInstaMessage(data.message || 'Instagram posts successfully synchronized!');
-      } else {
-        setInstaMessage('Could not synchronize posts. You can upload photos or edit post links below.');
+    if (confirm(`Are you sure you want to delete "${sections[index].name}"?`)) {
+      const updated = sections.filter((_, i) => i !== index);
+      setSections(updated);
+      if (activeSectionId === sections[index].id) {
+        setActiveSectionId(updated[0]?.id || null);
       }
-    } catch (err) {
-      setInstaMessage('Auto-fetch connection failed. Check handle or upload photos manually.');
-    } finally {
-      setFetchingInsta(false);
     }
   };
 
-  const handleSaveInstagram = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    router.post(
-      '/admin/pages/home/instagram',
-      { ...instagram, shop_by_gram_enabled: instagram.enabled !== false },
-      { onFinish: () => setSaving(false) }
+  const addSection = (preset: (typeof SECTION_PRESETS)[0]) => {
+    const newSection: SectionBlock = {
+      id: `sec_${preset.type}_${Date.now()}`,
+      type: preset.type,
+      name: preset.name,
+      enabled: true,
+      settings: JSON.parse(JSON.stringify(preset.defaultSettings)),
+    };
+
+    setSections((prev) => [...prev, newSection]);
+    setActiveSectionId(newSection.id);
+    setAddModalOpen(false);
+  };
+
+  const updateActiveSectionSettings = (newSettings: any) => {
+    if (!activeSectionId) return;
+    setSections((prev) =>
+      prev.map((s) =>
+        s.id === activeSectionId ? { ...s, settings: { ...s.settings, ...newSettings } } : s
+      )
     );
   };
 
-  // --- 5. Trust Badges Handlers ---
-  const handleSaveFeatures = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    router.post(
-      '/admin/pages/home/trust-badges',
-      { features, trust_badges_enabled: trustBadgesEnabled },
-      { onFinish: () => setSaving(false) }
+  const updateActiveSectionName = (name: string) => {
+    if (!activeSectionId) return;
+    setSections((prev) =>
+      prev.map((s) => (s.id === activeSectionId ? { ...s, name } : s))
     );
+  };
+
+  // --- Save Handler ---
+  const handleSave = () => {
+    setIsSaving(true);
+    setSaveSuccess(false);
+
+    router.post(
+      '/admin/pages/home/builder',
+      { sections },
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          setIsSaving(false);
+          setSaveSuccess(true);
+          setTimeout(() => setSaveSuccess(false), 4000);
+        },
+        onError: () => {
+          setIsSaving(false);
+          alert('Failed to save layout sections. Please verify all inputs.');
+        },
+      }
+    );
+  };
+
+  const getSectionIcon = (type: string) => {
+    const found = SECTION_PRESETS.find((p) => p.type === type);
+    if (!found) return Layers;
+    return found.icon;
   };
 
   return (
-    <AdminLayout title="Homepage Sections">
-      <Head title="Homepage Sections — Admin Haarmonaa" />
+    <AdminLayout title="Landing Page Visual Section Builder">
+      <Head title="Landing Page Builder — Admin" />
 
-      {/* Header with Breadcrumb */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-1">
-            <Link href="/admin/pages" className="hover:text-black transition-colors">
-              Pages
-            </Link>
-            <span>/</span>
-            <span className="text-gray-900">Homepage</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-            Homepage Section Customizer
-          </h1>
-          <p className="text-xs sm:text-[13px] text-gray-500 mt-0.5">
-            Configure live split sliders, promo blocks, seasonal collections, curated Instagram gallery, and trust badges.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
+      {/* Top Action Bar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-gray-200">
+        <div className="flex items-center gap-3">
           <Link
             href="/admin/pages"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-[10px] text-xs font-bold transition-all"
+            className="p-2 rounded-xl border border-gray-200 hover:bg-gray-100 transition-colors text-gray-600"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>All Pages</span>
           </Link>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+              <span>Landing Page Visual Builder</span>
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 uppercase tracking-wider">
+                Modular CMS
+              </span>
+            </h1>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Drag, reorder, duplicate, and configure all live storefront sections.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+          {/* View Mode Toggle (Editor / Live Preview) */}
+          <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200">
+            <button
+              type="button"
+              onClick={() => setViewMode('editor')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                viewMode === 'editor'
+                  ? 'bg-white text-gray-900 shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Editor
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('preview')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                viewMode === 'preview'
+                  ? 'bg-white text-gray-900 shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Live Preview
+            </button>
+          </div>
 
           <a
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-300 hover:border-black text-gray-900 rounded-[10px] text-xs font-bold transition-all shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-xs font-bold text-gray-700 transition-colors"
           >
-            <span>Preview Live</span>
-            <ExternalLink className="w-3.5 h-3.5 text-gray-500" />
+            <span>Storefront</span>
+            <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
           </a>
+
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isSaving}
+            className={`inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-sm cursor-pointer ${
+              saveSuccess
+                ? 'bg-emerald-600'
+                : 'bg-[#111111] hover:bg-[#d0473e]'
+            } disabled:opacity-50`}
+          >
+            {saveSuccess ? (
+              <>
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Saved Live!</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                <span>{isSaving ? 'Saving...' : 'Save All Sections'}</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 
-      {/* Navigation Tab Switcher */}
-      <div className="flex items-center gap-1.5 p-1 bg-white border border-gray-200/80 rounded-[10px] shadow-2xs overflow-x-auto">
-        <button
-          type="button"
-          onClick={() => setActiveTab('slider')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-[8px] text-xs font-bold transition-all cursor-pointer shrink-0 ${
-            activeTab === 'slider'
-              ? 'bg-[#111111] text-white shadow-xs'
-              : 'text-gray-600 hover:text-black hover:bg-gray-50'
-          }`}
-        >
-          <Sliders className="w-3.5 h-3.5 text-amber-400" />
-          <span>Hero Split Slider {heroSliderEnabled ? '🟢' : '⚪'}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('banners')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-[8px] text-xs font-bold transition-all cursor-pointer shrink-0 ${
-            activeTab === 'banners'
-              ? 'bg-[#111111] text-white shadow-xs'
-              : 'text-gray-600 hover:text-black hover:bg-gray-50'
-          }`}
-        >
-          <Layers className="w-3.5 h-3.5 text-blue-400" />
-          <span>Promo Dual Banners {promoBannersEnabled ? '🟢' : '⚪'}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('seasonal')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-[8px] text-xs font-bold transition-all cursor-pointer shrink-0 ${
-            activeTab === 'seasonal'
-              ? 'bg-[#111111] text-white shadow-xs'
-              : 'text-gray-600 hover:text-black hover:bg-gray-50'
-          }`}
-        >
-          <SunMedium className="w-3.5 h-3.5 text-amber-500" />
-          <span>Seasonal Capsule {seasonal.enabled ? '🟢' : '⚪'}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('instagram')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-[8px] text-xs font-bold transition-all cursor-pointer shrink-0 ${
-            activeTab === 'instagram'
-              ? 'bg-[#111111] text-white shadow-xs'
-              : 'text-gray-600 hover:text-black hover:bg-gray-50'
-          }`}
-        >
-          <Camera className="w-3.5 h-3.5 text-rose-400" />
-          <span>Shop by Gram {instagram.enabled !== false ? '🟢' : '⚪'}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('features')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-[8px] text-xs font-bold transition-all cursor-pointer shrink-0 ${
-            activeTab === 'features'
-              ? 'bg-[#111111] text-white shadow-xs'
-              : 'text-gray-600 hover:text-black hover:bg-gray-50'
-          }`}
-        >
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Trust Badges {trustBadgesEnabled ? '🟢' : '⚪'}</span>
-        </button>
-      </div>
-
-      {/* Floating Instant Live Feedback Toast */}
-      {instantFeedback && (
-        <div className="fixed bottom-6 right-6 z-50 p-4 bg-black text-white text-xs font-bold rounded-[10px] shadow-2xl flex items-center gap-3 animate-bounce border border-gray-800">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{instantFeedback}</span>
-        </div>
-      )}
-
-      {/* TAB 1: 50/50 HERO SPLIT SLIDER */}
-      {activeTab === 'slider' && (
-        <form onSubmit={handleSaveSlider} className="space-y-6">
-          <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-100 gap-4">
-              <div>
-                <h2 className="text-base font-extrabold text-gray-900">50/50 Hero Split Slider</h2>
-                <p className="text-xs text-gray-500">Each slide showcases 2 side-by-side images with centered typography, badge, and button.</p>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <AdminToggle
-                  label={heroSliderEnabled ? 'Hero Section Active' : 'Hero Section Disabled'}
-                  checked={heroSliderEnabled}
-                  onChange={(val) => {
-                    setHeroSliderEnabled(val);
-                    handleAsyncSectionToggle('hero_slider', val);
-                  }}
-                  activeColor="bg-emerald-600"
-                  size="md"
-                />
+      {/* Main Builder Canvas */}
+      {viewMode === 'editor' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6 items-start">
+          {/* Left Column: Sections List & Hierarchy (4 Columns) */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs p-4 sm:p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-sm font-bold text-gray-900 tracking-tight">
+                    Page Sections ({sections.length})
+                  </h2>
+                  <p className="text-[11px] text-gray-500">Drag to reorder section hierarchy</p>
+                </div>
 
                 <button
                   type="button"
-                  onClick={handleAddSlide}
-                  className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-xs font-bold rounded-[8px] flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                  onClick={() => setAddModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-bold transition-all cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Add New Slide</span>
+                  <span>Add Section</span>
+                </button>
+              </div>
+
+              {/* Sections Drag List */}
+              <div className="space-y-2">
+                {sections.map((sec, index) => {
+                  const Icon = getSectionIcon(sec.type);
+                  const isSelected = sec.id === activeSectionId;
+
+                  return (
+                    <div
+                      key={sec.id}
+                      draggable
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDragEnd={handleDragEnd}
+                      onClick={() => setActiveSectionId(sec.id)}
+                      className={`group relative rounded-xl border p-3 transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-amber-50/50 border-amber-400 ring-2 ring-amber-400/20 shadow-xs'
+                          : 'bg-white border-gray-200/80 hover:border-gray-300 hover:bg-gray-50/50'
+                      } ${!sec.enabled ? 'opacity-60 bg-gray-50' : ''}`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        {/* Drag Handle & Icon */}
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 p-0.5">
+                            <GripVertical className="w-4 h-4" />
+                          </div>
+
+                          <div
+                            className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                              isSelected
+                                ? 'bg-amber-500 text-white'
+                                : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
+                            }`}
+                          >
+                            <Icon className="w-4 h-4" />
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-gray-900 truncate leading-tight">
+                              {sec.name}
+                            </p>
+                            <p className="text-[10px] text-gray-500 font-mono capitalize">
+                              {sec.type.replace('_', ' ')}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Actions: Move, Toggle, Duplicate, Delete */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            title="Move Up"
+                            disabled={index === 0}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              moveSection(index, 'up');
+                            }}
+                            className="p-1 rounded text-gray-400 hover:text-gray-700 disabled:opacity-20 cursor-pointer"
+                          >
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            title="Move Down"
+                            disabled={index === sections.length - 1}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              moveSection(index, 'down');
+                            }}
+                            className="p-1 rounded text-gray-400 hover:text-gray-700 disabled:opacity-20 cursor-pointer"
+                          >
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            title={sec.enabled ? 'Hide Section' : 'Show Section'}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleSection(sec.id);
+                            }}
+                            className={`p-1 rounded cursor-pointer ${
+                              sec.enabled ? 'text-emerald-600 hover:bg-emerald-50' : 'text-gray-400 hover:bg-gray-200'
+                            }`}
+                          >
+                            {sec.enabled ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                          </button>
+                          <button
+                            type="button"
+                            title="Duplicate Section"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              duplicateSection(index);
+                            }}
+                            className="p-1 rounded text-gray-400 hover:text-amber-700 hover:bg-amber-50 cursor-pointer"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            title="Delete Section"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteSection(index);
+                            }}
+                            className="p-1 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setAddModalOpen(true)}
+                  className="w-full py-2.5 rounded-xl border-2 border-dashed border-gray-200 hover:border-amber-400 hover:bg-amber-50/40 text-gray-600 hover:text-amber-900 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add New Section</span>
                 </button>
               </div>
             </div>
+          </div>
 
-            <div className="space-y-6">
-              {slides.map((slide, idx) => (
-                <div
-                  key={slide.id || idx}
-                  className={`p-6 rounded-[10px] border-2 transition-all space-y-6 ${
-                    slide.enabled ? 'border-gray-200 bg-[#fdfdfd]' : 'border-gray-200/60 bg-gray-50/70 opacity-75'
-                  }`}
-                >
-                  {/* Top Row: Slide Header & Enable Toggle */}
-                  <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-                    <div className="flex items-center gap-3">
-                      <span className="w-6 h-6 rounded-full bg-[#111111] text-white text-xs font-extrabold flex items-center justify-center">
-                        {idx + 1}
+          {/* Right Column: Section Settings Inspector (8 Columns) */}
+          <div className="lg:col-span-8">
+            {activeSection ? (
+              <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs p-6 sm:p-8 space-y-6">
+                {/* Section Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-gray-100 gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-gray-100 text-gray-700">
+                        {activeSection.type.replace('_', ' ')}
                       </span>
-                      <span className="text-sm font-bold text-gray-900">{slide.title || `Slide #${idx + 1}`}</span>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <AdminToggle
-                        label={slide.enabled ? 'Active on Storefront' : 'Disabled'}
-                        checked={slide.enabled}
-                        onChange={(val) => {
-                          handleUpdateSlide(idx, 'enabled', val);
-                          handleAsyncSectionToggle('slide_item', val, slide.id);
-                        }}
-                        activeColor="bg-emerald-600"
-                        size="sm"
-                      />
-
-                      {slides.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteSlide(idx)}
-                          className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                          title="Delete Slide"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      {activeSection.enabled ? (
+                        <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          Active Live
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-gray-100 text-gray-500">
+                          Hidden
+                        </span>
                       )}
                     </div>
-                  </div>
-
-                  {/* Left & Right Images Row with Live Previews & System File Uploaders */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50/70 border border-gray-200/70 rounded-[10px]">
-                    <SingleImageUploader
-                      label="Left Split Image (Lifestyle / Model)"
-                      hint="Recommended: 1200×1400 px (Portrait/Square)"
-                      value={slide.leftImage}
-                      onChange={(url) => handleUpdateSlide(idx, 'leftImage', url)}
-                    />
-
-                    <SingleImageUploader
-                      label="Right Split Image (Product Focus)"
-                      hint="Recommended: 1200×1400 px (Portrait/Square)"
-                      value={slide.rightImage}
-                      onChange={(url) => handleUpdateSlide(idx, 'rightImage', url)}
-                    />
-                  </div>
-
-                  {/* Text Content Inputs */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">Subtitle / Kicker</label>
-                      <input
-                        type="text"
-                        value={slide.subtitle}
-                        onChange={(e) => handleUpdateSlide(idx, 'subtitle', e.target.value)}
-                        placeholder="CAPTIVATING COLLECTION"
-                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">Main Heading / Title</label>
-                      <input
-                        type="text"
-                        value={slide.title || ''}
-                        onChange={(e) => handleUpdateSlide(idx, 'title', e.target.value)}
-                        placeholder="Sculpted By Light"
-                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">Badge Tag</label>
-                      <input
-                        type="text"
-                        value={slide.badge || ''}
-                        onChange={(e) => handleUpdateSlide(idx, 'badge', e.target.value)}
-                        placeholder="NEW ARRIVALS 2026"
-                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Button & Link Settings */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1 items-center bg-gray-50/60 p-4 rounded-[10px] border border-gray-100">
-                    <AdminToggle
-                      label="Display CTA Button"
-                      checked={slide.showButton !== false}
-                      onChange={(val) => handleUpdateSlide(idx, 'showButton', val)}
-                      size="sm"
-                    />
-
-                    {slide.showButton !== false && (
-                      <>
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-600 mb-1">Button Text</label>
-                          <input
-                            type="text"
-                            value={slide.buttonText}
-                            onChange={(e) => handleUpdateSlide(idx, 'buttonText', e.target.value)}
-                            placeholder="Shop Collection"
-                            className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-600 mb-1">Button Link URL</label>
-                          <input
-                            type="text"
-                            value={slide.buttonLink}
-                            onChange={(e) => handleUpdateSlide(idx, 'buttonLink', e.target.value)}
-                            placeholder="/shop"
-                            className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                          />
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-end pt-4 border-t border-gray-100">
-              <button
-                type="submit"
-                disabled={saving}
-                className="inline-flex items-center gap-2 px-8 py-3 bg-[#111111] hover:bg-[#d0473e] text-white rounded-[10px] text-xs font-bold uppercase tracking-wider transition-all shadow-xs disabled:opacity-50 cursor-pointer"
-              >
-                <Save className="w-4 h-4" />
-                <span>{saving ? 'Saving...' : 'Save Hero Split Slider'}</span>
-              </button>
-            </div>
-          </div>
-        </form>
-      )}
-
-      {/* TAB 2: PROMOTIONAL DUAL BANNERS */}
-      {activeTab === 'banners' && (
-        <form onSubmit={handleSaveBanners} className="space-y-6">
-          <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 gap-4">
-              <div>
-                <h2 className="text-base font-extrabold text-gray-900">Promotional Dual Banners</h2>
-                <p className="text-xs text-gray-500">Edit the two side-by-side promotional highlight blocks displayed below categories.</p>
-              </div>
-
-              <AdminToggle
-                label={promoBannersEnabled ? 'Banners Active' : 'Banners Disabled'}
-                checked={promoBannersEnabled}
-                onChange={(val) => {
-                  setPromoBannersEnabled(val);
-                  handleAsyncSectionToggle('promo_banners', val);
-                }}
-                activeColor="bg-emerald-600"
-                size="md"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {banners.map((card, idx) => (
-                <div key={card.id || idx} className="p-6 rounded-[10px] border-2 border-gray-200 bg-gray-50/50 space-y-4">
-                  <div className="flex items-center justify-between pb-2 border-b border-gray-200">
-                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-gray-900">
-                      Promo Card #{idx + 1}
-                    </h3>
-
-                    <AdminToggle
-                      label={card.enabled !== false ? 'Enabled' : 'Hidden'}
-                      checked={card.enabled !== false}
-                      onChange={(val) => {
-                        const updated = [...banners];
-                        updated[idx].enabled = val;
-                        setBanners(updated);
-                        handleAsyncSectionToggle('banner_item', val, card.id);
-                      }}
-                      activeColor="bg-emerald-600"
-                      size="sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Subtitle</label>
-                    <input
-                      type="text"
-                      value={card.subtitle || ''}
-                      onChange={(e) => {
-                        const updated = [...banners];
-                        updated[idx].subtitle = e.target.value;
-                        setBanners(updated);
-                      }}
-                      placeholder="EPITOME OF REFINEMENT"
-                      className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Title</label>
-                    <input
-                      type="text"
-                      value={card.title || ''}
-                      onChange={(e) => {
-                        const updated = [...banners];
-                        updated[idx].title = e.target.value;
-                        setBanners(updated);
-                      }}
-                      placeholder="Light The Wonders"
-                      className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Description</label>
-                    <textarea
-                      rows={2}
-                      value={card.description || ''}
-                      onChange={(e) => {
-                        const updated = [...banners];
-                        updated[idx].description = e.target.value;
-                        setBanners(updated);
-                      }}
-                      className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                    />
-                  </div>
-
-                  <div>
-                    <SingleImageUploader
-                      label="Banner Background Image"
-                      hint="Recommended: 1200×800 px"
-                      value={card.image || ''}
-                      onChange={(url) => {
-                        const updated = [...banners];
-                        updated[idx].image = url;
-                        setBanners(updated);
-                      }}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-600 mb-1">Button Text</label>
-                      <input
-                        type="text"
-                        value={card.buttonText || ''}
-                        onChange={(e) => {
-                          const updated = [...banners];
-                          updated[idx].buttonText = e.target.value;
-                          setBanners(updated);
-                        }}
-                        placeholder="Shop Now"
-                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-600 mb-1">Button Link</label>
-                      <input
-                        type="text"
-                        value={card.buttonLink || ''}
-                        onChange={(e) => {
-                          const updated = [...banners];
-                          updated[idx].buttonLink = e.target.value;
-                          setBanners(updated);
-                        }}
-                        placeholder="/shop"
-                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-end pt-4 border-t border-gray-100">
-              <button
-                type="submit"
-                disabled={saving}
-                className="inline-flex items-center gap-2 px-8 py-3 bg-[#111111] hover:bg-[#d0473e] text-white rounded-[10px] text-xs font-bold uppercase tracking-wider transition-all shadow-xs disabled:opacity-50 cursor-pointer"
-              >
-                <Save className="w-4 h-4" />
-                <span>{saving ? 'Saving...' : 'Save Promo Banners'}</span>
-              </button>
-            </div>
-          </div>
-        </form>
-      )}
-
-      {/* TAB 3: SEASONAL CAPSULE */}
-      {activeTab === 'seasonal' && (
-        <form onSubmit={handleSaveSeasonal} className="space-y-6">
-          <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
-            <div className="p-5 rounded-[10px] bg-amber-50/70 border border-amber-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h2 className="text-sm font-extrabold text-gray-900">
-                  Seasonal / Feature Collection Display Section
-                </h2>
-                <p className="text-xs text-gray-600">
-                  Turn this curated showcase section ON or OFF on the storefront landing page.
-                </p>
-              </div>
-
-              <AdminToggle
-                label={seasonal.enabled ? 'Section Active on Landing Page' : 'Section Hidden from Landing Page'}
-                checked={seasonal.enabled}
-                onChange={(val) => {
-                  setSeasonal({ ...seasonal, enabled: val });
-                  handleAsyncSectionToggle('seasonal_collection', val);
-                }}
-                activeColor="bg-emerald-600"
-                size="md"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Title & Badge */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Collection Title (e.g. Summer Solstice / Winter Lookbook)
-                  </label>
-                  <input
-                    type="text"
-                    value={seasonal.title || ''}
-                    onChange={(e) => setSeasonal({ ...seasonal, title: e.target.value })}
-                    placeholder="Summer Solstice Edition"
-                    className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Subtitle / Subheading</label>
-                  <input
-                    type="text"
-                    value={seasonal.subtitle}
-                    onChange={(e) => setSeasonal({ ...seasonal, subtitle: e.target.value })}
-                    placeholder="SUNLIT REFLECTIONS & WATERPROOF HEIRLOOMS"
-                    className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Seasonal Capsule Badge</label>
-                  <input
-                    type="text"
-                    value={seasonal.badge}
-                    onChange={(e) => setSeasonal({ ...seasonal, badge: e.target.value })}
-                    placeholder="SUMMER 2026 CAPSULE"
-                    className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Description Paragraph</label>
-                  <textarea
-                    rows={3}
-                    value={seasonal.description}
-                    onChange={(e) => setSeasonal({ ...seasonal, description: e.target.value })}
-                    placeholder="A radiant curation designed to shine effortlessly through beach sun and ocean mist..."
-                    className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                  />
-                </div>
-              </div>
-
-              {/* Banner Image & Category Target */}
-              <div className="space-y-4">
-                <div className="p-4 bg-gray-50/70 border border-gray-200/70 rounded-[10px]">
-                  <SingleImageUploader
-                    label="Collection Showcase Banner Image"
-                    hint="Recommended: 1200×800 px (Landscape 3:2)"
-                    value={seasonal.banner_image}
-                    onChange={(url) => setSeasonal({ ...seasonal, banner_image: url })}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Select Featured Category or Collection to Showcase
-                  </label>
-                  <select
-                    value={seasonal.category_slug}
-                    onChange={(e) => setSeasonal({ ...seasonal, category_slug: e.target.value })}
-                    className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                  >
-                    <option value="all">All Products</option>
-                    <optgroup label="Shop Categories">
-                      {categories.map((c) => (
-                        <option key={`cat-${c.id}`} value={c.slug}>
-                          Category: {c.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                    {collections && collections.length > 0 && (
-                      <optgroup label="Curated Collections">
-                        {collections.map((col) => (
-                          <option key={`col-${col.id}`} value={col.slug}>
-                            Collection: {col.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Button Text</label>
-                    <input
-                      type="text"
-                      value={seasonal.button_text}
-                      onChange={(e) => setSeasonal({ ...seasonal, button_text: e.target.value })}
-                      placeholder="Explore Summer Edit"
-                      className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Button Link</label>
-                    <input
-                      type="text"
-                      value={seasonal.button_link}
-                      onChange={(e) => setSeasonal({ ...seasonal, button_link: e.target.value })}
-                      placeholder="/shop?category=necklaces"
-                      className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-4 border-t border-gray-100">
-              <button
-                type="submit"
-                disabled={saving}
-                className="inline-flex items-center gap-2 px-8 py-3 bg-[#111111] hover:bg-[#d0473e] text-white rounded-[10px] text-xs font-bold uppercase tracking-wider transition-all shadow-xs disabled:opacity-50 cursor-pointer"
-              >
-                <Save className="w-4 h-4" />
-                <span>{saving ? 'Saving...' : 'Save Seasonal Capsule'}</span>
-              </button>
-            </div>
-          </div>
-        </form>
-      )}
-
-      {/* TAB 4: SHOP BY GRAM (INSTAGRAM FEED & AUTO-FETCH) */}
-      {activeTab === 'instagram' && (
-        <form onSubmit={handleSaveInstagram} className="space-y-6">
-          <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-rose-50 text-rose-600 rounded-[8px]">
-                  <Camera className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-gray-900">
-                    "Shop by Gram" Instagram Gallery & Auto-Fetch
-                  </h2>
-                  <p className="text-xs text-gray-400">
-                    Connect your Instagram account, auto-sync posts, or manually curate high-res luxury lookbooks.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <AdminToggle
-                  label={instagram.enabled !== false ? 'Gram Section Active' : 'Gram Section Disabled'}
-                  checked={instagram.enabled !== false}
-                  onChange={(val) => {
-                    setInstagram({ ...instagram, enabled: val });
-                    handleAsyncSectionToggle('shop_by_gram', val);
-                  }}
-                  activeColor="bg-emerald-600"
-                  size="md"
-                />
-
-                {/* 1-Click Auto-Fetch Button */}
-                <button
-                  type="button"
-                  onClick={handleAutoFetchInstagram}
-                  disabled={fetchingInsta}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white rounded-[8px] text-xs font-extrabold uppercase tracking-wider transition-all shadow-xs disabled:opacity-50 cursor-pointer shrink-0"
-                >
-                  <Zap className={`w-3.5 h-3.5 ${fetchingInsta ? 'animate-spin' : ''}`} />
-                  <span>{fetchingInsta ? 'Fetching Instagram...' : '⚡ Auto-Fetch'}</span>
-                </button>
-              </div>
-            </div>
-
-            {instaMessage && (
-              <div className="p-3 bg-rose-50/80 border border-rose-200 rounded-[8px] text-xs text-rose-800 font-semibold flex items-center justify-between">
-                <span>{instaMessage}</span>
-                <button
-                  type="button"
-                  onClick={() => setInstaMessage(null)}
-                  className="text-rose-500 hover:text-black text-xs font-bold"
-                >
-                  ✕
-                </button>
-              </div>
-            )}
-
-            {/* Profile Config Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                  Instagram Profile Link <span className="text-[#d0473e]">*</span>
-                </label>
-                <input
-                  type="url"
-                  required
-                  value={instagram.url}
-                  onChange={(e) => setInstagram({ ...instagram, url: e.target.value })}
-                  placeholder="https://instagram.com/haarmonaa"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                  Instagram Handle <span className="text-[#d0473e]">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={instagram.handle}
-                  onChange={(e) => setInstagram({ ...instagram, handle: e.target.value })}
-                  placeholder="@haarmonaa"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                  Graph API Token <span className="text-gray-400 font-normal">(Optional for direct sync)</span>
-                </label>
-                <input
-                  type="text"
-                  value={instagram.access_token || ''}
-                  onChange={(e) => setInstagram({ ...instagram, access_token: e.target.value })}
-                  placeholder="Paste Instagram Access Token"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 focus:outline-hidden focus:border-black focus:bg-white"
-                />
-              </div>
-            </div>
-
-            {/* Gallery Posts Grid */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-900">
-                  Curated Gallery Posts ({instagram.posts.length} items)
-                </span>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newPost: InstagramPostItem = {
-                      id: Date.now(),
-                      image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop',
-                      alt: 'Haarmonaa Jewelry Post',
-                      handle: instagram.handle || '@haarmonaa',
-                      url: instagram.url || 'https://instagram.com',
-                    };
-                    setInstagram((prev) => ({
-                      ...prev,
-                      posts: [...prev.posts, newPost],
-                    }));
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-black hover:bg-[#d0473e] text-white rounded-[8px] text-[11px] font-bold transition-all cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Post</span>
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {instagram.posts.map((post, idx) => (
-                  <div
-                    key={post.id || idx}
-                    className="p-4 bg-gray-50/80 border border-gray-200/80 rounded-[10px] space-y-3 relative group flex flex-col justify-between"
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="text-[11px] font-extrabold uppercase px-2 py-0.5 bg-rose-100 text-rose-800 rounded-full">
-                          Post #{idx + 1}
-                        </span>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setInstagram((prev) => ({
-                              ...prev,
-                              posts: prev.posts.filter((_, i) => i !== idx),
-                            }));
-                          }}
-                          className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-[6px] transition-colors cursor-pointer"
-                          title="Remove Post"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      {/* Image Upload Component */}
-                      <SingleImageUploader
-                        label="Post Image / Screenshot"
-                        placeholder="Upload image or paste URL..."
-                        value={post.image}
-                        onChange={(url) => {
-                          const updated = [...instagram.posts];
-                          updated[idx] = { ...updated[idx], image: url };
-                          setInstagram({ ...instagram, posts: updated });
-                        }}
-                      />
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <div>
-                          <label className="block text-[10.5px] font-bold text-gray-500 mb-0.5">
-                            Post Handle
-                          </label>
-                          <input
-                            type="text"
-                            value={post.handle || ''}
-                            onChange={(e) => {
-                              const updated = [...instagram.posts];
-                              updated[idx] = { ...updated[idx], handle: e.target.value };
-                              setInstagram({ ...instagram, posts: updated });
-                            }}
-                            placeholder="@haarmonaa_"
-                            className="w-full bg-white border border-gray-200 rounded-[6px] py-1 px-2 text-[11px] text-gray-900 focus:outline-hidden focus:border-black"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[10.5px] font-bold text-gray-500 mb-0.5">
-                            Post URL Link
-                          </label>
-                          <input
-                            type="url"
-                            value={post.url || ''}
-                            onChange={(e) => {
-                              const updated = [...instagram.posts];
-                              updated[idx] = { ...updated[idx], url: e.target.value };
-                              setInstagram({ ...instagram, posts: updated });
-                            }}
-                            placeholder="https://instagram.com/p/..."
-                            className="w-full bg-white border border-gray-200 rounded-[6px] py-1 px-2 text-[11px] text-gray-900 focus:outline-hidden focus:border-black"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Save Button */}
-            <div className="flex justify-end pt-4 border-t border-gray-100">
-              <button
-                type="submit"
-                disabled={saving}
-                className="inline-flex items-center gap-2 px-8 py-3 bg-[#111111] hover:bg-[#d0473e] text-white rounded-[10px] text-xs font-bold uppercase tracking-wider transition-all shadow-xs disabled:opacity-50 cursor-pointer"
-              >
-                <Save className="w-4 h-4" />
-                <span>{saving ? 'Saving...' : 'Save Instagram Section'}</span>
-              </button>
-            </div>
-          </div>
-        </form>
-      )}
-
-      {/* TAB 5: TRUST BADGES & VALUE PROPOSITIONS (MIN 3 MANDATORY) */}
-      {activeTab === 'features' && (
-        <form onSubmit={handleSaveFeatures} className="space-y-6">
-          <div className="bg-white p-6 sm:p-8 rounded-[10px] border border-gray-200/80 shadow-2xs space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-50 text-emerald-700 rounded-[8px]">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-gray-900">
-                    Homepage Trust Badges & Value Propositions
-                  </h2>
-                  <p className="text-xs text-gray-400">
-                    Displayed beneath Shop by Gram. Enable or disable this section on the storefront.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <AdminToggle
-                  label={trustBadgesEnabled ? 'Trust Section Active' : 'Trust Section Disabled'}
-                  checked={trustBadgesEnabled}
-                  onChange={(val) => {
-                    setTrustBadgesEnabled(val);
-                    handleAsyncSectionToggle('trust_badges', val);
-                  }}
-                  activeColor="bg-emerald-600"
-                  size="md"
-                />
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newFeature: StoreFeatureItem = {
-                      id: 'feat_' + Date.now(),
-                      icon: 'Award',
-                      title: 'Solid 18K Gold Vermeil',
-                      description: 'Heirloom-grade craftsmanship with thick anti-tarnish coating.',
-                    };
-                    setFeatures((prev) => [...prev, newFeature]);
-                  }}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-[#d0473e] text-white rounded-[8px] text-xs font-bold transition-all cursor-pointer shrink-0"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Trust Card</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {features.map((feat, idx) => (
-                <div
-                  key={feat.id || idx}
-                  className="p-5 bg-gray-50/80 border border-gray-200/80 rounded-[10px] space-y-3"
-                >
-                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-black text-white text-xs font-bold flex items-center justify-center">
-                        {idx + 1}
-                      </span>
-                      <span className="text-xs font-bold text-gray-900">
-                        Card #{idx + 1} {idx < 3 && <span className="text-emerald-700 font-semibold">(Mandatory)</span>}
-                      </span>
+                      <input
+                        type="text"
+                        value={activeSection.name}
+                        onChange={(e) => updateActiveSectionName(e.target.value)}
+                        className="text-lg sm:text-xl font-extrabold text-gray-900 bg-transparent border-b border-dashed border-gray-300 hover:border-gray-500 focus:border-black focus:outline-hidden py-0.5"
+                      />
                     </div>
-
-                    <button
-                      type="button"
-                      disabled={features.length <= 3}
-                      onClick={() => {
-                        if (features.length <= 3) {
-                          alert('Minimum 3 cards are required.');
-                          return;
-                        }
-                        setFeatures((prev) => prev.filter((_, i) => i !== idx));
-                      }}
-                      className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-[6px] transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                      title={features.length <= 3 ? 'Minimum 3 cards required' : 'Remove Card'}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-start">
+                  <div className="flex items-center gap-2">
+                    <AdminToggle
+                      label="Visible on Home"
+                      checked={activeSection.enabled}
+                      onChange={() => toggleSection(activeSection.id)}
+                    />
+                  </div>
+                </div>
+
+                {/* Section Specific Inspector Form */}
+                {/* 1. Curated Capsule Form */}
+                {activeSection.type === 'curated_capsule' && (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Capsule Headline (Title)
+                        </label>
+                        <input
+                          type="text"
+                          value={activeSection.settings?.title || ''}
+                          onChange={(e) =>
+                            updateActiveSectionSettings({ title: e.target.value })
+                          }
+                          placeholder="e.g. Summer Solstice Edition"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:ring-1 focus:ring-black focus:border-black"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Sub-Headline / Tagline
+                        </label>
+                        <input
+                          type="text"
+                          value={activeSection.settings?.subtitle || ''}
+                          onChange={(e) =>
+                            updateActiveSectionSettings({ subtitle: e.target.value })
+                          }
+                          placeholder="e.g. SUNLIT REFLECTIONS & WATERPROOF HEIRLOOMS"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:ring-1 focus:ring-black focus:border-black"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Editorial Badge
+                        </label>
+                        <input
+                          type="text"
+                          value={activeSection.settings?.badge || ''}
+                          onChange={(e) =>
+                            updateActiveSectionSettings({ badge: e.target.value })
+                          }
+                          placeholder="e.g. SUMMER 2026 CAPSULE"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:ring-1 focus:ring-black focus:border-black"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Target Collection / Category
+                        </label>
+                        <select
+                          value={activeSection.settings?.category_slug || 'all'}
+                          onChange={(e) =>
+                            updateActiveSectionSettings({ category_slug: e.target.value })
+                          }
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:ring-1 focus:ring-black focus:border-black bg-white"
+                        >
+                          <option value="all">Featured Products (Automatic)</option>
+                          <optgroup label="Collections">
+                            {collections.map((coll) => (
+                              <option key={`coll-${coll.id}`} value={coll.slug}>
+                                Collection: {coll.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="Categories">
+                            {categories.map((cat) => (
+                              <option key={`cat-${cat.id}`} value={cat.slug}>
+                                Category: {cat.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Color Theme
+                        </label>
+                        <select
+                          value={activeSection.settings?.theme || 'gold'}
+                          onChange={(e) =>
+                            updateActiveSectionSettings({ theme: e.target.value })
+                          }
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:ring-1 focus:ring-black focus:border-black bg-white"
+                        >
+                          <option value="gold">Warm Gold Vermeil</option>
+                          <option value="rose">Rose Gold Shimmer</option>
+                          <option value="noir">Midnight Noir Luxury</option>
+                          <option value="minimal">Clean Minimalist White</option>
+                        </select>
+                      </div>
+                    </div>
+
                     <div>
-                      <VisualIconPicker
-                        selectedIcon={feat.icon}
-                        customIconUrl={feat.custom_icon || ''}
-                        onSelectIcon={(newIcon) => {
-                          const updated = [...features];
-                          updated[idx] = { ...updated[idx], icon: newIcon, custom_icon: '' };
-                          setFeatures(updated);
-                        }}
-                        onCustomIconChange={(newCustomIcon) => {
-                          const updated = [...features];
-                          updated[idx] = { ...updated[idx], custom_icon: newCustomIcon };
-                          setFeatures(updated);
-                        }}
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Capsule Description & Story
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={activeSection.settings?.description || ''}
+                        onChange={(e) =>
+                          updateActiveSectionSettings({ description: e.target.value })
+                        }
+                        placeholder="Detailed editorial story..."
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:ring-1 focus:ring-black focus:border-black"
                       />
                     </div>
 
-                    <div className="sm:col-span-2 space-y-1">
-                      <label className="block text-[11px] font-bold text-gray-700">
-                        Card Title <span className="text-[#d0473e]">*</span>
+                    <div>
+                      <SingleImageUploader
+                        label="Highlight Banner Image"
+                        value={activeSection.settings?.banner_image || ''}
+                        onChange={(url) =>
+                          updateActiveSectionSettings({ banner_image: url })
+                        }
+                        hint="Recommended: 1200x800px portrait or 4:5 luxury product photograph."
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Button CTA Text
+                        </label>
+                        <input
+                          type="text"
+                          value={activeSection.settings?.button_text || ''}
+                          onChange={(e) =>
+                            updateActiveSectionSettings({ button_text: e.target.value })
+                          }
+                          placeholder="e.g. Explore Summer Edit"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:ring-1 focus:ring-black focus:border-black"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Button Link
+                        </label>
+                        <input
+                          type="text"
+                          value={activeSection.settings?.button_link || ''}
+                          onChange={(e) =>
+                            updateActiveSectionSettings({ button_link: e.target.value })
+                          }
+                          placeholder="e.g. /shop?category=necklaces or /collection/summer-edit"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:ring-1 focus:ring-black focus:border-black"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. Hero Slider Form */}
+                {activeSection.type === 'hero_slider' && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Hero Slides ({(activeSection.settings?.slides || []).length})
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const current = activeSection.settings?.slides || [];
+                          const newSlide = {
+                            id: Date.now(),
+                            subtitle: 'CAPTIVATING COLLECTION',
+                            title: 'New Luxury Arrival',
+                            buttonText: 'Shop Collection',
+                            buttonLink: '/shop',
+                            showButton: true,
+                            enabled: true,
+                            badge: 'NEW RELEASE',
+                            leftImage: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1200&auto=format&fit=crop',
+                            rightImage: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=1200&auto=format&fit=crop',
+                          };
+                          updateActiveSectionSettings({ slides: [...current, newSlide] });
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold transition-all cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Slide</span>
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {(activeSection.settings?.slides || []).map((slide: any, sIdx: number) => (
+                        <div
+                          key={slide.id || sIdx}
+                          className="p-4 rounded-xl border border-gray-200 bg-gray-50/50 space-y-4"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-gray-900">
+                              Slide #{sIdx + 1}: {slide.title || 'Untitled Slide'}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <AdminToggle
+                                label="Enabled"
+                                checked={slide.enabled !== false}
+                                onChange={() => {
+                                  const slides = [...activeSection.settings.slides];
+                                  slides[sIdx].enabled = !(slides[sIdx].enabled !== false);
+                                  updateActiveSectionSettings({ slides });
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (confirm('Delete this slide?')) {
+                                    const slides = activeSection.settings.slides.filter((_: any, i: number) => i !== sIdx);
+                                    updateActiveSectionSettings({ slides });
+                                  }
+                                }}
+                                className="p-1 rounded text-red-500 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <input
+                              type="text"
+                              value={slide.badge || ''}
+                              onChange={(e) => {
+                                const slides = [...activeSection.settings.slides];
+                                slides[sIdx].badge = e.target.value;
+                                updateActiveSectionSettings({ slides });
+                              }}
+                              placeholder="Badge (e.g. NEW 2026)"
+                              className="px-3 py-2 rounded-lg border border-gray-300 text-xs font-medium"
+                            />
+                            <input
+                              type="text"
+                              value={slide.subtitle || ''}
+                              onChange={(e) => {
+                                const slides = [...activeSection.settings.slides];
+                                slides[sIdx].subtitle = e.target.value;
+                                updateActiveSectionSettings({ slides });
+                              }}
+                              placeholder="Subtitle"
+                              className="px-3 py-2 rounded-lg border border-gray-300 text-xs font-medium"
+                            />
+                            <input
+                              type="text"
+                              value={slide.title || ''}
+                              onChange={(e) => {
+                                const slides = [...activeSection.settings.slides];
+                                slides[sIdx].title = e.target.value;
+                                updateActiveSectionSettings({ slides });
+                              }}
+                              placeholder="Headline Title"
+                              className="px-3 py-2 rounded-lg border border-gray-300 text-xs font-medium"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <SingleImageUploader
+                              label="Left Split Image"
+                              value={slide.leftImage || ''}
+                              onChange={(url) => {
+                                const slides = [...activeSection.settings.slides];
+                                slides[sIdx].leftImage = url;
+                                updateActiveSectionSettings({ slides });
+                              }}
+                            />
+                            <SingleImageUploader
+                              label="Right Split Image"
+                              value={slide.rightImage || ''}
+                              onChange={(url) => {
+                                const slides = [...activeSection.settings.slides];
+                                slides[sIdx].rightImage = url;
+                                updateActiveSectionSettings({ slides });
+                              }}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <input
+                              type="text"
+                              value={slide.buttonText || ''}
+                              onChange={(e) => {
+                                const slides = [...activeSection.settings.slides];
+                                slides[sIdx].buttonText = e.target.value;
+                                updateActiveSectionSettings({ slides });
+                              }}
+                              placeholder="Button Text (e.g. Shop Collection)"
+                              className="px-3 py-2 rounded-lg border border-gray-300 text-xs font-medium"
+                            />
+                            <input
+                              type="text"
+                              value={slide.buttonLink || ''}
+                              onChange={(e) => {
+                                const slides = [...activeSection.settings.slides];
+                                slides[sIdx].buttonLink = e.target.value;
+                                updateActiveSectionSettings({ slides });
+                              }}
+                              placeholder="Button Link (e.g. /shop)"
+                              className="px-3 py-2 rounded-lg border border-gray-300 text-xs font-medium"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Best Selling Grid Form */}
+                {activeSection.type === 'best_selling' && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Section Title
+                        </label>
+                        <input
+                          type="text"
+                          value={activeSection.settings?.title || ''}
+                          onChange={(e) =>
+                            updateActiveSectionSettings({ title: e.target.value })
+                          }
+                          placeholder="e.g. Best Selling Products"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Badge Label
+                        </label>
+                        <input
+                          type="text"
+                          value={activeSection.settings?.badge || ''}
+                          onChange={(e) =>
+                            updateActiveSectionSettings({ badge: e.target.value })
+                          }
+                          placeholder="e.g. MOST LOVED PIECES"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Subtitle
                       </label>
                       <input
                         type="text"
-                        required
-                        value={feat.title}
-                        onChange={(e) => {
-                          const updated = [...features];
-                          updated[idx] = { ...updated[idx], title: e.target.value };
-                          setFeatures(updated);
-                        }}
-                        placeholder="e.g. Free Worldwide Shipping"
-                        className="w-full bg-white border border-gray-200 rounded-[8px] py-2.5 px-3.5 text-xs text-gray-900 font-bold focus:outline-hidden focus:border-black"
+                        value={activeSection.settings?.subtitle || ''}
+                        onChange={(e) =>
+                          updateActiveSectionSettings({ subtitle: e.target.value })
+                        }
+                        placeholder="e.g. TIMELESS EVERYDAY LUXURY IN 18K GOLD VERMEIL"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium"
                       />
                     </div>
                   </div>
+                )}
 
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                      Card Description
-                    </label>
-                    <textarea
-                      rows={2}
-                      required
-                      value={feat.description}
-                      onChange={(e) => {
-                        const updated = [...features];
-                        updated[idx] = { ...updated[idx], description: e.target.value };
-                        setFeatures(updated);
-                      }}
-                      placeholder="Highlight customer guarantees and benefits..."
-                      className="w-full bg-white border border-gray-200 rounded-[8px] py-2 px-3 text-xs text-gray-900 focus:outline-hidden focus:border-black"
-                    />
+                {/* 4. Featured Products Slider Form */}
+                {activeSection.type === 'featured_products' && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Section Title
+                        </label>
+                        <input
+                          type="text"
+                          value={activeSection.settings?.title || ''}
+                          onChange={(e) =>
+                            updateActiveSectionSettings({ title: e.target.value })
+                          }
+                          placeholder="e.g. Captivating Collection"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Subtitle
+                        </label>
+                        <input
+                          type="text"
+                          value={activeSection.settings?.subtitle || ''}
+                          onChange={(e) =>
+                            updateActiveSectionSettings({ subtitle: e.target.value })
+                          }
+                          placeholder="e.g. HANDCRAFTED 18K THICK SOLID GOLD VERMEIL"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                )}
 
-            {/* Save Button */}
-            <div className="flex justify-end pt-4 border-t border-gray-100">
-              <button
-                type="submit"
-                disabled={saving}
-                className="inline-flex items-center gap-2 px-8 py-3 bg-[#111111] hover:bg-[#d0473e] text-white rounded-[10px] text-xs font-bold uppercase tracking-wider transition-all shadow-xs disabled:opacity-50 cursor-pointer"
-              >
-                <Save className="w-4 h-4" />
-                <span>{saving ? 'Saving...' : 'Save Trust Badges'}</span>
-              </button>
+                {/* 5. Brand Manifesto Form */}
+                {activeSection.type === 'story_manifesto' && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Headline Title
+                        </label>
+                        <input
+                          type="text"
+                          value={activeSection.settings?.title || ''}
+                          onChange={(e) =>
+                            updateActiveSectionSettings({ title: e.target.value })
+                          }
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Subtitle
+                        </label>
+                        <input
+                          type="text"
+                          value={activeSection.settings?.subtitle || ''}
+                          onChange={(e) =>
+                            updateActiveSectionSettings({ subtitle: e.target.value })
+                          }
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Featured Quote
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={activeSection.settings?.quote || ''}
+                        onChange={(e) =>
+                          updateActiveSectionSettings({ quote: e.target.value })
+                        }
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <SingleImageUploader
+                        label="Manifesto Editorial Photo"
+                        value={activeSection.settings?.image || ''}
+                        onChange={(url) =>
+                          updateActiveSectionSettings({ image: url })
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* 6. FAQ Accordion Form */}
+                {activeSection.type === 'faq_accordion' && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Section Title
+                        </label>
+                        <input
+                          type="text"
+                          value={activeSection.settings?.title || ''}
+                          onChange={(e) =>
+                            updateActiveSectionSettings({ title: e.target.value })
+                          }
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Subtitle
+                        </label>
+                        <input
+                          type="text"
+                          value={activeSection.settings?.subtitle || ''}
+                          onChange={(e) =>
+                            updateActiveSectionSettings({ subtitle: e.target.value })
+                          }
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          Questions & Answers ({(activeSection.settings?.items || []).length})
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const items = activeSection.settings?.items || [];
+                            const newItem = {
+                              id: `faq_${Date.now()}`,
+                              question: 'New Question',
+                              answer: 'Detailed helpful answer...',
+                            };
+                            updateActiveSectionSettings({ items: [...items, newItem] });
+                          }}
+                          className="text-xs font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg border border-amber-200"
+                        >
+                          + Add FAQ
+                        </button>
+                      </div>
+
+                      {(activeSection.settings?.items || []).map((faq: any, fIdx: number) => (
+                        <div key={faq.id || fIdx} className="p-3 rounded-xl border border-gray-200 bg-gray-50/50 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <input
+                              type="text"
+                              value={faq.question}
+                              onChange={(e) => {
+                                const items = [...activeSection.settings.items];
+                                items[fIdx].question = e.target.value;
+                                updateActiveSectionSettings({ items });
+                              }}
+                              placeholder="Question"
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs font-bold"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const items = activeSection.settings.items.filter((_: any, i: number) => i !== fIdx);
+                                updateActiveSectionSettings({ items });
+                              }}
+                              className="p-1 text-red-500 hover:bg-red-50 rounded"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <textarea
+                            rows={2}
+                            value={faq.answer}
+                            onChange={(e) => {
+                              const items = [...activeSection.settings.items];
+                              items[fIdx].answer = e.target.value;
+                              updateActiveSectionSettings({ items });
+                            }}
+                            placeholder="Answer"
+                            className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 7. Custom HTML Block Form */}
+                {activeSection.type === 'custom_html' && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Container Width
+                        </label>
+                        <select
+                          value={activeSection.settings?.container_width || 'boxed'}
+                          onChange={(e) =>
+                            updateActiveSectionSettings({ container_width: e.target.value })
+                          }
+                          className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-medium bg-white"
+                        >
+                          <option value="boxed">Boxed (Max 7xl Centered)</option>
+                          <option value="full">Full Width Edge-to-Edge</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Background Color
+                        </label>
+                        <input
+                          type="text"
+                          value={activeSection.settings?.bg_color || '#ffffff'}
+                          onChange={(e) =>
+                            updateActiveSectionSettings({ bg_color: e.target.value })
+                          }
+                          className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-medium font-mono"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Vertical Padding
+                        </label>
+                        <select
+                          value={activeSection.settings?.padding_y || 'medium'}
+                          onChange={(e) =>
+                            updateActiveSectionSettings({ padding_y: e.target.value })
+                          }
+                          className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-medium bg-white"
+                        >
+                          <option value="none">None (0px)</option>
+                          <option value="small">Small (32px)</option>
+                          <option value="medium">Medium (64px)</option>
+                          <option value="large">Large (96px)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        HTML & CSS Code
+                      </label>
+                      <textarea
+                        rows={8}
+                        value={activeSection.settings?.html_content || ''}
+                        onChange={(e) =>
+                          updateActiveSectionSettings({ html_content: e.target.value })
+                        }
+                        placeholder="<div>Custom content...</div>"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 font-mono text-xs text-gray-800 bg-gray-900 text-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs p-12 text-center">
+                <p className="text-sm font-bold text-gray-900">No Section Selected</p>
+                <p className="text-xs text-gray-500 mt-1">Select a section from the left sidebar to configure its properties.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* Live Responsive Preview Mode */
+        <div className="mt-6 space-y-4">
+          <div className="flex items-center justify-center gap-2 bg-white p-2 rounded-2xl border border-gray-200 shadow-xs max-w-sm mx-auto">
+            <button
+              type="button"
+              onClick={() => setPreviewDevice('desktop')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                previewDevice === 'desktop'
+                  ? 'bg-[#111111] text-white shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Monitor className="w-3.5 h-3.5" />
+              <span>Desktop</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreviewDevice('tablet')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                previewDevice === 'tablet'
+                  ? 'bg-[#111111] text-white shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Tablet className="w-3.5 h-3.5" />
+              <span>Tablet (768px)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreviewDevice('mobile')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                previewDevice === 'mobile'
+                  ? 'bg-[#111111] text-white shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>Mobile (375px)</span>
+            </button>
+          </div>
+
+          {/* Preview Viewport Container */}
+          <div className="flex justify-center bg-gray-100/80 p-4 sm:p-8 rounded-3xl border border-gray-200 min-h-[800px] overflow-x-auto">
+            <div
+              className={`transition-all duration-300 bg-white shadow-2xl overflow-hidden rounded-2xl ${
+                previewDevice === 'desktop'
+                  ? 'w-full max-w-7xl'
+                  : previewDevice === 'tablet'
+                  ? 'w-[768px]'
+                  : 'w-[375px]'
+              }`}
+            >
+              <SectionRenderer
+                sections={sections}
+                products={products}
+                categories={categories}
+              />
             </div>
           </div>
-        </form>
+        </div>
+      )}
+
+      {/* Add New Section Modal */}
+      {addModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl border border-gray-200 shadow-2xl max-w-3xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 tracking-tight">
+                  Add New Landing Page Section
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Choose a luxury section preset to insert into your landing page.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAddModalOpen(false)}
+                className="p-2 rounded-full hover:bg-gray-100 text-gray-500 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {SECTION_PRESETS.map((preset) => {
+                const Icon = preset.icon;
+                return (
+                  <div
+                    key={preset.type}
+                    onClick={() => addSection(preset)}
+                    className="p-5 rounded-2xl border border-gray-200 hover:border-amber-400 hover:bg-amber-50/40 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between space-y-3 group"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-800 border border-amber-200/60 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        {preset.badge && (
+                          <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">
+                            {preset.badge}
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="text-sm font-bold text-gray-900 group-hover:text-amber-900">
+                        {preset.name}
+                      </h4>
+                      <p className="text-xs text-gray-500 leading-relaxed">
+                        {preset.description}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 flex items-center text-xs font-bold text-amber-800 group-hover:translate-x-1 transition-transform">
+                      <span>+ Add to Page</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       )}
     </AdminLayout>
   );

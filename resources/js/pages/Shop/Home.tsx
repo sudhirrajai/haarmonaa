@@ -1,16 +1,10 @@
-import React, { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import React from 'react';
 import { GlozinLayout } from '@/components/layout/GlozinLayout';
-import { ProductCard } from '@/components/shop/ProductCard';
 import { SeoHead } from '@/components/seo/SeoHead';
 import { Product, Category } from '@/types/shop';
-import { ArrowRight, SunMedium } from 'lucide-react';
-
-import { SplitHeroSlider, SplitSlide } from '@/components/shop/SplitHeroSlider';
-import { PromoDualBanners, PromoCardData } from '@/components/shop/PromoDualBanners';
-import { ShopByGram } from '@/components/shop/ShopByGram';
-import { FeaturedProductSlider } from '@/components/shop/FeaturedProductSlider';
-import { CategorySlider } from '@/components/shop/CategorySlider';
+import { SplitSlide } from '@/components/shop/SplitHeroSlider';
+import { PromoCardData } from '@/components/shop/PromoDualBanners';
+import { SectionRenderer, SectionBlock } from '@/components/shop/builder/SectionRenderer';
 
 interface SeasonalConfig {
   enabled: boolean;
@@ -25,6 +19,7 @@ interface SeasonalConfig {
 }
 
 interface HomeProps {
+  sections?: SectionBlock[];
   products: Product[];
   bestSelling?: Product[];
   featuredCollection?: Product[];
@@ -42,6 +37,7 @@ interface HomeProps {
 }
 
 export default function Home({
+  sections = [],
   products = [],
   bestSelling = [],
   featuredCollection = [],
@@ -57,21 +53,6 @@ export default function Home({
   onAddToCart,
   onQuickView,
 }: HomeProps) {
-  const [activeCategoryTab, setActiveCategoryTab] = useState('all');
-
-  // Base list of products for best selling (8 curated items)
-  const baseBestSelling = bestSelling && bestSelling.length > 0 ? bestSelling : products.slice(0, 8);
-
-  // Filtered down to 8 products max (2 rows of 4 columns)
-  const displayedBestSelling =
-    activeCategoryTab === 'all'
-      ? baseBestSelling.slice(0, 8)
-      : products
-          .filter((p) =>
-            p.category.toLowerCase().includes(activeCategoryTab.toLowerCase())
-          )
-          .slice(0, 8);
-
   const homeSchemas = [
     {
       '@context': 'https://schema.org',
@@ -109,233 +90,23 @@ export default function Home({
         structuredData={homeSchemas}
       />
 
-      {/* Full-Bleed 50/50 Split Hero Slider (Live from Admin CMS) */}
-      {heroSliderEnabled && <SplitHeroSlider slides={slides} />}
-
-      {/* DYNAMIC SEASONAL / CURATED COLLECTION SHOWCASE (Managed via Admin CMS) */}
-      {seasonalCollection && seasonalCollection.enabled !== false && (
-        <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-b from-amber-50/40 via-white to-white border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between mb-8 sm:mb-10 lg:mb-12 gap-4">
-              <div className="space-y-1.5">
-                <span className="text-[11px] sm:text-xs font-bold tracking-[0.2em] uppercase text-amber-700 block">
-                  {seasonalCollection.badge || 'EXCLUSIVE CAPSULE'}
-                </span>
-                <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
-                  {seasonalCollection.title || 'Seasonal Collection'}
-                </h2>
-                {seasonalCollection.subtitle && (
-                  <p className="text-xs sm:text-sm font-medium text-gray-500">
-                    {seasonalCollection.subtitle}
-                  </p>
-                )}
-              </div>
-
-              {seasonalCollection.button_link && (
-                <Link
-                  href={seasonalCollection.button_link}
-                  className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-900 hover:text-[#d0473e] transition-colors group"
-                >
-                  <span>{seasonalCollection.button_text || 'View Full Capsule'}</span>
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-              )}
-            </div>
-
-            {/* Seasonal Feature Grid: Left Banner Card + Right Product Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-stretch">
-              {/* Left Highlight Banner Card */}
-              {seasonalCollection.banner_image && (
-                <div className="lg:col-span-4 relative rounded-3xl overflow-hidden shadow-md flex flex-col justify-end p-6 sm:p-8 lg:p-10 min-h-[360px] bg-gray-900 text-white group">
-                  <img
-                    src={seasonalCollection.banner_image}
-                    alt={seasonalCollection.title}
-                    className="absolute inset-0 w-full h-full object-cover opacity-85 transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
-
-                  <div className="relative z-10 space-y-3">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-300">
-                      LIMITED HEIRLOOM EDITION
-                    </span>
-                    <h3 className="text-2xl font-extrabold leading-tight text-white">
-                      {seasonalCollection.title}
-                    </h3>
-                    {seasonalCollection.description && (
-                      <p className="text-xs text-gray-300 leading-relaxed line-clamp-3">
-                        {seasonalCollection.description}
-                      </p>
-                    )}
-                    {seasonalCollection.button_link && (
-                      <div className="pt-2">
-                        <Link
-                          href={seasonalCollection.button_link}
-                          className="inline-block bg-white hover:bg-[#d0473e] text-black hover:text-white px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md"
-                        >
-                          {seasonalCollection.button_text || 'Shop Capsule'}
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Right Curated Products Grid */}
-              {seasonalProducts && seasonalProducts.length > 0 ? (
-                <div
-                  className={`${
-                    seasonalCollection.banner_image ? 'lg:col-span-8' : 'lg:col-span-12'
-                  } grid grid-cols-2 md:grid-cols-3 ${
-                    seasonalCollection.banner_image ? 'lg:grid-cols-3' : 'lg:grid-cols-4'
-                  } gap-4 sm:gap-6 lg:gap-8`}
-                >
-                  {seasonalProducts.map((product) => (
-                    <ProductCard
-                      key={`seasonal-${product.id}`}
-                      product={product}
-                      currencySymbol="₹"
-                      onAddToCart={onAddToCart}
-                      onQuickView={onQuickView}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div
-                  className={`${
-                    seasonalCollection.banner_image ? 'lg:col-span-8' : 'lg:col-span-12'
-                  } flex flex-col items-center justify-center p-8 bg-gray-50/80 border border-gray-100 rounded-3xl text-center min-h-[300px]`}
-                >
-                  <p className="text-sm font-bold text-gray-900">Curated Capsule Dropping Soon</p>
-                  <p className="text-xs text-gray-500 mt-1 max-w-sm">
-                    Exclusive artisanal pieces are currently being selected for this showcase.
-                  </p>
-                  {seasonalCollection.button_link && (
-                    <Link
-                      href={seasonalCollection.button_link}
-                      className="mt-4 inline-block bg-black hover:bg-[#d0473e] text-white px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-colors"
-                    >
-                      Browse Boutique
-                    </Link>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Best Selling Section: Clean 4x2 Grid (8 Products) */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
-              Best Selling
-            </h2>
-            <p className="text-xs sm:text-sm text-gray-500 mt-2 font-medium">
-              Unmatched design with supreme performance and satisfaction.
-            </p>
-
-            {/* Category Filter Tabs - One Single Line Without Scrollbar */}
-            <div
-              className="w-full overflow-x-auto no-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden py-2 mt-6 sm:mt-8"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            >
-              <div className="flex flex-nowrap items-center justify-center gap-2 sm:gap-2.5 min-w-max mx-auto px-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveCategoryTab('all')}
-                  className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap shrink-0 transition-all cursor-pointer ${
-                    activeCategoryTab === 'all'
-                      ? 'bg-[#111111] text-white shadow-md'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  All Jewelry
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveCategoryTab('earrings')}
-                  className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap shrink-0 transition-all cursor-pointer ${
-                    activeCategoryTab === 'earrings'
-                      ? 'bg-[#111111] text-white shadow-md'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  Earrings & Hoops
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveCategoryTab('necklaces')}
-                  className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap shrink-0 transition-all cursor-pointer ${
-                    activeCategoryTab === 'necklaces'
-                      ? 'bg-[#111111] text-white shadow-md'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  Necklaces & Pendants
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveCategoryTab('bracelets')}
-                  className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap shrink-0 transition-all cursor-pointer ${
-                    activeCategoryTab === 'bracelets'
-                      ? 'bg-[#111111] text-white shadow-md'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  Bangles & Rings
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* 4-Column x 2-Row Product Grid (Exact 8 Products) */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-            {displayedBestSelling.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={onAddToCart}
-                onQuickView={onQuickView}
-              />
-            ))}
-          </div>
-
-          <div className="text-center mt-8 sm:mt-10 lg:mt-12">
-            <Link
-              href="/shop"
-              className="inline-flex items-center gap-2 border-2 border-[#111111] hover:bg-[#111111] hover:text-white text-[#111111] px-8 py-3.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
-            >
-              <span>Explore Entire Collection</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Full-Width Shop By Category Interactive Horizontal Slider Section */}
-      <CategorySlider categories={categories} />
-
-      {/* Two Promotional Banner Cards Section (Live from Admin CMS) */}
-      {promoBannersEnabled && banners && banners.length > 0 && (
-        <PromoDualBanners cards={banners as any} />
-      )}
-
-      {/* Featured Collection Interactive Horizontal Slider Section */}
-      {featuredCollection && featuredCollection.length > 0 && (
-        <FeaturedProductSlider
-          products={featuredCollection}
-          title="Featured Collection"
-          subtitle="Exceptional design, delivering top performance and ensuring customer satisfaction all together."
-          onAddToCart={onAddToCart}
-          onQuickView={onQuickView}
-        />
-      )}
-
-      {/* Shop by Gram & Value Proposition Cards Section */}
-      <ShopByGram
-        shopByGramEnabled={shopByGramEnabled}
+      {/* Dynamic Section Engine (Managed via Admin Page Builder) */}
+      <SectionRenderer
+        sections={sections}
+        products={products}
+        bestSelling={bestSelling}
+        featuredCollection={featuredCollection}
+        categories={categories}
+        banners={banners}
+        slides={slides}
+        heroSliderEnabled={heroSliderEnabled}
+        promoBannersEnabled={promoBannersEnabled}
         trustBadgesEnabled={trustBadgesEnabled}
+        shopByGramEnabled={shopByGramEnabled}
+        seasonalCollection={seasonalCollection}
+        seasonalProducts={seasonalProducts}
+        onAddToCart={onAddToCart}
+        onQuickView={onQuickView}
       />
     </GlozinLayout>
   );

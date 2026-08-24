@@ -143,6 +143,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::cla
     // Pages Management & Sections Builder
     Route::get('/pages', [AdminPageController::class, 'index'])->name('pages.index');
     Route::get('/pages/home', [AdminPageController::class, 'home'])->name('pages.home');
+    Route::post('/pages/home/builder', [AdminPageController::class, 'saveLayoutSections'])->name('pages.home.builder.save');
     Route::post('/pages/home/toggle-section', [AdminPageController::class, 'toggleSection'])->name('pages.home.toggle-section');
     Route::post('/pages/home/instagram-fetch', [AdminPageController::class, 'fetchInstagram'])->name('pages.home.instagram-fetch');
     Route::post('/pages/home/instagram', [AdminPageController::class, 'updateInstagram'])->name('pages.home.instagram');
