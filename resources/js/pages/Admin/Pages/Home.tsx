@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import { Category, Product } from '@/types/shop';
 import { SingleImageUploader } from '@/components/admin/SingleImageUploader';
 import { AdminToggle } from '@/components/admin/AdminToggle';
 import { SectionRenderer, SectionBlock } from '@/components/shop/builder/SectionRenderer';
+import { Puck, Data } from '@measured/puck';
+import '@measured/puck/puck.css';
+import { createPuckConfig } from '@/components/shop/builder/puckConfig';
 import {
   Sparkles,
   Sliders,
@@ -289,6 +292,128 @@ const SECTION_PRESETS = [
   },
 ];
 
+const sectionsToPuckData = (secList: SectionBlock[]): Data => {
+  const content = secList.map((sec) => {
+    let puckType = 'CustomHtml';
+    switch (sec.type) {
+      case 'hero_slider':
+        puckType = 'HeroSlider';
+        break;
+      case 'curated_capsule':
+        puckType = 'CuratedCapsule';
+        break;
+      case 'category_slider':
+        puckType = 'CategorySlider';
+        break;
+      case 'best_selling':
+        puckType = 'BestSellingGrid';
+        break;
+      case 'dual_banners':
+        puckType = 'DualPromoBanners';
+        break;
+      case 'featured_products':
+        puckType = 'FeaturedProducts';
+        break;
+      case 'story_manifesto':
+        puckType = 'BrandStoryManifesto';
+        break;
+      case 'trust_badges':
+        puckType = 'TrustBadges';
+        break;
+      case 'faq_accordion':
+        puckType = 'FaqAccordion';
+        break;
+      case 'shop_by_gram':
+        puckType = 'ShopByGram';
+        break;
+      case 'custom_html':
+        puckType = 'CustomHtml';
+        break;
+      default:
+        puckType = 'CustomHtml';
+        break;
+    }
+    return {
+      type: puckType,
+      props: {
+        id: sec.id,
+        ...(sec.settings || {}),
+      },
+    };
+  });
+
+  return {
+    content,
+    root: { props: { title: 'Home Page' } },
+  };
+};
+
+const puckDataToSections = (data: Data): SectionBlock[] => {
+  return data.content.map((item, idx) => {
+    let secType = 'custom_html';
+    let secName = 'Custom Section';
+    switch (item.type) {
+      case 'HeroSlider':
+        secType = 'hero_slider';
+        secName = 'Split Hero Slider';
+        break;
+      case 'CuratedCapsule':
+        secType = 'curated_capsule';
+        secName = 'Curated / Seasonal Capsule';
+        break;
+      case 'CategorySlider':
+        secType = 'category_slider';
+        secName = 'Shop By Category Track';
+        break;
+      case 'BestSellingGrid':
+        secType = 'best_selling';
+        secName = 'Best Selling Products Grid';
+        break;
+      case 'DualPromoBanners':
+        secType = 'dual_banners';
+        secName = 'Dual Promo Marketing Banners';
+        break;
+      case 'FeaturedProducts':
+        secType = 'featured_products';
+        secName = 'Featured Products Slider';
+        break;
+      case 'BrandStoryManifesto':
+        secType = 'story_manifesto';
+        secName = 'Brand Story & Manifesto';
+        break;
+      case 'TrustBadges':
+        secType = 'trust_badges';
+        secName = 'Luxury Trust Badges';
+        break;
+      case 'FaqAccordion':
+        secType = 'faq_accordion';
+        secName = 'FAQ & Care Accordion';
+        break;
+      case 'ShopByGram':
+        secType = 'shop_by_gram';
+        secName = 'Shop By Gram (Instagram)';
+        break;
+      case 'CustomHtml':
+        secType = 'custom_html';
+        secName = 'Custom HTML Block';
+        break;
+      default:
+        secType = 'custom_html';
+        secName = 'Custom HTML Block';
+        break;
+    }
+
+    const { id, ...settings } = (item.props || {}) as any;
+    return {
+      id: id || `sec_${secType}_${idx}_${Date.now()}`,
+      type: secType,
+      name: secName,
+      enabled: true,
+      settings,
+    };
+  });
+};
+
 export default function HomePageBuilder({
   sections: initialSections = [],
   categories = [],
@@ -296,6 +421,7 @@ export default function HomePageBuilder({
   products = [],
 }: HomePageBuilderProps) {
   const [sections, setSections] = useState<SectionBlock[]>(initialSections);
+  const [editorMode, setEditorMode] = useState<'shopify' | 'puck'>('shopify');
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [sidebarTab, setSidebarTab] = useState<'tree' | 'add'>('tree');
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -305,6 +431,35 @@ export default function HomePageBuilder({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [hasChanges, setHasChanges] = useState(false);
+
+  const puckConfig = useMemo(
+    () => createPuckConfig(products, categories, collections),
+    [products, categories, collections]
+  );
+
+  const puckData = useMemo(() => sectionsToPuckData(sections), [sections]);
+
+  const handlePuckPublish = (data: Data) => {
+    const updated = puckDataToSections(data);
+    setSections(updated);
+    setIsSaving(true);
+    router.post(
+      '/admin/pages/home/builder',
+      { sections: updated },
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          setIsSaving(false);
+          setSaveSuccess(true);
+          setTimeout(() => setSaveSuccess(false), 4000);
+        },
+        onError: () => {
+          setIsSaving(false);
+          alert('Failed to publish layout.');
+        },
+      }
+    );
+  };
 
   const selectedSection = sections.find((s) => s.id === selectedSectionId);
 
@@ -509,47 +664,79 @@ export default function HomePageBuilder({
           </div>
         </div>
 
-        {/* Center: Device Viewport Switcher */}
-        <div className="flex items-center bg-[#0e1017] p-1 rounded-xl border border-gray-800 shadow-inner">
-          <button
-            type="button"
-            onClick={() => setPreviewDevice('desktop')}
-            title="Desktop View (Full Width)"
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              previewDevice === 'desktop'
-                ? 'bg-gray-800 text-white shadow-sm ring-1 ring-gray-700'
-                : 'text-gray-400 hover:text-gray-200'
-            }`}
-          >
-            <Monitor className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Desktop</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setPreviewDevice('tablet')}
-            title="Tablet View (768px)"
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              previewDevice === 'tablet'
-                ? 'bg-gray-800 text-white shadow-sm ring-1 ring-gray-700'
-                : 'text-gray-400 hover:text-gray-200'
-            }`}
-          >
-            <Tablet className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Tablet (768px)</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setPreviewDevice('mobile')}
-            title="Mobile Phone View (375px)"
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              previewDevice === 'mobile'
-                ? 'bg-gray-800 text-white shadow-sm ring-1 ring-gray-700'
-                : 'text-gray-400 hover:text-gray-200'
-            }`}
-          >
-            <Smartphone className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Mobile (375px)</span>
-          </button>
+        {/* Center: Device Viewport Switcher & Editor Mode Switcher */}
+        <div className="flex items-center gap-3">
+          {/* Mode Switcher: Shopify Customizer vs Puck Visual Drag & Drop */}
+          <div className="flex items-center bg-[#0e1017] p-1 rounded-xl border border-gray-800 shadow-inner">
+            <button
+              type="button"
+              onClick={() => setEditorMode('shopify')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                editorMode === 'shopify'
+                  ? 'bg-amber-500 text-black shadow-sm'
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              <span>Theme Customizer</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditorMode('puck')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                editorMode === 'puck'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Puck Visual Studio</span>
+            </button>
+          </div>
+
+          {editorMode === 'shopify' && (
+            <div className="flex items-center bg-[#0e1017] p-1 rounded-xl border border-gray-800 shadow-inner">
+              <button
+                type="button"
+                onClick={() => setPreviewDevice('desktop')}
+                title="Desktop View (Full Width)"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  previewDevice === 'desktop'
+                    ? 'bg-gray-800 text-white shadow-sm ring-1 ring-gray-700'
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                <Monitor className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Desktop</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewDevice('tablet')}
+                title="Tablet View (768px)"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  previewDevice === 'tablet'
+                    ? 'bg-gray-800 text-white shadow-sm ring-1 ring-gray-700'
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                <Tablet className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Tablet (768px)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewDevice('mobile')}
+                title="Mobile Phone View (375px)"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  previewDevice === 'mobile'
+                    ? 'bg-gray-800 text-white shadow-sm ring-1 ring-gray-700'
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Mobile (375px)</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Right Side: View Store Link & Save Live Button */}
@@ -591,85 +778,335 @@ export default function HomePageBuilder({
         </div>
       </header>
 
-      {/* BODY (Split Customizer Workspace) */}
-      <div className="flex-1 flex overflow-hidden relative">
-        {/* LEFT SIDEBAR (Hierarchy List + Complete Section Inspector) */}
-        <aside
-          className={`h-full bg-[#161922] border-r border-gray-800 transition-all duration-300 flex flex-col shrink-0 z-20 ${
-            sidebarOpen ? 'w-[370px] sm:w-[400px]' : 'w-0 -translate-x-full overflow-hidden border-none'
-          }`}
-        >
-          {/* Section Inspector Mode */}
-          {selectedSection ? (
-            <div className="flex flex-col h-full bg-[#161922]">
-              {/* Header */}
-              <div className="p-3.5 border-b border-gray-800 flex items-center justify-between bg-[#12141c]">
-                <button
-                  type="button"
-                  onClick={() => handleSelectSection(null)}
-                  className="flex items-center gap-1.5 text-xs font-bold text-gray-300 hover:text-white transition-colors cursor-pointer"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>All Sections</span>
-                </button>
+      {/* BODY (Split Customizer Workspace OR Puck Drag & Drop Studio) */}
+      {editorMode === 'puck' ? (
+        <div className="flex-1 w-full h-[calc(100vh-3.5rem)] overflow-hidden bg-[#0e1017] text-gray-100">
+          <Puck
+            config={puckConfig}
+            data={puckData}
+            onPublish={handlePuckPublish}
+          />
+        </div>
+      ) : (
+        <div className="flex-1 flex overflow-hidden relative">
+          {/* LEFT SIDEBAR (Hierarchy List + Complete Section Inspector) */}
+          <aside
+            className={`h-full bg-[#161922] border-r border-gray-800 transition-all duration-300 flex flex-col shrink-0 z-20 ${
+              sidebarOpen ? 'w-[370px] sm:w-[400px]' : 'w-0 -translate-x-full overflow-hidden border-none'
+            }`}
+          >
+            {/* Section Inspector Mode */}
+            {selectedSection ? (
+              <div className="flex flex-col h-full bg-[#161922]">
+                {/* Header */}
+                <div className="p-3.5 border-b border-gray-800 flex items-center justify-between bg-[#12141c]">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectSection(null)}
+                    className="flex items-center gap-1.5 text-xs font-bold text-gray-300 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>All Sections</span>
+                  </button>
 
-                <div className="flex items-center gap-2">
-                  <AdminToggle
-                    label="Visible"
-                    checked={selectedSection.enabled}
-                    onChange={() => toggleSection(selectedSection.id)}
-                  />
-                </div>
-              </div>
-
-              {/* Inspector Form */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 text-gray-200">
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                    Section Name (Admin Label)
-                  </label>
-                  <input
-                    type="text"
-                    value={selectedSection.name}
-                    onChange={(e) => updateSelectedSectionName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-bold text-white focus:ring-1 focus:ring-amber-400"
-                  />
+                  <div className="flex items-center gap-2">
+                    <AdminToggle
+                      label="Visible"
+                      checked={selectedSection.enabled}
+                      onChange={() => toggleSection(selectedSection.id)}
+                    />
+                  </div>
                 </div>
 
-                {/* 1. CURATED CAPSULE INSPECTOR */}
-                {selectedSection.type === 'curated_capsule' && (
-                  <div className="space-y-4 pt-2 border-t border-gray-800">
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                        Capsule Headline (Title)
-                      </label>
-                      <input
-                        type="text"
-                        value={selectedSection.settings?.title || ''}
-                        onChange={(e) =>
-                          updateSelectedSectionSettings({ title: e.target.value })
-                        }
-                        placeholder="e.g. Summer Solstice Edition"
-                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white focus:ring-1 focus:ring-amber-400"
-                      />
-                    </div>
+                {/* Inspector Form */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 text-gray-200">
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                      Section Name (Admin Label)
+                    </label>
+                    <input
+                      type="text"
+                      value={selectedSection.name}
+                      onChange={(e) => updateSelectedSectionName(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-bold text-white focus:ring-1 focus:ring-amber-400"
+                    />
+                  </div>
 
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                        Tagline / Sub-Headline
-                      </label>
-                      <input
-                        type="text"
-                        value={selectedSection.settings?.subtitle || ''}
-                        onChange={(e) =>
-                          updateSelectedSectionSettings({ subtitle: e.target.value })
-                        }
-                        placeholder="e.g. SUNLIT REFLECTIONS & HEIRLOOMS"
-                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white focus:ring-1 focus:ring-amber-400"
-                      />
-                    </div>
+                  {/* 1. CURATED CAPSULE INSPECTOR */}
+                  {selectedSection.type === 'curated_capsule' && (
+                    <div className="space-y-4 pt-2 border-t border-gray-800">
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                          Capsule Headline (Title)
+                        </label>
+                        <input
+                          type="text"
+                          value={selectedSection.settings?.title || ''}
+                          onChange={(e) =>
+                            updateSelectedSectionSettings({ title: e.target.value })
+                          }
+                          placeholder="e.g. Summer Solstice Edition"
+                          className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white focus:ring-1 focus:ring-amber-400"
+                        />
+                      </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                          Tagline / Sub-Headline
+                        </label>
+                        <input
+                          type="text"
+                          value={selectedSection.settings?.subtitle || ''}
+                          onChange={(e) =>
+                            updateSelectedSectionSettings({ subtitle: e.target.value })
+                          }
+                          placeholder="e.g. SUNLIT REFLECTIONS & HEIRLOOMS"
+                          className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white focus:ring-1 focus:ring-amber-400"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                            Badge Label
+                          </label>
+                          <input
+                            type="text"
+                            value={selectedSection.settings?.badge || ''}
+                            onChange={(e) =>
+                              updateSelectedSectionSettings({ badge: e.target.value })
+                            }
+                            placeholder="e.g. SUMMER CAPSULE"
+                            className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                            Theme Styling
+                          </label>
+                          <select
+                            value={selectedSection.settings?.theme || 'gold'}
+                            onChange={(e) =>
+                              updateSelectedSectionSettings({ theme: e.target.value })
+                            }
+                            className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                          >
+                            <option value="gold">Warm Gold</option>
+                            <option value="rose">Rose Gold</option>
+                            <option value="noir">Midnight Noir</option>
+                            <option value="minimal">Clean White</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                          Target Collection / Category
+                        </label>
+                        <select
+                          value={selectedSection.settings?.category_slug || 'all'}
+                          onChange={(e) =>
+                            updateSelectedSectionSettings({ category_slug: e.target.value })
+                          }
+                          className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                        >
+                          <option value="all">Featured Products (Automatic)</option>
+                          <optgroup label="Collections">
+                            {collections.map((coll) => (
+                              <option key={`coll-${coll.id}`} value={coll.slug}>
+                                Collection: {coll.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="Categories">
+                            {categories.map((cat) => (
+                              <option key={`cat-${cat.id}`} value={cat.slug}>
+                                Category: {cat.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                          Editorial Description
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={selectedSection.settings?.description || ''}
+                          onChange={(e) =>
+                            updateSelectedSectionSettings({ description: e.target.value })
+                          }
+                          className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                        />
+                      </div>
+
+                      <div>
+                        <SingleImageUploader
+                          label="Highlight Banner Image"
+                          value={selectedSection.settings?.banner_image || ''}
+                          onChange={(url) =>
+                            updateSelectedSectionSettings({ banner_image: url })
+                          }
+                          hint="Recommended: 1200x800px portrait photograph."
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                            Button Text
+                          </label>
+                          <input
+                            type="text"
+                            value={selectedSection.settings?.button_text || ''}
+                            onChange={(e) =>
+                              updateSelectedSectionSettings({ button_text: e.target.value })
+                            }
+                            className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                            Button Link
+                          </label>
+                          <input
+                            type="text"
+                            value={selectedSection.settings?.button_link || ''}
+                            onChange={(e) =>
+                              updateSelectedSectionSettings({ button_link: e.target.value })
+                            }
+                            className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 2. HERO SLIDER INSPECTOR */}
+                  {selectedSection.type === 'hero_slider' && (
+                    <div className="space-y-4 pt-2 border-t border-gray-800">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white">
+                          Slides ({(selectedSection.settings?.slides || []).length})
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const current = selectedSection.settings?.slides || [];
+                            const newSlide = {
+                              id: Date.now(),
+                              subtitle: 'CAPTIVATING COLLECTION',
+                              title: 'New Luxury Arrival',
+                              buttonText: 'Shop Collection',
+                              buttonLink: '/shop',
+                              showButton: true,
+                              enabled: true,
+                              badge: 'NEW RELEASE',
+                              leftImage: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1200&auto=format&fit=crop',
+                              rightImage: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=1200&auto=format&fit=crop',
+                            };
+                            updateSelectedSectionSettings({ slides: [...current, newSlide] });
+                          }}
+                          className="text-xs font-bold text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 px-2.5 py-1 rounded-lg border border-amber-500/40 cursor-pointer"
+                        >
+                          + Add Slide
+                        </button>
+                      </div>
+
+                      <div className="space-y-3">
+                        {(selectedSection.settings?.slides || []).map((slide: any, sIdx: number) => (
+                          <div key={slide.id || sIdx} className="p-3 rounded-xl border border-gray-800 bg-gray-900/60 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-gray-200">Slide #{sIdx + 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const slides = selectedSection.settings.slides.filter((_: any, i: number) => i !== sIdx);
+                                  updateSelectedSectionSettings({ slides });
+                                }}
+                                className="text-red-400 hover:bg-red-500/20 p-1 rounded cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            <input
+                              type="text"
+                              value={slide.title || ''}
+                              onChange={(e) => {
+                                const slides = [...selectedSection.settings.slides];
+                                slides[sIdx].title = e.target.value;
+                                updateSelectedSectionSettings({ slides });
+                              }}
+                              placeholder="Headline Title"
+                              className="w-full px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs font-bold text-white"
+                            />
+                            <input
+                              type="text"
+                              value={slide.subtitle || ''}
+                              onChange={(e) => {
+                                const slides = [...selectedSection.settings.slides];
+                                slides[sIdx].subtitle = e.target.value;
+                                updateSelectedSectionSettings({ slides });
+                              }}
+                              placeholder="Subtitle"
+                              className="w-full px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs text-white"
+                            />
+                            <SingleImageUploader
+                              label="Left Image"
+                              value={slide.leftImage || ''}
+                              onChange={(url) => {
+                                const slides = [...selectedSection.settings.slides];
+                                slides[sIdx].leftImage = url;
+                                updateSelectedSectionSettings({ slides });
+                              }}
+                            />
+                            <SingleImageUploader
+                              label="Right Image"
+                              value={slide.rightImage || ''}
+                              onChange={(url) => {
+                                const slides = [...selectedSection.settings.slides];
+                                slides[sIdx].rightImage = url;
+                                updateSelectedSectionSettings({ slides });
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 3. BEST SELLING INSPECTOR */}
+                  {selectedSection.type === 'best_selling' && (
+                    <div className="space-y-4 pt-2 border-t border-gray-800">
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                          Section Title
+                        </label>
+                        <input
+                          type="text"
+                          value={selectedSection.settings?.title || ''}
+                          onChange={(e) =>
+                            updateSelectedSectionSettings({ title: e.target.value })
+                          }
+                          className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                          Subtitle
+                        </label>
+                        <input
+                          type="text"
+                          value={selectedSection.settings?.subtitle || ''}
+                          onChange={(e) =>
+                            updateSelectedSectionSettings({ subtitle: e.target.value })
+                          }
+                          className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                        />
+                      </div>
                       <div>
                         <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                           Badge Label
@@ -680,312 +1117,71 @@ export default function HomePageBuilder({
                           onChange={(e) =>
                             updateSelectedSectionSettings({ badge: e.target.value })
                           }
-                          placeholder="e.g. SUMMER CAPSULE"
                           className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
                         />
                       </div>
+                    </div>
+                  )}
 
+                  {/* 4. LUXURY TRUST BADGES INSPECTOR */}
+                  {selectedSection.type === 'trust_badges' && (
+                    <div className="space-y-4 pt-2 border-t border-gray-800">
                       <div>
                         <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                          Theme Styling
-                        </label>
-                        <select
-                          value={selectedSection.settings?.theme || 'gold'}
-                          onChange={(e) =>
-                            updateSelectedSectionSettings({ theme: e.target.value })
-                          }
-                          className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
-                        >
-                          <option value="gold">Warm Gold</option>
-                          <option value="rose">Rose Gold</option>
-                          <option value="noir">Midnight Noir</option>
-                          <option value="minimal">Clean White</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                        Target Collection / Category
-                      </label>
-                      <select
-                        value={selectedSection.settings?.category_slug || 'all'}
-                        onChange={(e) =>
-                          updateSelectedSectionSettings({ category_slug: e.target.value })
-                        }
-                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
-                      >
-                        <option value="all">Featured Products (Automatic)</option>
-                        <optgroup label="Collections">
-                          {collections.map((coll) => (
-                            <option key={`coll-${coll.id}`} value={coll.slug}>
-                              Collection: {coll.name}
-                            </option>
-                          ))}
-                        </optgroup>
-                        <optgroup label="Categories">
-                          {categories.map((cat) => (
-                            <option key={`cat-${cat.id}`} value={cat.slug}>
-                              Category: {cat.name}
-                            </option>
-                          ))}
-                        </optgroup>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                        Editorial Description
-                      </label>
-                      <textarea
-                        rows={3}
-                        value={selectedSection.settings?.description || ''}
-                        onChange={(e) =>
-                          updateSelectedSectionSettings({ description: e.target.value })
-                        }
-                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <SingleImageUploader
-                        label="Highlight Banner Image"
-                        value={selectedSection.settings?.banner_image || ''}
-                        onChange={(url) =>
-                          updateSelectedSectionSettings({ banner_image: url })
-                        }
-                        hint="Recommended: 1200x800px portrait photograph."
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                          Button Text
+                          Headline Title
                         </label>
                         <input
                           type="text"
-                          value={selectedSection.settings?.button_text || ''}
+                          value={selectedSection.settings?.title || ''}
                           onChange={(e) =>
-                            updateSelectedSectionSettings({ button_text: e.target.value })
+                            updateSelectedSectionSettings({ title: e.target.value })
                           }
+                          placeholder="e.g. The Haarmonaa Promise"
                           className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
                         />
                       </div>
                       <div>
                         <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                          Button Link
+                          Subtitle
                         </label>
                         <input
                           type="text"
-                          value={selectedSection.settings?.button_link || ''}
+                          value={selectedSection.settings?.subtitle || ''}
                           onChange={(e) =>
-                            updateSelectedSectionSettings({ button_link: e.target.value })
+                            updateSelectedSectionSettings({ subtitle: e.target.value })
                           }
+                          placeholder="e.g. CERTIFIED LUXURY EXPERIENCE"
                           className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
                         />
                       </div>
-                    </div>
-                  </div>
-                )}
 
-                {/* 2. HERO SLIDER INSPECTOR */}
-                {selectedSection.type === 'hero_slider' && (
-                  <div className="space-y-4 pt-2 border-t border-gray-800">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-white">
-                        Slides ({(selectedSection.settings?.slides || []).length})
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const current = selectedSection.settings?.slides || [];
-                          const newSlide = {
-                            id: Date.now(),
-                            subtitle: 'CAPTIVATING COLLECTION',
-                            title: 'New Luxury Arrival',
-                            buttonText: 'Shop Collection',
-                            buttonLink: '/shop',
-                            showButton: true,
-                            enabled: true,
-                            badge: 'NEW RELEASE',
-                            leftImage: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1200&auto=format&fit=crop',
-                            rightImage: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=1200&auto=format&fit=crop',
-                          };
-                          updateSelectedSectionSettings({ slides: [...current, newSlide] });
-                        }}
-                        className="text-xs font-bold text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 px-2.5 py-1 rounded-lg border border-amber-500/40 cursor-pointer"
-                      >
-                        + Add Slide
-                      </button>
-                    </div>
+                      {/* Layout Mode: Grid vs Carousel */}
+                      <div className="p-3 rounded-xl bg-gray-900/90 border border-gray-800 space-y-3">
+                        <span className="text-[11px] font-bold text-amber-300 block uppercase tracking-wider">
+                          Layout & Responsive Grid
+                        </span>
 
-                    <div className="space-y-3">
-                      {(selectedSection.settings?.slides || []).map((slide: any, sIdx: number) => (
-                        <div key={slide.id || sIdx} className="p-3 rounded-xl border border-gray-800 bg-gray-900/60 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-gray-200">Slide #{sIdx + 1}</span>
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+                            Display Mode
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
                             <button
                               type="button"
-                              onClick={() => {
-                                const slides = selectedSection.settings.slides.filter((_: any, i: number) => i !== sIdx);
-                                updateSelectedSectionSettings({ slides });
-                              }}
-                              className="text-red-400 hover:bg-red-500/20 p-1 rounded cursor-pointer"
+                              onClick={() => updateSelectedSectionSettings({ layout: 'grid' })}
+                              className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                (selectedSection.settings?.layout || 'grid') === 'grid'
+                                  ? 'bg-amber-500 text-black shadow-sm'
+                                  : 'bg-gray-800 text-gray-400 hover:text-white'
+                              }`}
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              Grid Layout
                             </button>
-                          </div>
-                          <input
-                            type="text"
-                            value={slide.title || ''}
-                            onChange={(e) => {
-                              const slides = [...selectedSection.settings.slides];
-                              slides[sIdx].title = e.target.value;
-                              updateSelectedSectionSettings({ slides });
-                            }}
-                            placeholder="Headline Title"
-                            className="w-full px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs font-bold text-white"
-                          />
-                          <input
-                            type="text"
-                            value={slide.subtitle || ''}
-                            onChange={(e) => {
-                              const slides = [...selectedSection.settings.slides];
-                              slides[sIdx].subtitle = e.target.value;
-                              updateSelectedSectionSettings({ slides });
-                            }}
-                            placeholder="Subtitle"
-                            className="w-full px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs text-white"
-                          />
-                          <SingleImageUploader
-                            label="Left Image"
-                            value={slide.leftImage || ''}
-                            onChange={(url) => {
-                              const slides = [...selectedSection.settings.slides];
-                              slides[sIdx].leftImage = url;
-                              updateSelectedSectionSettings({ slides });
-                            }}
-                          />
-                          <SingleImageUploader
-                            label="Right Image"
-                            value={slide.rightImage || ''}
-                            onChange={(url) => {
-                              const slides = [...selectedSection.settings.slides];
-                              slides[sIdx].rightImage = url;
-                              updateSelectedSectionSettings({ slides });
-                            }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* 3. BEST SELLING INSPECTOR */}
-                {selectedSection.type === 'best_selling' && (
-                  <div className="space-y-4 pt-2 border-t border-gray-800">
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                        Section Title
-                      </label>
-                      <input
-                        type="text"
-                        value={selectedSection.settings?.title || ''}
-                        onChange={(e) =>
-                          updateSelectedSectionSettings({ title: e.target.value })
-                        }
-                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                        Subtitle
-                      </label>
-                      <input
-                        type="text"
-                        value={selectedSection.settings?.subtitle || ''}
-                        onChange={(e) =>
-                          updateSelectedSectionSettings({ subtitle: e.target.value })
-                        }
-                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                        Badge Label
-                      </label>
-                      <input
-                        type="text"
-                        value={selectedSection.settings?.badge || ''}
-                        onChange={(e) =>
-                          updateSelectedSectionSettings({ badge: e.target.value })
-                        }
-                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* 4. LUXURY TRUST BADGES INSPECTOR */}
-                {selectedSection.type === 'trust_badges' && (
-                  <div className="space-y-4 pt-2 border-t border-gray-800">
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                        Headline Title
-                      </label>
-                      <input
-                        type="text"
-                        value={selectedSection.settings?.title || ''}
-                        onChange={(e) =>
-                          updateSelectedSectionSettings({ title: e.target.value })
-                        }
-                        placeholder="e.g. The Haarmonaa Promise"
-                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                        Subtitle
-                      </label>
-                      <input
-                        type="text"
-                        value={selectedSection.settings?.subtitle || ''}
-                        onChange={(e) =>
-                          updateSelectedSectionSettings({ subtitle: e.target.value })
-                        }
-                        placeholder="e.g. CERTIFIED LUXURY EXPERIENCE"
-                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
-                      />
-                    </div>
-
-                    {/* Layout Mode: Grid vs Carousel */}
-                    <div className="p-3 rounded-xl bg-gray-900/90 border border-gray-800 space-y-3">
-                      <span className="text-[11px] font-bold text-amber-300 block uppercase tracking-wider">
-                        Layout & Responsive Grid
-                      </span>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-                          Display Mode
-                        </label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <button
-                            type="button"
-                            onClick={() => updateSelectedSectionSettings({ layout: 'grid' })}
-                            className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                              (selectedSection.settings?.layout || 'grid') === 'grid'
-                                ? 'bg-amber-500 text-black shadow-sm'
-                                : 'bg-gray-800 text-gray-400 hover:text-white'
-                            }`}
-                          >
-                            Grid Layout
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => updateSelectedSectionSettings({ layout: 'carousel' })}
-                            className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                              selectedSection.settings?.layout === 'carousel'
+                            <button
+                              type="button"
+                              onClick={() => updateSelectedSectionSettings({ layout: 'carousel' })}
+                              className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                selectedSection.settings?.layout === 'carousel'
                                 ? 'bg-amber-500 text-black shadow-sm'
                                 : 'bg-gray-800 text-gray-400 hover:text-white'
                             }`}
@@ -1727,6 +1923,7 @@ export default function HomePageBuilder({
           </div>
         </main>
       </div>
+      )}
     </div>
   );
 }
