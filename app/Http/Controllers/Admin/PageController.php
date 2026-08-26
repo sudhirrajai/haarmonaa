@@ -380,7 +380,11 @@ class PageController extends Controller
             $products = collect();
         }
 
+        $rawPuckData = Setting::get('homepage_puck_data');
+        $puckData = $rawPuckData ? json_decode($rawPuckData, true) : null;
+
         return Inertia::render('Admin/Pages/Home', [
+            'puckData' => $puckData,
             'sections' => $sections,
             'categories' => $categories,
             'collections' => $collections,
@@ -393,6 +397,15 @@ class PageController extends Controller
      */
     public function saveLayoutSections(Request $request): RedirectResponse
     {
+        if ($request->has('puck_data')) {
+            $validated = $request->validate([
+                'puck_data' => 'required|array',
+            ]);
+            Setting::set('homepage_puck_data', json_encode($validated['puck_data']));
+
+            return back()->with('success', 'Homepage visual theme and sections published successfully.');
+        }
+
         $validated = $request->validate([
             'sections' => 'required|array',
         ]);

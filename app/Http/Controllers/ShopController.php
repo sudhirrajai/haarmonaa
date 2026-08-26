@@ -279,7 +279,11 @@ class ShopController extends Controller
             $sections[] = $sec;
         }
 
+        $rawPuck = Setting::get('homepage_puck_data');
+        $puckData = $rawPuck ? json_decode($rawPuck, true) : null;
+
         return Inertia::render('Shop/Home', [
+            'puckData' => $puckData,
             'sections' => $sections,
             'products' => $products,
             'bestSelling' => $bestSellers,

@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { GlozinLayout } from '@/components/layout/GlozinLayout';
 import { SeoHead } from '@/components/seo/SeoHead';
 import { Product, Category } from '@/types/shop';
 import { SplitSlide } from '@/components/shop/SplitHeroSlider';
 import { PromoCardData } from '@/components/shop/PromoDualBanners';
 import { SectionRenderer, SectionBlock } from '@/components/shop/builder/SectionRenderer';
+import { Render, Data } from '@measured/puck';
+import { createPuckConfig, Props } from '@/components/shop/builder/puckConfig';
 
 interface SeasonalConfig {
   enabled: boolean;
@@ -19,6 +21,7 @@ interface SeasonalConfig {
 }
 
 interface HomeProps {
+  puckData?: Data<Props> | null;
   sections?: SectionBlock[];
   products: Product[];
   bestSelling?: Product[];
@@ -37,6 +40,7 @@ interface HomeProps {
 }
 
 export default function Home({
+  puckData,
   sections = [],
   products = [],
   bestSelling = [],
@@ -53,6 +57,11 @@ export default function Home({
   onAddToCart,
   onQuickView,
 }: HomeProps) {
+  const puckConfig = useMemo(
+    () => createPuckConfig(products, categories, []),
+    [products, categories]
+  );
+
   const homeSchemas = [
     {
       '@context': 'https://schema.org',
@@ -90,24 +99,27 @@ export default function Home({
         structuredData={homeSchemas}
       />
 
-      {/* Dynamic Section Engine (Managed via Admin Page Builder) */}
-      <SectionRenderer
-        sections={sections}
-        products={products}
-        bestSelling={bestSelling}
-        featuredCollection={featuredCollection}
-        categories={categories}
-        banners={banners}
-        slides={slides}
-        heroSliderEnabled={heroSliderEnabled}
-        promoBannersEnabled={promoBannersEnabled}
-        trustBadgesEnabled={trustBadgesEnabled}
-        shopByGramEnabled={shopByGramEnabled}
-        seasonalCollection={seasonalCollection}
-        seasonalProducts={seasonalProducts}
-        onAddToCart={onAddToCart}
-        onQuickView={onQuickView}
-      />
+      {puckData && puckData.content && puckData.content.length > 0 ? (
+        <Render config={puckConfig} data={puckData} />
+      ) : (
+        <SectionRenderer
+          sections={sections}
+          products={products}
+          bestSelling={bestSelling}
+          featuredCollection={featuredCollection}
+          categories={categories}
+          banners={banners}
+          slides={slides}
+          heroSliderEnabled={heroSliderEnabled}
+          promoBannersEnabled={promoBannersEnabled}
+          trustBadgesEnabled={trustBadgesEnabled}
+          shopByGramEnabled={shopByGramEnabled}
+          seasonalCollection={seasonalCollection}
+          seasonalProducts={seasonalProducts}
+          onAddToCart={onAddToCart}
+          onQuickView={onQuickView}
+        />
+      )}
     </GlozinLayout>
   );
 }
