@@ -46,9 +46,9 @@ const defaultCards: [PromoCardData, PromoCardData] = [
 
 export const PromoDualBanners: React.FC<PromoDualBannersProps> = ({ cards = defaultCards }) => {
   return (
-    <section className="py-4 sm:py-6 lg:py-8 bg-white w-full">
-      <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+    <section className="@container py-3 @sm:py-5 @lg:py-8 bg-white w-full">
+      <div className="w-full px-4 @sm:px-6 @lg:px-8">
+        <div className="grid grid-cols-1 @[768px]:grid-cols-2 gap-4 @sm:gap-6">
           {cards.map((card) => {
             const hasImage = Boolean(card.image && card.image.trim().length > 0);
             const isDarkText = !hasImage || card.textColor === 'dark' || !card.textColor;

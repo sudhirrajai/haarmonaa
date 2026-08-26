@@ -34,11 +34,11 @@ export const BrandManifestoSection: React.FC<BrandManifestoSectionProps> = ({ se
   } = settings;
 
   return (
-    <section className="py-16 sm:py-24 bg-white border-b border-gray-100 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+    <section className="@container py-12 @sm:py-16 @lg:py-24 bg-white border-b border-gray-100 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 @sm:px-6 @lg:px-8">
+        <div className="grid grid-cols-1 @[768px]:grid-cols-12 gap-8 @lg:gap-16 items-center">
           {/* Visual Showcase Side */}
-          <div className="lg:col-span-5 relative">
+          <div className="@[768px]:col-span-5 relative">
             <div className="relative rounded-3xl overflow-hidden shadow-xl aspect-[4/5] bg-gray-900 group">
               <img
                 src={image}
@@ -60,13 +60,13 @@ export const BrandManifestoSection: React.FC<BrandManifestoSectionProps> = ({ se
           </div>
 
           {/* Editorial Content Side */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="@[768px]:col-span-7 space-y-4 @sm:space-y-6">
             <div className="space-y-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase bg-amber-50 text-amber-800 border border-amber-200/50">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] @sm:text-xs font-bold tracking-[0.2em] uppercase bg-amber-50 text-amber-800 border border-amber-200/50">
                 <Sparkles className="w-3 h-3" />
                 {badge}
               </span>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
+              <h2 className="text-2xl @sm:text-3xl @lg:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
                 {title}
               </h2>
               {subtitle && (

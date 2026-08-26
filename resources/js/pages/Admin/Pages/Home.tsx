@@ -51,11 +51,16 @@ export default function HomePageBuilder({
         config={config}
         data={initialData}
         onPublish={handlePublish}
-        headerTitle="Haarmonaa Theme Builder"
+        headerTitle="Haarmonaa Theme Customizer"
         headerPath="/admin/pages"
         iframe={{
-          enabled: true,
+          enabled: false,
         }}
+        viewports={[
+          { width: 1280, height: 'auto', label: 'Desktop', icon: 'monitor' },
+          { width: 768, height: 'auto', label: 'Tablet (768px)', icon: 'tablet' },
+          { width: 375, height: 'auto', label: 'Mobile (375px)', icon: 'smartphone' },
+        ]}
       />
     </div>
   );

@@ -103,33 +103,33 @@ export const TrustBadgesSection: React.FC<TrustBadgesSectionProps> = ({ settings
   };
 
   return (
-    <section className="py-12 sm:py-16 bg-[#faf8f5] border-y border-amber-100/60">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="@container py-10 @sm:py-14 bg-[#faf8f5] border-y border-amber-100/60">
+      <div className="max-w-7xl mx-auto px-4 @sm:px-6 @lg:px-8">
         {settings.title && (
-          <div className="text-center max-w-xl mx-auto mb-10">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+          <div className="text-center max-w-xl mx-auto mb-8 @sm:mb-10">
+            <h2 className="text-2xl @sm:text-3xl font-extrabold text-gray-900 tracking-tight">
               {settings.title}
             </h2>
             {settings.subtitle && (
-              <p className="text-xs sm:text-sm text-gray-500 mt-2">{settings.subtitle}</p>
+              <p className="text-xs @sm:text-sm text-gray-500 mt-1.5">{settings.subtitle}</p>
             )}
           </div>
         )}
 
-        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${Math.min(features.length, 4)} gap-6 sm:gap-8`}>
+        <div className="grid grid-cols-1 @sm:grid-cols-2 @[1024px]:grid-cols-4 gap-4 @sm:gap-6">
           {features.map((feat) => (
             <div
               key={feat.id}
-              className="flex items-start gap-4 p-5 sm:p-6 rounded-2xl bg-white border border-amber-100/40 shadow-xs hover:shadow-md hover:border-amber-200 transition-all group"
+              className="flex items-start gap-3.5 p-4 @sm:p-5 rounded-2xl bg-white border border-amber-100/40 shadow-xs hover:shadow-md hover:border-amber-200 transition-all group"
             >
-              <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center shrink-0 border border-amber-200/50">
+              <div className="w-10 h-10 @sm:w-11 @sm:h-11 rounded-xl bg-amber-50 flex items-center justify-center shrink-0 border border-amber-200/50">
                 {renderIcon(feat.icon, feat.custom_icon)}
               </div>
-              <div className="space-y-1">
-                <h3 className="text-sm sm:text-base font-bold text-gray-900 leading-tight">
+              <div className="space-y-1 min-w-0">
+                <h3 className="text-xs @sm:text-sm font-bold text-gray-900 leading-tight truncate">
                   {feat.title}
                 </h3>
-                <p className="text-xs text-gray-500 leading-relaxed">
+                <p className="text-[11px] @sm:text-xs text-gray-500 leading-relaxed line-clamp-3">
                   {feat.description}
                 </p>
               </div>

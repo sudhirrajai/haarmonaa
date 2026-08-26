@@ -218,7 +218,7 @@ export const SplitHeroSlider: React.FC<SplitHeroSliderProps> = ({
         </div>
 
         {/* Right Half: Pure Image Showcase with Ken Burns Smooth Transition */}
-        <div className="relative w-full h-full min-h-[380px] sm:min-h-[480px] lg:min-h-full overflow-hidden bg-gray-950 hidden sm:block">
+        <div className="relative w-full h-full min-h-[380px] @[768px]:min-h-full overflow-hidden bg-gray-950 hidden @[768px]:block">
           {slides.map((slide, idx) => {
             const isActive = idx === currentSlide;
             return (
