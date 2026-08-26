@@ -38,7 +38,6 @@ import {
 
 interface HomePageBuilderProps {
   sections: SectionBlock[];
-  puckData?: any;
   categories: Category[];
   collections: { id: number; name: string; slug: string }[];
   products: Product[];
@@ -309,6 +308,19 @@ export default function HomePageBuilder({
 
   const selectedSection = sections.find((s) => s.id === selectedSectionId);
 
+  // --- Select & Scroll to Section ---
+  const handleSelectSection = (id: string | null) => {
+    setSelectedSectionId(id);
+    if (id) {
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 50);
+    }
+  };
+
   // --- Drag & Drop Reordering ---
   const handleDragStart = (index: number) => {
     setDraggedIndex(index);
@@ -372,7 +384,7 @@ export default function HomePageBuilder({
     const updated = [...sections];
     updated.splice(index + 1, 0, clone);
     setSections(updated);
-    setSelectedSectionId(clone.id);
+    handleSelectSection(clone.id);
     setHasChanges(true);
   };
 
@@ -402,7 +414,7 @@ export default function HomePageBuilder({
     };
 
     setSections((prev) => [...prev, newSection]);
-    setSelectedSectionId(newSection.id);
+    handleSelectSection(newSection.id);
     setSidebarTab('tree');
     setHasChanges(true);
   };
@@ -456,7 +468,7 @@ export default function HomePageBuilder({
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#0b0d13] text-gray-100 overflow-hidden select-none font-sans">
+    <div className="h-screen w-screen flex flex-col bg-[#0b0d13] text-gray-100 overflow-hidden font-sans">
       <Head title="Theme Customizer — Haarmonaa Fine Jewelry" />
 
       {/* TOP HEADER (Shopify Chrome Toolbar) */}
@@ -497,7 +509,7 @@ export default function HomePageBuilder({
           </div>
         </div>
 
-        {/* Center: Device Viewport Switcher (Desktop 100%, Tablet 768px, Mobile 375px) */}
+        {/* Center: Device Viewport Switcher */}
         <div className="flex items-center bg-[#0e1017] p-1 rounded-xl border border-gray-800 shadow-inner">
           <button
             type="button"
@@ -594,7 +606,7 @@ export default function HomePageBuilder({
               <div className="p-3.5 border-b border-gray-800 flex items-center justify-between bg-[#12141c]">
                 <button
                   type="button"
-                  onClick={() => setSelectedSectionId(null)}
+                  onClick={() => handleSelectSection(null)}
                   className="flex items-center gap-1.5 text-xs font-bold text-gray-300 hover:text-white transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" />
@@ -819,7 +831,7 @@ export default function HomePageBuilder({
                                 const slides = selectedSection.settings.slides.filter((_: any, i: number) => i !== sIdx);
                                 updateSelectedSectionSettings({ slides });
                               }}
-                              className="text-red-400 hover:bg-red-500/20 p-1 rounded"
+                              className="text-red-400 hover:bg-red-500/20 p-1 rounded cursor-pointer"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -956,7 +968,7 @@ export default function HomePageBuilder({
               {sidebarTab === 'tree' ? (
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
                   <p className="text-[10px] font-semibold text-gray-400 px-1 uppercase tracking-wider">
-                    Use ▲▼ buttons or drag handles to reorder sections.
+                    Click section to edit. Use ▲▼ to reorder.
                   </p>
 
                   {sections.map((sec, index) => {
@@ -971,7 +983,7 @@ export default function HomePageBuilder({
                         onDragOver={(e) => handleDragOver(e, index)}
                         onDrop={() => handleDrop(index)}
                         onDragEnd={handleDragEnd}
-                        onClick={() => setSelectedSectionId(sec.id)}
+                        onClick={() => handleSelectSection(sec.id)}
                         className={`group relative rounded-xl border p-2.5 transition-all cursor-pointer ${
                           isDragOver
                             ? 'border-amber-400 bg-amber-500/20 shadow-lg ring-2 ring-amber-400'
@@ -1101,21 +1113,23 @@ export default function HomePageBuilder({
           )}
         </aside>
 
-        {/* RIGHT MAIN WORKSPACE (Real-Time Live Storefront Canvas) */}
-        <main className="flex-1 h-full bg-[#0b0d13] overflow-y-auto overflow-x-hidden flex flex-col items-center p-2 sm:p-6 transition-all">
+        {/* RIGHT MAIN WORKSPACE (Real-Time Live Storefront Canvas with Smooth Scrolling) */}
+        <main className="flex-1 h-full bg-[#0b0d13] overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 flex flex-col items-center">
           <div
-            className={`transition-all duration-300 bg-white shadow-2xl overflow-hidden rounded-2xl border border-gray-800 ${
+            className={`transition-all duration-300 bg-white shadow-2xl rounded-2xl border border-gray-800/80 shrink-0 pb-16 ${
               previewDevice === 'desktop'
                 ? 'w-full max-w-7xl'
                 : previewDevice === 'tablet'
-                ? 'w-[768px] max-w-full my-auto'
-                : 'w-[375px] max-w-full my-auto shadow-2xl ring-8 ring-gray-900 rounded-[36px]'
+                ? 'w-[768px]'
+                : 'w-[375px] rounded-[36px] ring-8 ring-gray-900 my-4'
             }`}
           >
             <SectionRenderer
               sections={sections}
               products={products}
               categories={categories}
+              selectedSectionId={selectedSectionId}
+              onSelectSection={handleSelectSection}
             />
           </div>
         </main>

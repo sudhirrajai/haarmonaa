@@ -35,6 +35,8 @@ interface SectionRendererProps {
   shopByGramEnabled?: boolean;
   seasonalCollection?: any;
   seasonalProducts?: Product[];
+  selectedSectionId?: string | null;
+  onSelectSection?: (id: string) => void;
   onAddToCart?: (product: Product) => void;
   onQuickView?: (product: Product) => void;
 }
@@ -53,13 +55,15 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   shopByGramEnabled = true,
   seasonalCollection,
   seasonalProducts = [],
+  selectedSectionId,
+  onSelectSection,
   onAddToCart,
   onQuickView,
 }) => {
-  // If no dynamic sections are passed (fallback mode), render legacy default sections
+  // Fallback legacy rendering if sections is empty
   if (!sections || sections.length === 0) {
     return (
-      <>
+      <div className="w-full bg-white flex flex-col">
         {heroSliderEnabled && <SplitHeroSlider slides={slides} />}
         {seasonalCollection && seasonalCollection.enabled !== false && (
           <CuratedCapsuleSection
@@ -91,120 +95,133 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
           shopByGramEnabled={shopByGramEnabled}
           trustBadgesEnabled={trustBadgesEnabled}
         />
-      </>
+      </div>
     );
   }
 
   // Dynamic modular rendering
   return (
-    <>
+    <div className="w-full bg-white flex flex-col">
       {sections.map((section) => {
         if (!section.enabled) return null;
 
-        switch (section.type) {
-          case 'hero_slider':
-            return (
-              <SplitHeroSlider
-                key={section.id}
-                slides={section.settings?.slides || slides}
-              />
-            );
+        const isSelected = selectedSectionId === section.id;
+        const isInteractive = Boolean(onSelectSection);
 
-          case 'curated_capsule':
-            return (
-              <CuratedCapsuleSection
-                key={section.id}
-                settings={section.settings as CuratedCapsuleSettings}
-                products={section.resolved_products || seasonalProducts || featuredCollection}
-                onAddToCart={onAddToCart}
-                onQuickView={onQuickView}
-              />
-            );
+        const renderSectionContent = () => {
+          switch (section.type) {
+            case 'hero_slider':
+              return (
+                <SplitHeroSlider
+                  slides={section.settings?.slides || slides}
+                />
+              );
 
-          case 'category_slider':
-            return (
-              <CategorySlider
-                key={section.id}
-                categories={categories}
-              />
-            );
+            case 'curated_capsule':
+              return (
+                <CuratedCapsuleSection
+                  settings={section.settings as CuratedCapsuleSettings}
+                  products={section.resolved_products || seasonalProducts || featuredCollection}
+                  onAddToCart={onAddToCart}
+                  onQuickView={onQuickView}
+                />
+              );
 
-          case 'best_selling':
-            return (
-              <BestSellingSection
-                key={section.id}
-                settings={section.settings as BestSellingSettings}
-                products={section.resolved_products || bestSelling || products}
-                onAddToCart={onAddToCart}
-                onQuickView={onQuickView}
-              />
-            );
+            case 'category_slider':
+              return (
+                <CategorySlider
+                  categories={categories}
+                />
+              );
 
-          case 'dual_banners':
-            return (
-              <PromoDualBanners
-                key={section.id}
-                cards={(section.settings?.banners || banners) as any}
-              />
-            );
+            case 'best_selling':
+              return (
+                <BestSellingSection
+                  settings={section.settings as BestSellingSettings}
+                  products={section.resolved_products || bestSelling || products}
+                  onAddToCart={onAddToCart}
+                  onQuickView={onQuickView}
+                />
+              );
 
-          case 'featured_products':
-            return (
-              <FeaturedProductSlider
-                key={section.id}
-                products={section.resolved_products || featuredCollection || products}
-                title={section.settings?.title || 'Featured Collection'}
-                subtitle={section.settings?.subtitle || 'Exceptional craftsmanship in 18K solid gold vermeil.'}
-                onAddToCart={onAddToCart}
-                onQuickView={onQuickView}
-              />
-            );
+            case 'dual_banners':
+              return (
+                <PromoDualBanners
+                  cards={(section.settings?.banners || banners) as any}
+                />
+              );
 
-          case 'shop_by_gram':
-            return (
-              <ShopByGram
-                key={section.id}
-                shopByGramEnabled={true}
-                trustBadgesEnabled={false}
-              />
-            );
+            case 'featured_products':
+              return (
+                <FeaturedProductSlider
+                  products={section.resolved_products || featuredCollection || products}
+                  title={section.settings?.title || 'Featured Collection'}
+                  subtitle={section.settings?.subtitle || 'Exceptional craftsmanship in 18K solid gold vermeil.'}
+                  onAddToCart={onAddToCart}
+                  onQuickView={onQuickView}
+                />
+              );
 
-          case 'trust_badges':
-            return (
-              <TrustBadgesSection
-                key={section.id}
-                settings={section.settings as TrustBadgesSettings}
-              />
-            );
+            case 'shop_by_gram':
+              return (
+                <ShopByGram
+                  shopByGramEnabled={true}
+                  trustBadgesEnabled={false}
+                />
+              );
 
-          case 'story_manifesto':
-            return (
-              <BrandManifestoSection
-                key={section.id}
-                settings={section.settings as BrandManifestoSettings}
-              />
-            );
+            case 'trust_badges':
+              return (
+                <TrustBadgesSection
+                  settings={section.settings as TrustBadgesSettings}
+                />
+              );
 
-          case 'faq_accordion':
-            return (
-              <FaqAccordionSection
-                key={section.id}
-                settings={section.settings as FaqAccordionSettings}
-              />
-            );
+            case 'story_manifesto':
+              return (
+                <BrandManifestoSection
+                  settings={section.settings as BrandManifestoSettings}
+                />
+              );
 
-          case 'custom_html':
-            return (
-              <CustomHtmlSection
-                key={section.id}
-                settings={section.settings as CustomHtmlSettings}
-              />
-            );
+            case 'faq_accordion':
+              return (
+                <FaqAccordionSection
+                  settings={section.settings as FaqAccordionSettings}
+                />
+              );
 
-          default:
-            return null;
-        }
+            case 'custom_html':
+              return (
+                <CustomHtmlSection
+                  settings={section.settings as CustomHtmlSettings}
+                />
+              );
+
+            default:
+              return null;
+          }
+        };
+
+        return (
+          <div
+            key={section.id}
+            id={section.id}
+            onClick={() => onSelectSection?.(section.id)}
+            className={`w-full transition-all duration-200 relative ${
+              isInteractive ? 'cursor-pointer' : ''
+            } ${
+              isSelected
+                ? 'ring-4 ring-amber-500 ring-inset z-10'
+                : isInteractive
+                ? 'hover:ring-2 hover:ring-amber-400/50 hover:ring-inset'
+                : ''
+            }`}
+          >
+            {renderSectionContent()}
+          </div>
+        );
       })}
-    </>
+    </div>
   );
 };
