@@ -41,10 +41,14 @@ export const BestSellingSection: React.FC<BestSellingSectionProps> = ({
     activeCategoryTab === 'all'
       ? baseProducts.slice(0, 8)
       : baseProducts
-          .filter((p) =>
-            p.category?.toLowerCase().includes(activeCategoryTab.toLowerCase()) ||
-            p.categories?.some((c) => c.toLowerCase().includes(activeCategoryTab.toLowerCase()))
-          )
+          .filter((p) => {
+            const tabLower = String(activeCategoryTab || '').toLowerCase();
+            const catLower = String(p?.category || '').toLowerCase();
+            return (
+              catLower.includes(tabLower) ||
+              p?.categories?.some((c) => String(c || '').toLowerCase().includes(tabLower))
+            );
+          })
           .slice(0, 8);
 
   return (

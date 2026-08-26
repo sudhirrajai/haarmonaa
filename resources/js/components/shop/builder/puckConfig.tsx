@@ -219,13 +219,13 @@ export const createPuckConfig = (
           button_link: '/shop',
         },
         render: (props) => {
-          let capsuleProducts = products;
-          if (props.category_slug && props.category_slug !== 'all') {
-            const target = props.category_slug.toLowerCase();
-            const matched = products.filter(
+          let capsuleProducts = products || [];
+          if (props?.category_slug && props.category_slug !== 'all') {
+            const target = String(props.category_slug).toLowerCase();
+            const matched = (products || []).filter(
               (p) =>
-                p.category.toLowerCase().includes(target) ||
-                p.categories?.some((c) => c.toLowerCase().includes(target))
+                String(p?.category || '').toLowerCase().includes(target) ||
+                p?.categories?.some((c) => String(c || '').toLowerCase().includes(target))
             );
             if (matched.length > 0) capsuleProducts = matched;
           }
