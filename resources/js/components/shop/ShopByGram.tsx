@@ -163,7 +163,13 @@ export const ShopByGram: React.FC<ShopByGramProps> = ({
   shopByGramEnabled,
   trustBadgesEnabled,
 }) => {
-  const { settings } = (usePage().props as any) || {};
+  let settings: any = {};
+  try {
+    const page = usePage?.();
+    settings = (page?.props as any)?.settings || {};
+  } catch {
+    settings = {};
+  }
 
   const isGramActive =
     shopByGramEnabled !== undefined

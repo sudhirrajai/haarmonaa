@@ -291,6 +291,50 @@ const SECTION_PRESETS = [
     },
   },
 ];
+class PuckErrorBoundary extends React.Component<
+  { children: React.ReactNode; onReset: () => void },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error('Puck Studio Error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-[#0e1017] text-white">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center justify-center mb-4">
+            <Sparkles className="w-6 h-6" />
+          </div>
+          <h3 className="text-lg font-bold">Puck Studio Notice</h3>
+          <p className="text-xs text-gray-400 max-w-md mt-1 mb-4">
+            {this.state.error?.message || 'Puck visual canvas encountered a rendering conflict.'}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              this.setState({ hasError: false, error: null });
+              this.props.onReset();
+            }}
+            className="px-4 py-2 bg-amber-500 text-black font-bold text-xs rounded-xl hover:bg-amber-400 transition-colors cursor-pointer"
+          >
+            Switch to Theme Customizer Mode
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const sectionsToPuckData = (secList: SectionBlock[]): Data => {
   const content = secList.map((sec) => {
@@ -781,11 +825,13 @@ export default function HomePageBuilder({
       {/* BODY (Split Customizer Workspace OR Puck Drag & Drop Studio) */}
       {editorMode === 'puck' ? (
         <div className="flex-1 w-full h-[calc(100vh-3.5rem)] overflow-hidden bg-[#0e1017] text-gray-100">
-          <Puck
-            config={puckConfig}
-            data={puckData}
-            onPublish={handlePuckPublish}
-          />
+          <PuckErrorBoundary onReset={() => setEditorMode('shopify')}>
+            <Puck
+              config={puckConfig}
+              data={puckData}
+              onPublish={handlePuckPublish}
+            />
+          </PuckErrorBoundary>
         </div>
       ) : (
         <div className="flex-1 flex overflow-hidden relative">
