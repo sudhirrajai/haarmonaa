@@ -959,6 +959,106 @@ export default function HomePageBuilder({
                       />
                     </div>
 
+                    {/* Layout Mode: Grid vs Carousel */}
+                    <div className="p-3 rounded-xl bg-gray-900/90 border border-gray-800 space-y-3">
+                      <span className="text-[11px] font-bold text-amber-300 block uppercase tracking-wider">
+                        Layout & Responsive Grid
+                      </span>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+                          Display Mode
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => updateSelectedSectionSettings({ layout: 'grid' })}
+                            className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                              (selectedSection.settings?.layout || 'grid') === 'grid'
+                                ? 'bg-amber-500 text-black shadow-sm'
+                                : 'bg-gray-800 text-gray-400 hover:text-white'
+                            }`}
+                          >
+                            Grid Layout
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateSelectedSectionSettings({ layout: 'carousel' })}
+                            className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                              selectedSection.settings?.layout === 'carousel'
+                                ? 'bg-amber-500 text-black shadow-sm'
+                                : 'bg-gray-800 text-gray-400 hover:text-white'
+                            }`}
+                          >
+                            Carousel Slider
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 3-Device Columns Selector */}
+                      {(selectedSection.settings?.layout || 'grid') === 'grid' && (
+                        <div className="grid grid-cols-3 gap-2 pt-1">
+                          <div>
+                            <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                              Desktop Cols
+                            </label>
+                            <select
+                              value={selectedSection.settings?.columns_desktop || 4}
+                              onChange={(e) =>
+                                updateSelectedSectionSettings({
+                                  columns_desktop: Number(e.target.value),
+                                })
+                              }
+                              className="w-full px-2 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs font-bold text-white"
+                            >
+                              <option value="1">1 Col</option>
+                              <option value="2">2 Cols</option>
+                              <option value="3">3 Cols</option>
+                              <option value="4">4 Cols</option>
+                              <option value="5">5 Cols</option>
+                              <option value="6">6 Cols</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                              Tablet Cols
+                            </label>
+                            <select
+                              value={selectedSection.settings?.columns_tablet || 2}
+                              onChange={(e) =>
+                                updateSelectedSectionSettings({
+                                  columns_tablet: Number(e.target.value),
+                                })
+                              }
+                              className="w-full px-2 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs font-bold text-white"
+                            >
+                              <option value="1">1 Col</option>
+                              <option value="2">2 Cols</option>
+                              <option value="3">3 Cols</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                              Mobile Cols
+                            </label>
+                            <select
+                              value={selectedSection.settings?.columns_mobile || 1}
+                              onChange={(e) =>
+                                updateSelectedSectionSettings({
+                                  columns_mobile: Number(e.target.value),
+                                })
+                              }
+                              className="w-full px-2 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs font-bold text-white"
+                            >
+                              <option value="1">1 Col</option>
+                              <option value="2">2 Cols</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Trust Cards with Icon Selector & Custom Icon */}
                     <div className="space-y-3 pt-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-white">Trust Cards ({(selectedSection.settings?.features || []).length})</span>
@@ -983,7 +1083,7 @@ export default function HomePageBuilder({
                       {(selectedSection.settings?.features || []).map((feat: any, fIdx: number) => (
                         <div key={feat.id || fIdx} className="p-3 rounded-xl border border-gray-800 bg-gray-900/60 space-y-2.5">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-gray-300">Card #{fIdx + 1}</span>
+                            <span className="text-xs font-bold text-amber-300">Card #{fIdx + 1}</span>
                             <button
                               type="button"
                               onClick={() => {
@@ -995,6 +1095,44 @@ export default function HomePageBuilder({
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
+
+                          {/* Icon Picker Dropdown */}
+                          <div>
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+                              Card Icon
+                            </label>
+                            <select
+                              value={feat.icon || 'ShieldCheck'}
+                              onChange={(e) => {
+                                const features = [...selectedSection.settings.features];
+                                features[fIdx].icon = e.target.value;
+                                updateSelectedSectionSettings({ features });
+                              }}
+                              className="w-full px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs font-bold text-white"
+                            >
+                              <option value="Package">📦 Package / Shipping Box</option>
+                              <option value="Truck">🚚 Truck / Express Delivery</option>
+                              <option value="ShieldCheck">🛡️ ShieldCheck / Guarantee</option>
+                              <option value="Gem">💎 Gem / Diamond Masterpiece</option>
+                              <option value="Award">🏆 Award / Certified Premium</option>
+                              <option value="RotateCcw">🔄 RotateCcw / Free Returns</option>
+                              <option value="MessageSquareText">💬 MessageSquareText / Support</option>
+                              <option value="Headphones">🎧 Headphones / Concierge</option>
+                              <option value="Phone">📞 Phone / 24/7 Call</option>
+                              <option value="Gift">🎁 Gift / Bespoke Box</option>
+                              <option value="Sparkles">✨ Sparkles / Pure Lustre</option>
+                              <option value="Zap">⚡ Zap / Fast Dispatch</option>
+                              <option value="Heart">❤️ Heart / Handcrafted with Love</option>
+                              <option value="Clock">⏰ Clock / 24/7 Service</option>
+                              <option value="Lock">🔒 Lock / Secure 256-bit Payment</option>
+                              <option value="Star">⭐ Star / 5-Star Luxury Rating</option>
+                              <option value="Smile">😊 Smile / 100% Satisfaction</option>
+                              <option value="ThumbsUp">👍 ThumbsUp / Trusted Quality</option>
+                              <option value="RefreshCw">🔁 RefreshCw / Lifetime Exchange</option>
+                              <option value="CheckCircle2">✅ CheckCircle / Verified Authentic</option>
+                            </select>
+                          </div>
+
                           <input
                             type="text"
                             value={feat.title || ''}
@@ -1016,6 +1154,18 @@ export default function HomePageBuilder({
                             }}
                             placeholder="Card Description"
                             className="w-full px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs text-white"
+                          />
+
+                          {/* Custom Image Icon Option */}
+                          <SingleImageUploader
+                            label="Custom Icon Image (Optional)"
+                            value={feat.custom_icon || ''}
+                            onChange={(url) => {
+                              const features = [...selectedSection.settings.features];
+                              features[fIdx].custom_icon = url;
+                              updateSelectedSectionSettings({ features });
+                            }}
+                            hint="Upload SVG or PNG to replace standard icon."
                           />
                         </div>
                       ))}
