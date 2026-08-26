@@ -423,7 +423,7 @@ export default function HomePageBuilder({
     if (!selectedSectionId) return;
     setSections((prev) =>
       prev.map((s) =>
-        s.id === selectedSectionId ? { ...s, settings: { ...s.settings, ...newSettings } } : s
+        s.id === selectedSectionId ? { ...s, settings: { ...(s.settings || {}), ...newSettings } } : s
       )
     );
     setHasChanges(true);
@@ -593,7 +593,7 @@ export default function HomePageBuilder({
 
       {/* BODY (Split Customizer Workspace) */}
       <div className="flex-1 flex overflow-hidden relative">
-        {/* LEFT SIDEBAR (Hierarchy List + Section Inspector) */}
+        {/* LEFT SIDEBAR (Hierarchy List + Complete Section Inspector) */}
         <aside
           className={`h-full bg-[#161922] border-r border-gray-800 transition-all duration-300 flex flex-col shrink-0 z-20 ${
             sidebarOpen ? 'w-[370px] sm:w-[400px]' : 'w-0 -translate-x-full overflow-hidden border-none'
@@ -636,7 +636,7 @@ export default function HomePageBuilder({
                   />
                 </div>
 
-                {/* Specific Form Fields */}
+                {/* 1. CURATED CAPSULE INSPECTOR */}
                 {selectedSection.type === 'curated_capsule' && (
                   <div className="space-y-4 pt-2 border-t border-gray-800">
                     <div>
@@ -789,7 +789,7 @@ export default function HomePageBuilder({
                   </div>
                 )}
 
-                {/* Hero Slider Settings */}
+                {/* 2. HERO SLIDER INSPECTOR */}
                 {selectedSection.type === 'hero_slider' && (
                   <div className="space-y-4 pt-2 border-t border-gray-800">
                     <div className="flex items-center justify-between">
@@ -882,8 +882,181 @@ export default function HomePageBuilder({
                   </div>
                 )}
 
-                {/* Best Selling Settings */}
+                {/* 3. BEST SELLING INSPECTOR */}
                 {selectedSection.type === 'best_selling' && (
+                  <div className="space-y-4 pt-2 border-t border-gray-800">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                        Section Title
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedSection.settings?.title || ''}
+                        onChange={(e) =>
+                          updateSelectedSectionSettings({ title: e.target.value })
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                        Subtitle
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedSection.settings?.subtitle || ''}
+                        onChange={(e) =>
+                          updateSelectedSectionSettings({ subtitle: e.target.value })
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                        Badge Label
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedSection.settings?.badge || ''}
+                        onChange={(e) =>
+                          updateSelectedSectionSettings({ badge: e.target.value })
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. LUXURY TRUST BADGES INSPECTOR */}
+                {selectedSection.type === 'trust_badges' && (
+                  <div className="space-y-4 pt-2 border-t border-gray-800">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                        Headline Title
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedSection.settings?.title || ''}
+                        onChange={(e) =>
+                          updateSelectedSectionSettings({ title: e.target.value })
+                        }
+                        placeholder="e.g. The Haarmonaa Promise"
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                        Subtitle
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedSection.settings?.subtitle || ''}
+                        onChange={(e) =>
+                          updateSelectedSectionSettings({ subtitle: e.target.value })
+                        }
+                        placeholder="e.g. CERTIFIED LUXURY EXPERIENCE"
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                      />
+                    </div>
+
+                    <div className="space-y-3 pt-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white">Trust Cards ({(selectedSection.settings?.features || []).length})</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const current = selectedSection.settings?.features || [];
+                            const newCard = {
+                              id: `feat_${Date.now()}`,
+                              icon: 'ShieldCheck',
+                              title: 'New Guarantee',
+                              description: 'Description of your guarantee or promise to the customer.',
+                            };
+                            updateSelectedSectionSettings({ features: [...current, newCard] });
+                          }}
+                          className="text-xs font-bold text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 px-2 py-1 rounded-lg border border-amber-500/40 cursor-pointer"
+                        >
+                          + Add Card
+                        </button>
+                      </div>
+
+                      {(selectedSection.settings?.features || []).map((feat: any, fIdx: number) => (
+                        <div key={feat.id || fIdx} className="p-3 rounded-xl border border-gray-800 bg-gray-900/60 space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-gray-300">Card #{fIdx + 1}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const features = selectedSection.settings.features.filter((_: any, i: number) => i !== fIdx);
+                                updateSelectedSectionSettings({ features });
+                              }}
+                              className="text-red-400 hover:bg-red-500/20 p-1 rounded cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <input
+                            type="text"
+                            value={feat.title || ''}
+                            onChange={(e) => {
+                              const features = [...selectedSection.settings.features];
+                              features[fIdx].title = e.target.value;
+                              updateSelectedSectionSettings({ features });
+                            }}
+                            placeholder="Card Title (e.g. Free Shipping)"
+                            className="w-full px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs font-bold text-white"
+                          />
+                          <textarea
+                            rows={2}
+                            value={feat.description || ''}
+                            onChange={(e) => {
+                              const features = [...selectedSection.settings.features];
+                              features[fIdx].description = e.target.value;
+                              updateSelectedSectionSettings({ features });
+                            }}
+                            placeholder="Card Description"
+                            className="w-full px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs text-white"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 5. SHOP BY GRAM INSPECTOR */}
+                {selectedSection.type === 'shop_by_gram' && (
+                  <div className="space-y-4 pt-2 border-t border-gray-800">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                        Instagram Handle
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedSection.settings?.handle || '@haarmonaa'}
+                        onChange={(e) =>
+                          updateSelectedSectionSettings({ handle: e.target.value })
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                        Instagram Profile URL
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedSection.settings?.url || 'https://instagram.com/haarmonaa'}
+                        onChange={(e) =>
+                          updateSelectedSectionSettings({ url: e.target.value })
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* 6. CATEGORY SLIDER INSPECTOR */}
+                {selectedSection.type === 'category_slider' && (
                   <div className="space-y-4 pt-2 border-t border-gray-800">
                     <div>
                       <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
@@ -914,7 +1087,273 @@ export default function HomePageBuilder({
                   </div>
                 )}
 
-                {/* Custom HTML Settings */}
+                {/* 7. FEATURED PRODUCTS INSPECTOR */}
+                {selectedSection.type === 'featured_products' && (
+                  <div className="space-y-4 pt-2 border-t border-gray-800">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                        Section Title
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedSection.settings?.title || ''}
+                        onChange={(e) =>
+                          updateSelectedSectionSettings({ title: e.target.value })
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                        Subtitle
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedSection.settings?.subtitle || ''}
+                        onChange={(e) =>
+                          updateSelectedSectionSettings({ subtitle: e.target.value })
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* 8. DUAL PROMO BANNERS INSPECTOR */}
+                {selectedSection.type === 'dual_banners' && (
+                  <div className="space-y-4 pt-2 border-t border-gray-800">
+                    <span className="text-xs font-bold text-white block">Banner Cards (2)</span>
+                    {(selectedSection.settings?.banners || []).map((banner: any, bIdx: number) => (
+                      <div key={banner.id || bIdx} className="p-3 rounded-xl border border-gray-800 bg-gray-900/60 space-y-2.5">
+                        <span className="text-xs font-bold text-amber-300">Banner #{bIdx + 1}</span>
+                        <input
+                          type="text"
+                          value={banner.title || ''}
+                          onChange={(e) => {
+                            const banners = [...(selectedSection.settings.banners || [])];
+                            banners[bIdx].title = e.target.value;
+                            updateSelectedSectionSettings({ banners });
+                          }}
+                          placeholder="Banner Headline Title"
+                          className="w-full px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs font-bold text-white"
+                        />
+                        <input
+                          type="text"
+                          value={banner.subtitle || ''}
+                          onChange={(e) => {
+                            const banners = [...(selectedSection.settings.banners || [])];
+                            banners[bIdx].subtitle = e.target.value;
+                            updateSelectedSectionSettings({ banners });
+                          }}
+                          placeholder="Subtitle / Badge"
+                          className="w-full px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs text-white"
+                        />
+                        <textarea
+                          rows={2}
+                          value={banner.description || ''}
+                          onChange={(e) => {
+                            const banners = [...(selectedSection.settings.banners || [])];
+                            banners[bIdx].description = e.target.value;
+                            updateSelectedSectionSettings({ banners });
+                          }}
+                          placeholder="Description"
+                          className="w-full px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs text-white"
+                        />
+                        <SingleImageUploader
+                          label="Banner Background Image (Optional)"
+                          value={banner.image || ''}
+                          onChange={(url) => {
+                            const banners = [...(selectedSection.settings.banners || [])];
+                            banners[bIdx].image = url;
+                            updateSelectedSectionSettings({ banners });
+                          }}
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            value={banner.buttonText || ''}
+                            onChange={(e) => {
+                              const banners = [...(selectedSection.settings.banners || [])];
+                              banners[bIdx].buttonText = e.target.value;
+                              updateSelectedSectionSettings({ banners });
+                            }}
+                            placeholder="Button Text"
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs text-white"
+                          />
+                          <input
+                            type="text"
+                            value={banner.buttonLink || ''}
+                            onChange={(e) => {
+                              const banners = [...(selectedSection.settings.banners || [])];
+                              banners[bIdx].buttonLink = e.target.value;
+                              updateSelectedSectionSettings({ banners });
+                            }}
+                            placeholder="Button Link"
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs text-white"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 9. BRAND STORY MANIFESTO INSPECTOR */}
+                {selectedSection.type === 'story_manifesto' && (
+                  <div className="space-y-4 pt-2 border-t border-gray-800">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                        Headline Title
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedSection.settings?.title || ''}
+                        onChange={(e) =>
+                          updateSelectedSectionSettings({ title: e.target.value })
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                        Badge Label
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedSection.settings?.badge || ''}
+                        onChange={(e) =>
+                          updateSelectedSectionSettings({ badge: e.target.value })
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                        Featured Quote
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={selectedSection.settings?.quote || ''}
+                        onChange={(e) =>
+                          updateSelectedSectionSettings({ quote: e.target.value })
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                        Story Body Text
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={selectedSection.settings?.body_text || ''}
+                        onChange={(e) =>
+                          updateSelectedSectionSettings({ body_text: e.target.value })
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                      />
+                    </div>
+                    <SingleImageUploader
+                      label="Editorial Photograph"
+                      value={selectedSection.settings?.image || ''}
+                      onChange={(url) =>
+                        updateSelectedSectionSettings({ image: url })
+                      }
+                    />
+                  </div>
+                )}
+
+                {/* 10. FAQ ACCORDION INSPECTOR */}
+                {selectedSection.type === 'faq_accordion' && (
+                  <div className="space-y-4 pt-2 border-t border-gray-800">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                        Headline Title
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedSection.settings?.title || ''}
+                        onChange={(e) =>
+                          updateSelectedSectionSettings({ title: e.target.value })
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                        Subtitle
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedSection.settings?.subtitle || ''}
+                        onChange={(e) =>
+                          updateSelectedSectionSettings({ subtitle: e.target.value })
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-gray-900 border border-gray-700 text-xs font-medium text-white"
+                      />
+                    </div>
+                    <div className="space-y-3 pt-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white">Questions ({(selectedSection.settings?.items || []).length})</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const current = selectedSection.settings?.items || [];
+                            const newItem = {
+                              id: `faq_${Date.now()}`,
+                              question: 'New Question',
+                              answer: 'Answer to the question.',
+                            };
+                            updateSelectedSectionSettings({ items: [...current, newItem] });
+                          }}
+                          className="text-xs font-bold text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 px-2 py-1 rounded-lg border border-amber-500/40 cursor-pointer"
+                        >
+                          + Add FAQ
+                        </button>
+                      </div>
+                      {(selectedSection.settings?.items || []).map((faq: any, idx: number) => (
+                        <div key={faq.id || idx} className="p-3 rounded-xl border border-gray-800 bg-gray-900/60 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-gray-300">FAQ #{idx + 1}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const items = selectedSection.settings.items.filter((_: any, i: number) => i !== idx);
+                                updateSelectedSectionSettings({ items });
+                              }}
+                              className="text-red-400 hover:bg-red-500/20 p-1 rounded cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <input
+                            type="text"
+                            value={faq.question || ''}
+                            onChange={(e) => {
+                              const items = [...selectedSection.settings.items];
+                              items[idx].question = e.target.value;
+                              updateSelectedSectionSettings({ items });
+                            }}
+                            placeholder="Question"
+                            className="w-full px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs font-bold text-white"
+                          />
+                          <textarea
+                            rows={2}
+                            value={faq.answer || ''}
+                            onChange={(e) => {
+                              const items = [...selectedSection.settings.items];
+                              items[idx].answer = e.target.value;
+                              updateSelectedSectionSettings({ items });
+                            }}
+                            placeholder="Answer"
+                            className="w-full px-3 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs text-white"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 11. CUSTOM HTML INSPECTOR */}
                 {selectedSection.type === 'custom_html' && (
                   <div className="space-y-4 pt-2 border-t border-gray-800">
                     <div>
