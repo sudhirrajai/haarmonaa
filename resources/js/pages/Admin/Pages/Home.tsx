@@ -1114,14 +1114,18 @@ export default function HomePageBuilder({
         </aside>
 
         {/* RIGHT MAIN WORKSPACE (Real-Time Live Storefront Canvas with Smooth Scrolling) */}
-        <main className="flex-1 h-full bg-[#0b0d13] overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 flex flex-col items-center">
+        <main
+          className={`flex-1 h-full bg-[#0b0d13] overflow-y-auto overflow-x-hidden flex flex-col items-center transition-all ${
+            previewDevice === 'desktop' ? 'p-0' : 'p-4 sm:p-6 lg:p-8'
+          }`}
+        >
           <div
-            className={`transition-all duration-300 bg-white shadow-2xl rounded-2xl border border-gray-800/80 shrink-0 pb-16 ${
+            className={`transition-all duration-300 bg-white shrink-0 pb-16 ${
               previewDevice === 'desktop'
-                ? 'w-full max-w-7xl'
+                ? 'w-full min-w-full rounded-none border-none shadow-none'
                 : previewDevice === 'tablet'
-                ? 'w-[768px]'
-                : 'w-[375px] rounded-[36px] ring-8 ring-gray-900 my-4'
+                ? 'w-[768px] shadow-2xl rounded-2xl border border-gray-800/80 my-4'
+                : 'w-[375px] rounded-[36px] ring-8 ring-gray-900 shadow-2xl my-4'
             }`}
           >
             <SectionRenderer

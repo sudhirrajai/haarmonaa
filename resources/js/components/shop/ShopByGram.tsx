@@ -208,24 +208,24 @@ export const ShopByGram: React.FC<ShopByGramProps> = ({
   };
 
   return (
-    <section className="py-12 sm:py-16 lg:py-20 bg-white border-t border-gray-100 overflow-hidden">
+    <section className="@container py-10 @sm:py-14 @lg:py-20 bg-white border-t border-gray-100 overflow-hidden">
       {/* 1. Shop by Gram Instagram Section (Controlled by Toggle) */}
       {isGramActive && (
         <>
           {/* Section Header */}
-          <div className="text-center max-w-2xl mx-auto px-4 mb-8 sm:mb-10 lg:mb-12 space-y-2">
+          <div className="text-center max-w-2xl mx-auto px-4 mb-6 @sm:mb-10 @lg:mb-12 space-y-2">
             <a
               href={instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 group cursor-pointer"
             >
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight group-hover:text-[#d0473e] transition-colors">
+              <h2 className="text-2xl @sm:text-3xl @lg:text-4xl font-extrabold text-gray-900 tracking-tight group-hover:text-[#d0473e] transition-colors">
                 Shop by Gram
               </h2>
               <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-[#d0473e] transition-colors" />
             </a>
-            <p className="text-xs sm:text-[13.5px] text-gray-500 font-medium">
+            <p className="text-xs @sm:text-sm text-gray-500 font-medium">
               Inspire and let yourself be inspired, from one unique fashion to another. Follow{' '}
               <a
                 href={instagramUrl}
@@ -239,8 +239,8 @@ export const ShopByGram: React.FC<ShopByGramProps> = ({
           </div>
 
           {/* FULL-WIDTH Instagram Gallery Grid */}
-          <div className={`w-full px-2 sm:px-4 lg:px-6 ${isTrustActive ? 'mb-12 sm:mb-16' : ''}`}>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-4">
+          <div className={`w-full px-2 @sm:px-4 @lg:px-6 ${isTrustActive ? 'mb-8 @sm:mb-12' : ''}`}>
+            <div className="grid grid-cols-2 @sm:grid-cols-3 @[1024px]:grid-cols-6 gap-2.5 @sm:gap-4">
               {rawPosts.map((item, idx) => (
                 <a
                   key={item.id || idx}

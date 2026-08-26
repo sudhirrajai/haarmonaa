@@ -116,7 +116,15 @@ export const TrustBadgesSection: React.FC<TrustBadgesSectionProps> = ({ settings
           </div>
         )}
 
-        <div className="grid grid-cols-1 @sm:grid-cols-2 @[1024px]:grid-cols-4 gap-4 @sm:gap-6">
+        <div
+          className={`grid gap-4 @sm:gap-6 ${
+            features.length === 3
+              ? 'grid-cols-1 @[768px]:grid-cols-3'
+              : features.length === 2
+              ? 'grid-cols-1 @[768px]:grid-cols-2'
+              : 'grid-cols-1 @sm:grid-cols-2 @[1024px]:grid-cols-4'
+          }`}
+        >
           {features.map((feat) => (
             <div
               key={feat.id}
